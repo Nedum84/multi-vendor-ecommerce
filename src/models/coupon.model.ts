@@ -13,10 +13,9 @@ export interface CouponAttributes {
   title: string;
   start_date: Date;
   end_date: Date;
+  product_qty_limit: number;
   usage_limit: number;
   usage_limit_per_user: number;
-  total_used: number;
-  min_product_price: number;
   created_by: string;
   percentage_discount: number;
   revoke: boolean;
@@ -56,15 +55,13 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     type: DataTypes.INTEGER,
     defaultValue: 10,
   },
+  product_qty_limit: {
+    type: DataTypes.INTEGER,
+  },
   usage_limit_per_user: {
     type: DataTypes.INTEGER,
     defaultValue: 1,
   },
-  total_used: {
-    type: DataTypes.INTEGER,
-    defaultValue: 0,
-  },
-  min_product_price: DataTypes.BIGINT,
   created_by: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -97,8 +94,8 @@ export function CouponFactory(sequelize: Sequelize) {
 
     Coupon.belongsTo(models.User, {
       as: "user",
-      foreignKey: "user_id",
-      targetKey: "created_by",
+      foreignKey: "created_by",
+      targetKey: "user_id",
     });
     Coupon.hasMany(models.CouponProduct, {
       as: "products",

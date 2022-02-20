@@ -21,7 +21,7 @@ export const VendorSettlementModelAttributes: SequelizeAttributes<VendorSettleme
     primaryKey: true,
   },
   sub_order_ids: {
-    type: DataTypes.ARRAY,
+    type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: false,
   },
   total: {

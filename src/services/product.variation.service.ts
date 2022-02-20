@@ -1,53 +1,57 @@
 import { Request } from "express";
-import sequelize, {
-  Product,
-  ProductAttribute,
-  ProductAttributeSets,
-  ProductDiscount,
-  ProductVariationWithAttributeSet,
-  ProductWithAttribute,
-} from "../models";
+import sequelize, { ProductDiscount } from "../models";
 import { ProductVariation } from "../models";
 import { createModel } from "../utils/random.string";
 import { ProductVariationAttributes, ProductVariationInstance } from "../models/product.variation.model";
 import productService from "./product.service";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { ErrorResponse } from "../apiresponse/error.response";
-import moment from "moment";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { ProductDiscountAttributes } from "../models/product.discount.model";
 import { Op, Transaction } from "sequelize/dist";
-import { ProductAttributeAttributes, ProductAttributeInstance } from "../models/product.attribute.model";
-import { ProductAttributeSetsAttributes, ProductAttributeSetsInstance } from "../models/product.attribute.sets.model";
 import { arraysEqual, asyncForEach } from "../utils/function.utils";
 import { isAdmin } from "../utils/admin.utils";
 import { CartInstance } from "../models/cart.model";
 import { StockStatus } from "../enum/product.enum";
+import ProductVariationUtils from "../utils/product.variation.utils";
+import variationAttributesService from "./variation.attributes.service";
 
 //--> Create
 const create = async (
   variationBody: ProductVariationAttributes,
+  discount: ProductDiscountAttributes,
   attribute_set_ids: string[] = [],
   transaction?: Transaction
 ) => {
   //--> Get all the available product attributes
-  const productAttributes = await findProductAttributes(variationBody.product_id);
+  const productAttributes = await variationAttributesService.findProductAttributes(variationBody.product_id);
   //--> Get all current variations
-  const existingVariations = await findAllByProductId(variationBody.product_id);
+  const existingVariations = await findAllByProductId(variationBody.product_id, transaction);
 
   //--> no product attributes & variation already exist for this product
   if (productAttributes.length == 0 && existingVariations.length > 0) {
     throw new ErrorResponse("Variation already added for this product");
   }
 
-  if (productAttributes.length > 0) {
-    const attributes = await findAttributeBySetIds(attribute_set_ids);
+  //validat qty.....
+  if (variationBody.with_storehouse_management) {
+    if (!variationBody.stock_qty) {
+      throw new ErrorResponse("Quantity is required for store house management");
+    }
+  } else {
+    if (!variationBody.stock_status) {
+      throw new ErrorResponse("Stock status is required for store house management");
+    }
+  }
 
-    productAttributes.forEach(async ({ attribute_id }) => {
+  if (productAttributes.length > 0) {
+    const attributes = await variationAttributesService.findAttributeBySetIds(attribute_set_ids);
+
+    await asyncForEach(productAttributes, async ({ attribute_id }) => {
       //--> check if all attributes are passed as create payloads
       const checkExist = attributes.find((x) => x.attribute_id == attribute_id);
       if (!checkExist) {
-        const { name } = await findAttributeById(attribute_id);
+        const { name } = await variationAttributesService.findAttributeById(attribute_id);
         throw new ErrorResponse(`Attribute (${name}) required!`);
       }
     });
@@ -77,14 +81,18 @@ const create = async (
       variation_id = variation.variation_id;
       //Create the attributes set ids
       if (productAttributes.length > 0) {
-        await createVariationAttributes(attribute_set_ids, variation_id, transaction ?? t);
+        await variationAttributesService.createVariationAttributes(attribute_set_ids, variation_id, transaction ?? t);
+      }
+      //Create Discount
+      if (discount) {
+        await createDiscount(variation_id, discount, transaction ?? t);
       }
     });
   } catch (error: any) {
     throw new ErrorResponse(error);
   }
 
-  return findById(variation_id!);
+  return findById(variation_id!, transaction);
 };
 
 //--> Update
@@ -93,6 +101,7 @@ const update = async (req: Request) => {
   const { variation_id } = req.params;
   const body: ProductVariationAttributes & {
     attribute_set_ids: string[];
+    discount: ProductDiscountAttributes;
   } = req.body;
 
   const { attribute_set_ids } = body;
@@ -105,19 +114,19 @@ const update = async (req: Request) => {
   }
 
   //--> Get all the available product attributes
-  const productAttributes = await findProductAttributes(variation.product_id);
+  const productAttributes = await variationAttributesService.findProductAttributes(variation.product_id);
   //--> Get all current variations
   const existingVariations = await findAllByProductId(variation.product_id);
 
   if (attribute_set_ids.length) {
     if (productAttributes.length > 0) {
-      const attributes = await findAttributeBySetIds(attribute_set_ids);
+      const attributes = await variationAttributesService.findAttributeBySetIds(attribute_set_ids);
 
-      productAttributes.forEach(async ({ attribute_id }) => {
+      await asyncForEach(productAttributes, async ({ attribute_id }) => {
         //--> check if all attributes are passed as create payloads
         const checkExist = attributes.find((x) => x.attribute_id == attribute_id);
         if (!checkExist) {
-          const { name } = await findAttributeById(attribute_id);
+          const { name } = await variationAttributesService.findAttributeById(attribute_id);
           throw new ErrorResponse(`Attribute (${name}) required!`);
         }
       });
@@ -128,6 +137,7 @@ const update = async (req: Request) => {
 
         //--> create sets vs already existing compare
         const existsAlready = arraysEqual(attribute_set_ids, attr_set_ids);
+        //Skip if the existing one is same as the body payload variation
         if (existsAlready && variation_id !== each_variation_id) {
           throw new ErrorResponse("Variation already exists");
         }
@@ -135,21 +145,48 @@ const update = async (req: Request) => {
     }
   }
 
-  Object.assign(variation, body);
-  await variation.save();
+  try {
+    await sequelize.transaction(async (transaction) => {
+      //Create Discount if any
+      if (body.discount) {
+        const obj1 = {
+          price: body.discount.price,
+          discount_from: body.discount.discount_from,
+          discount_to: body.discount.discount_to,
+        };
+        const obj2 = {
+          price: variation.discount.price,
+          discount_from: variation.discount.discount_from,
+          discount_to: variation.discount.discount_to,
+        };
 
-  //Create the attributes set ids
-  if (productAttributes.length > 0) {
-    const currentSetIds = variation.attribute_sets.map((a) => a.attribute_set_id);
+        const isObjectsEqual = JSON.stringify(obj1) === JSON.stringify(obj2);
+        if (!isObjectsEqual) {
+          await createDiscount(variation_id, body.discount, transaction);
+        }
+      }
 
-    //--> create sets vs already existing compare
-    const isEqual = arraysEqual(attribute_set_ids, currentSetIds);
-    if (!isEqual) {
-      //Delete already existing one for only this variation
-      await deleteVariationAttributesByVariationIds([variation_id]);
-      //Create new ones
-      await createVariationAttributes(attribute_set_ids, variation_id);
-    }
+      Object.assign(variation, body);
+      await variation.save({ transaction });
+
+      //Create the attributes set ids
+      if (productAttributes.length > 0) {
+        const currentSetIds = variation.attribute_sets.map((a) => a.attribute_set_id);
+
+        //--> create sets vs already existing compare
+        const isEqual = arraysEqual(attribute_set_ids, currentSetIds);
+        if (!isEqual) {
+          //Delete already existing one for only this variation
+          await variationAttributesService.deleteVariationAttributesByVariationIds([variation_id], transaction);
+          //Create new ones
+          await variationAttributesService.createVariationAttributes(attribute_set_ids, variation_id, transaction);
+        }
+      }
+    });
+  } catch (error: any) {
+    console.log(error, "Error");
+
+    throw new ErrorResponse(error);
   }
 
   return findById(variation_id);
@@ -159,7 +196,7 @@ const validateCartProductQty = (carts: CartInstance[]) => {
     const { variation, qty } = cart;
 
     if (variation.with_storehouse_management) {
-      if (variation.stock_qty >= qty) {
+      if (variation.stock_qty < qty) {
         throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
       }
     } else {
@@ -171,14 +208,36 @@ const validateCartProductQty = (carts: CartInstance[]) => {
   return true;
 };
 
-const validateProductQty = (variation: ProductVariationInstance, limit = 1) => {
+const validateProductQty = (variation: ProductVariationInstance, qty: number) => {
   if (variation.with_storehouse_management) {
-    if (variation.stock_qty >= 1) {
+    if (variation.stock_qty < 1) {
       throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
+    }
+
+    if (variation.stock_qty < qty) {
+      throw new ErrorResponse(`Item ${variation.product.name} is out of stock`);
+    }
+
+    /// Check Max product qty that can be bought once
+    if (variation.max_purchase_qty) {
+      if (variation.max_purchase_qty < qty) {
+        throw new ErrorResponse(
+          `You can only purchase ${variation.max_purchase_qty} quantity of ${variation.product.name} at a time`
+        );
+      }
     }
   } else {
     if (variation.stock_status !== StockStatus.IN_STOCK) {
       throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
+    }
+
+    /// Check Max product qty that can be bought once
+    if (variation.max_purchase_qty) {
+      if (variation.max_purchase_qty < qty) {
+        throw new ErrorResponse(
+          `You can only purchase ${variation.max_purchase_qty} quantity of ${variation.product.name} at a time`
+        );
+      }
     }
   }
   return true;
@@ -198,33 +257,19 @@ const updateQtyRemaining = async (carts: CartInstance[], transaction?: Transacti
 };
 
 //--> createDiscount
-const createDiscount = async (
-  variation_id: string,
-  discount: ProductDiscountAttributes,
-  req: Request,
-  t?: Transaction
-) => {
-  const { stores, role } = req.user!;
-
-  const variation = await findById(variation_id);
-
-  const product = await productService.findById(variation.product_id);
-
-  if (!stores.includes(product.store_id) && !isAdmin(role)) {
-    throw new UnauthorizedError();
-  }
-
-  //expired
+const createDiscount = async (variation_id: string, discount: ProductDiscountAttributes, t?: Transaction) => {
+  //check if there's existing
   const checkExist = await ProductDiscount.findOne({
     where: {
       variation_id,
       revoke: false,
-      [Op.or]: [{ discount_to: moment().isBefore() }, { discount_to: null }],
+      discount_from: { [Op.lt]: new Date() },
+      [Op.or]: [{ discount_to: { [Op.gt]: new Date() } }, { discount_to: null }],
     },
   });
 
   if (checkExist) {
-    throw new ErrorResponse("Discount already added to this product");
+    await revokeDiscount(variation_id);
   }
 
   await ProductDiscount.create(
@@ -238,54 +283,53 @@ const createDiscount = async (
     { transaction: t }
   );
 
-  return findById(variation_id);
+  return findById(variation_id, t);
 };
 
 //--> revokeDiscount
-const revokeDiscount = async (req: Request) => {
-  const { variation_id } = req.params;
-
-  const { stores, role } = req.user!;
-
-  const variation = await findById(variation_id);
-
-  const product = await productService.findById(variation.product_id);
-
-  if (!stores.includes(product.store_id) && !isAdmin(role)) {
-    throw new UnauthorizedError();
-  }
-
+const revokeDiscount = async (variation_id: string) => {
   const discount = await ProductDiscount.findOne({
     where: {
       variation_id,
       revoke: false,
-      discount_to: { [Op.or]: [moment().isBefore(), null] },
+      discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
     },
   });
 
-  if (!discount) {
-    throw new ErrorResponse("No discount found");
+  if (discount) {
+    discount.revoke = true;
+    await discount.save();
   }
-  discount.revoke = true;
 
-  // OR simply .....
-  // await ProductDiscount.update({ revoke: true }, { where: { variation_id } });
+  return discount;
+};
 
-  return findById(variation.product_id);
+const deleteVariation = async (req: Request) => {
+  const { stores, role } = req.user!;
+  const { variation_id } = req.params;
+
+  const variation = await findById(variation_id);
+
+  const product = await productService.findById(variation.product_id);
+  if (!stores.includes(product.store_id) && !isAdmin(role)) {
+    throw new UnauthorizedError();
+  }
+
+  const del = await sequelize.transaction(async (transaction) => {
+    await variation.destroy({ transaction });
+    //Delete already existing one for only this variation
+    await variationAttributesService.deleteVariationAttributesByVariationIds([variation_id], transaction);
+  });
+
+  return true;
 };
 
 //--> findById
-const findById = async (variation_id: string) => {
+const findById = async (variation_id: string, t?: Transaction) => {
   const variation = await ProductVariation.findOne({
     where: { variation_id },
-    include: [
-      { model: Product, as: "product" },
-      {
-        model: ProductVariationWithAttributeSet,
-        as: "attribute_sets",
-        include: [{ model: ProductAttribute, as: "attribute" }],
-      },
-    ],
+    transaction: t,
+    ...ProductVariationUtils.sequelizeFindOptions(),
   });
   if (!variation) {
     throw new NotFoundError("Product not found");
@@ -295,255 +339,22 @@ const findById = async (variation_id: string) => {
 };
 
 //--> find all variations ById
-const findAllByProductId = async (product_id: string) => {
+const findAllByProductId = async (product_id: string, transaction?: Transaction) => {
   const variations = await ProductVariation.findAll({
     where: { product_id },
-    include: [
-      { model: Product, as: "product" },
-      {
-        model: ProductVariationWithAttributeSet,
-        as: "attribute_sets",
-        include: [{ model: ProductAttribute, as: "attribute" }],
-      },
-    ],
+    ...ProductVariationUtils.sequelizeFindOptions(),
+    transaction,
   });
   return variations;
-};
-
-///----->>> VARIATIONS
-//--> Product Attributes
-const createAttribute = async (req: Request) => {
-  const body: ProductAttributeAttributes = req.body;
-
-  const { attribute_id } = await createModel<ProductAttributeInstance>(ProductAttribute, body, "attribute_id");
-
-  return findAttributeById(attribute_id);
-};
-const updateAttribute = async (req: Request) => {
-  const body: ProductAttributeAttributes = req.body;
-  const { attribute_id } = req.params;
-
-  const attribute = await findAttributeById(attribute_id);
-
-  Object.assign(attribute, body);
-
-  await attribute.save();
-
-  return findAttributeById(attribute.attribute_id);
-};
-const findAttributeById = async (attribute_id: string) => {
-  const attribute = await ProductAttribute.findOne({ where: { attribute_id } });
-
-  if (!attribute) {
-    throw new NotFoundError("No attribute found");
-  }
-
-  return attribute;
-};
-const findAttributeByIds = async (attribute_ids: string[]) => {
-  const attributes = await ProductAttribute.findAll({
-    where: { attribute_id: { [Op.in]: attribute_ids } },
-  });
-
-  return attributes;
-};
-const findAllAttributes = async () => {
-  const attributes = await ProductAttribute.findAll({
-    include: { model: ProductAttributeSets, as: "sets" },
-  });
-
-  return attributes;
-};
-
-//--> Product Attributes Sets
-const createAttributeSet = async (req: Request) => {
-  const body: ProductAttributeSetsAttributes = req.body;
-  const { attribute_id } = req.params;
-  body.attribute_id = attribute_id;
-
-  await createModel<ProductAttributeSetsInstance>(ProductAttributeSets, body, "attribute_set_id");
-
-  return findAttributeSetsByAttributeId(attribute_id);
-};
-const updateAttributeSet = async (req: Request) => {
-  const body: ProductAttributeSetsAttributes = req.body;
-  const { attribute_set_id } = req.params;
-
-  const attributeSet = await findAttributeSetById(attribute_set_id);
-
-  Object.assign(attributeSet, body);
-
-  await attributeSet.save();
-
-  return findAttributeSetsByAttributeId(attributeSet.attribute_id);
-};
-const findAttributeSetById = async (attribute_set_id: string) => {
-  const attributeSet = await ProductAttributeSets.findOne({
-    where: { attribute_set_id },
-  });
-
-  if (!attributeSet) {
-    throw new NotFoundError("Attribute set not found");
-  }
-
-  return attributeSet;
-};
-/** Find many sets with attribute ID */
-const findAttributeSetsByAttributeId = async (attribute_id: string) => {
-  const attributeSets = await ProductAttributeSets.findAll({
-    where: { attribute_id },
-  });
-
-  return attributeSets;
-};
-/** Find attributes sets by attribute set IDs(IN QUERY) */
-const findAttributeBySetIds = async (attribute_set_ids: string[]) => {
-  const attributeSets = await ProductAttributeSets.findAll({
-    where: { attribute_set_id: { [Op.in]: attribute_set_ids } },
-  });
-
-  return attributeSets;
-};
-
-//--> create product attributes
-const createProductAttributes = async (req: Request) => {
-  type PayloadType = { product_id: string; attribute_ids: string[] };
-
-  const { product_id, attribute_ids }: PayloadType = req.body;
-
-  //Validate attribute_ids
-  const attrs = await findAttributeByIds(attribute_ids);
-  if (attrs.length !== attribute_ids.length) {
-    throw new ErrorResponse("Invalid attribute(s) detected");
-  }
-
-  //Check if the same attribute_ids is the already existing ones
-  const originalProdAttrs = await findProductAttributes(product_id);
-  const isEqual = arraysEqual(
-    attribute_ids,
-    originalProdAttrs.map((x) => x.attribute_id)
-  );
-  if (isEqual) {
-    return originalProdAttrs;
-  }
-
-  // clear attributes if any
-  await ProductWithAttribute.destroy({ where: { product_id } });
-
-  const variations = await findAllByProductId(product_id);
-
-  const defaultVariation = variations.find((v) => v.is_default);
-
-  if (variations.length > 1) {
-    const variation_ids = variations.map((v) => v.variation_id);
-
-    //clear all variations except the default
-    await ProductVariation.destroy({
-      where: {
-        variation_id: {
-          [Op.in]: variation_ids.filter((id) => id != defaultVariation?.variation_id),
-        },
-      },
-    });
-    // clear variation attribute sets if any
-    await deleteVariationAttributesByVariationIds(variation_ids);
-  }
-
-  //build insert  payload
-  const payload = attribute_ids.map((attribute_id) => ({
-    attribute_id,
-    product_id,
-  }));
-  const productAttributes = await ProductWithAttribute.bulkCreate(payload);
-
-  //Using default variation Create new Variation attribute sets with any random sets
-  if (defaultVariation) {
-    if (attribute_ids.length) {
-      //Find all variation attribute sets
-      const allAttributeSets = await Promise.all(attribute_ids.map((id) => findAttributeSetsByAttributeId(id)));
-
-      //Randomly select any attribute set id for all each attribute
-      const randSets: string[] = [];
-      if (allAttributeSets.length) {
-        allAttributeSets.forEach((attributeSets) => {
-          const randSetId = attributeSets[0].attribute_set_id;
-          randSets.push(randSetId);
-        });
-      }
-
-      await createVariationAttributes(randSets, defaultVariation.variation_id);
-    }
-  }
-
-  return productAttributes;
-};
-
-//find product attributes
-const findProductAttributes = async (product_id: string) => {
-  const productAttributes = await ProductWithAttribute.findAll({
-    where: { product_id },
-  });
-
-  return productAttributes;
-};
-
-// #### ---->>>>>>>>> PRODUCT VARIATION ATTRIBUTE SETS...
-//create product variation attribute set
-const createVariationAttributes = async (
-  attribute_set_ids: string[],
-  variation_id: string,
-  transaction?: Transaction
-) => {
-  const body = attribute_set_ids.map((attribute_set_id) => {
-    return { attribute_set_id, variation_id };
-  });
-
-  // clear attributes if any
-  await ProductVariationWithAttributeSet.bulkCreate(body, { transaction });
-
-  return findVariationAttributes(variation_id);
-};
-//delete variation attribute sets by many variation_ids
-const deleteVariationAttributesByVariationIds = async (variation_ids: string[]) => {
-  const del = await ProductVariationWithAttributeSet.destroy({
-    where: { variation_id: { [Op.in]: variation_ids } },
-  });
-
-  return !!del;
-};
-//find variation attributes sets
-const findVariationAttributes = async (variation_id: string) => {
-  // const { variation_id } = req.params;
-
-  const variationSets = await ProductVariationWithAttributeSet.findAll({
-    where: { variation_id },
-  });
-
-  return variationSets;
 };
 
 export default {
   create,
   update,
+  deleteVariation,
   validateCartProductQty,
   validateProductQty,
   updateQtyRemaining,
-  createDiscount,
-  revokeDiscount,
   findById,
   findAllByProductId,
-
-  //Attributes
-  createAttribute,
-  updateAttribute,
-  findAllAttributes,
-
-  //Attribute sets
-  createAttributeSet,
-  updateAttributeSet,
-  findAttributeSetsByAttributeId,
-
-  //product attributes
-  createProductAttributes,
-  findProductAttributes,
 };

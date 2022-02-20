@@ -15,12 +15,17 @@ const create = async (req: Request) => {
 };
 const update = async (req: Request) => {
   const { address_id } = req.params;
-  const body = req.body;
+  const body: UserAddressAttributes = req.body;
   const { user_id } = req.user!;
 
   const address = await findById(address_id);
   if (address.user_id != user_id) {
     throw new UnauthorizedError("Cannot edit another person's address");
+  }
+
+  //Reset others default to false if this set to default
+  if (body.is_default && !address.is_default) {
+    await UserAddress.update({ is_default: false }, { where: { user_id } });
   }
 
   Object.assign(address, body);

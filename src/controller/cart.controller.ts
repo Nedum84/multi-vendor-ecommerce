@@ -28,4 +28,7 @@ const findAllByUserId = async (req: Request, res: Response) => {
 
 export default {
   create,
+  update,
+  clearCart,
+  findAllByUserId,
 };

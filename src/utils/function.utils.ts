@@ -105,3 +105,39 @@ export function generateSlug(text: string): string {
 
   return text.toLowerCase().replace(/[^a-zA-Z0-9]+/g, "-");
 }
+/**
+ * Makes array distinct
+ * @param arr T[]
+ * @returns T[]
+ */
+export function distinctArray<T>(arr: T[]): T[] {
+  const uniqueArr = arr.filter((x, i, a) => a.indexOf(x) == i);
+  // const uniqueArr = Array.from(new Set(arr))
+  return uniqueArr;
+}
+
+/**
+ * Checks if two objects are equal
+ * @param obj1 Object 1
+ * @param obj2 Object 2
+ * @returns boolean
+ */
+export function isObjectsEqual(obj1: { [k: string]: any }, obj2: { [k: string]: any }): boolean {
+  // return JSON.stringify(obj1) === JSON.stringify(obj2);
+
+  for (var p in obj1) {
+    if (obj1.hasOwnProperty(p)) {
+      if (String(obj1[p]) != String(obj2[p])) {
+        return false;
+      }
+    }
+  }
+  for (var p in obj2) {
+    if (obj2.hasOwnProperty(p)) {
+      if (String(obj1[p]) != String(obj2[p])) {
+        return false;
+      }
+    }
+  }
+  return true;
+}

@@ -85,8 +85,8 @@ export function SubOrdersProductFactory(sequelize: Sequelize) {
 
     SubOrdersProduct.belongsTo(models.SubOrders, {
       as: "order",
-      foreignKey: "order_id",
-      targetKey: "order_id",
+      foreignKey: "sub_order_id",
+      targetKey: "sub_order_id",
     });
   };
 

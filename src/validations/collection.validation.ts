@@ -29,24 +29,10 @@ const findAll = {
   params: Joi.object().keys({}),
   body: Joi.object().keys({}),
 };
-const createProduct = {
-  body: Joi.object().keys({
-    product_id: Joi.string().required(),
-    collection_id: Joi.string().required(),
-  }),
-};
-const deleteProduct = {
-  body: Joi.object().keys({
-    product_id: Joi.string().required(),
-    collection_id: Joi.string().required(),
-  }),
-};
 
 export default {
   create,
   update,
   findById,
   findAll,
-  createProduct,
-  deleteProduct,
 };

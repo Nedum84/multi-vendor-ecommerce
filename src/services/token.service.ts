@@ -6,7 +6,7 @@ import { ErrorResponse } from "../apiresponse/error.response";
 import { UserAttributes } from "../models/user.model";
 import userService from "./user.service";
 import { TokenTypes } from "../enum/token.enum";
-import { Token } from "../models";
+import sequelize, { Token } from "../models";
 import storeService from "./store.service";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { Transaction } from "sequelize/dist";
@@ -49,7 +49,7 @@ const saveToken = async (
   tokenType: TokenTypes,
   t?: Transaction
 ) => {
-  const tk = await Token.findOne({ where: { user_id: user_id, type: tokenType } });
+  const tk = await Token.findOne({ where: { user_id, type: tokenType }, transaction: t });
   if (tk) {
     tk.token = token;
     tk.expires = expires.toDate();
@@ -126,7 +126,17 @@ const refreshToken = async (refresh_token: string) => {
   const stores = await storeService.findUserStores(verified.user_id, true);
 
   const store_ids = stores.map((s) => s.store_id);
-  return generateAuthTokens(user, store_ids);
+
+  try {
+    const result = await sequelize.transaction(async (transaction) => {
+      await verified.destroy({ transaction });
+
+      return generateAuthTokens(user, store_ids, transaction);
+    });
+    return result;
+  } catch (error) {
+    throw new ErrorResponse(`${error}`);
+  }
 };
 
 export = {

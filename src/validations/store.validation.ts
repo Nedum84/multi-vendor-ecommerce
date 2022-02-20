@@ -7,6 +7,8 @@ const create = {
     phone: Joi.string(),
     logo: Joi.string(),
     address: Joi.string().required(),
+    city: Joi.string().required(),
+    state: Joi.string().required(),
     country: Joi.string().required(),
     description: Joi.string(),
   }),
@@ -16,14 +18,18 @@ const update = {
   params: Joi.object().keys({
     store_id: Joi.string().required(),
   }),
-  body: Joi.object().keys({
-    name: Joi.string(),
-    phone: Joi.string(),
-    logo: Joi.string(),
-    address: Joi.string(),
-    country: Joi.string(),
-    description: Joi.string(),
-  }),
+  body: Joi.object()
+    .keys({
+      name: Joi.string(),
+      phone: Joi.string(),
+      logo: Joi.string(),
+      address: Joi.string(),
+      city: Joi.string(),
+      state: Joi.string(),
+      country: Joi.string(),
+      description: Joi.string(),
+    })
+    .min(1),
 };
 
 const adminVerifyStore = {
@@ -39,7 +45,7 @@ const findById = {
 };
 
 const findUserStores = {
-  params: Joi.object().keys({
+  query: Joi.object().keys({
     user_id: Joi.string().required(),
     verified: Joi.boolean(),
   }),

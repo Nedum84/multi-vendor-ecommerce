@@ -1,6 +1,5 @@
 import Joi from "joi";
 import { paginateDefault } from ".";
-import { CouponType } from "../enum/coupon.enum";
 import { FileType } from "../enum/media.enum";
 
 const createFolder = {
@@ -21,8 +20,6 @@ const createFile = {
     url: Joi.string().required(),
     size_in_mb: Joi.number().required(),
     ext: Joi.string().required(),
-    duration: Joi.number(),
-    page_no: Joi.number(),
     file_type: Joi.string()
       .required()
       .valid(...Object.values(FileType)),
@@ -53,12 +50,6 @@ const updateFile = {
       name: Joi.string(),
       desc: Joi.string(),
       icon: Joi.string(),
-      url: Joi.string(),
-      size_in_mb: Joi.number(),
-      ext: Joi.string(),
-      duration: Joi.number(),
-      page_no: Joi.number(),
-      file_type: Joi.string().valid(...Object.values(FileType)),
     })
     .min(1),
 };

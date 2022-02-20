@@ -19,7 +19,7 @@ const login = async (req: Request, res: Response) => {
   const store_ids = stores.map((s) => s.store_id);
 
   const tokens = await tokenService.generateAuthTokens(user, store_ids);
-  ApiResponse.created(res, { user, tokens });
+  ApiResponse.ok(res, { user, tokens });
 };
 
 const logout = async (req: Request, res: Response) => {

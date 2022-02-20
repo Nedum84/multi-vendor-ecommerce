@@ -20,19 +20,19 @@ const findCategories = async (req: Request, res: Response) => {
   const { limit, offset } = Helpers.getPaginate(req.query);
   const { parent_id } = req.query as any;
   const result = await categoryService.findCategories(limit, offset, parent_id);
-  ApiResponse.ok(res, { category: result });
+  ApiResponse.ok(res, { categories: result });
 };
 
 const findParents = async (req: Request, res: Response) => {
   const { category_id, direction } = req.query as any;
   const result = await categoryService.findParents(category_id, direction);
-  ApiResponse.ok(res, { category: result });
+  ApiResponse.ok(res, { categories: result });
 };
 
 const findChildren = async (req: Request, res: Response) => {
   const { category_id, direction } = req.query as any;
   const result = await categoryService.findChildren(category_id, direction);
-  ApiResponse.ok(res, { category: result });
+  ApiResponse.ok(res, { categories: result });
 };
 
 export default {

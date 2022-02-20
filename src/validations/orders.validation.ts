@@ -3,6 +3,15 @@ import { paginateDefault, ValidatorInterface } from ".";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { PaymentChannel, PaymentStatus } from "../enum/payment.enum";
 
+const create = {
+  params: Joi.object().keys({}),
+  body: Joi.object()
+    .keys({
+      coupon_code: Joi.string(),
+      payment_id: Joi.string().required(),
+    })
+    .min(1),
+};
 const updatePayment = {
   params: Joi.object().keys({
     order_id: Joi.string().required(),
@@ -94,6 +103,7 @@ const findAll: ValidatorInterface = {
 };
 
 export default {
+  create,
   updatePayment,
   storeUnsettledOrders,
   userCancelOrder,

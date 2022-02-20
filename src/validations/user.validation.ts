@@ -1,59 +1,75 @@
 import Joi from "joi";
-import { BaseCurrency, OnlineStatus, UserRadius } from "../enum/user.enum";
-import { password, phone, email, name } from ".";
+import { password, email, name } from ".";
+import { UserRoleStatus } from "../enum/user.enum";
 
-const updateUser = {
+const update = {
   body: Joi.object()
     .keys({
-      uid: Joi.string(),
       name: Joi.string().custom(name),
-      mobile_number: Joi.string(),
+      phone: Joi.string(),
       email: Joi.string().custom(email),
-      radius: Joi.number().valid(...Object.values(UserRadius)),
-      address: Joi.string(),
-      address_lat: Joi.number(),
-      address_long: Joi.number(),
-      state: Joi.string(),
-      profile_photo: Joi.string(),
-      device_token: Joi.string(),
-      notification: Joi.object().keys({
-        general: Joi.boolean(),
-        call: Joi.boolean(),
-        chat: Joi.boolean(),
-        product: Joi.boolean(),
-      }),
-      // user_level: Joi.number(),
-      // online_status: Joi.string().valid('away','offline',"online"),
-      online_status: Joi.string().valid(...Object.values(OnlineStatus)),
-      user_app_version: Joi.number(),
-      base_currency: Joi.string().valid(...Object.values(BaseCurrency)),
-      last_login: Joi.date(),
-      suspended: Joi.boolean(),
-      suspended_at: Joi.date(),
-      un_suspended_at: Joi.date(),
-      ip_ban: Joi.boolean(),
+      photo: Joi.string(),
     })
     .min(1),
 };
-const updateAddress = {
+
+const adminUpdateUser = {
+  params: Joi.object().keys({
+    user_id: Joi.string().required(),
+  }),
   body: Joi.object()
     .keys({
-      address: Joi.string().required(),
-      address_lat: Joi.number().required(),
-      address_long: Joi.number().required(),
-      state: Joi.string(),
+      name: Joi.string().custom(name),
+      phone: Joi.string(),
+      email: Joi.string().custom(email),
+      photo: Joi.string(),
+      role: Joi.string().valid(...Object.values(UserRoleStatus)),
+      suspended: Joi.boolean(),
     })
-    .min(3),
+    .min(1),
 };
-//by user_id or email
-const getUser = {
+
+const updatePassword = {
+  body: Joi.object()
+    .keys({
+      new_password: Joi.string().required().custom(password),
+      old_password: Joi.string().required(),
+    })
+    .min(1),
+};
+
+const findById = {
   params: Joi.object().keys({
     user_id: Joi.string().required(),
   }),
 };
 
+const findMe = {
+  params: Joi.object().keys({}),
+};
+
+const findByEmail = {
+  params: Joi.object().keys({
+    email: Joi.string().required(),
+  }),
+};
+
+const findAll = {
+  params: Joi.object().keys({
+    user_id: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.string(),
+    suspended: Joi.boolean(),
+    search_query: Joi.string(),
+  }),
+};
+
 export default {
-  getUser,
-  updateUser,
-  updateAddress,
+  update,
+  adminUpdateUser,
+  updatePassword,
+  findById,
+  findMe,
+  findByEmail,
+  findAll,
 };

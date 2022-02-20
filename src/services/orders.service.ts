@@ -153,6 +153,7 @@ const updatePayment = async (req: Request) => {
       //update this order
       if (payed_from_wallet) order.payed_from_wallet = true;
 
+      order.order_status = OrderStatus.COMPLETED;
       await order.save({ transaction });
     }
 
@@ -412,7 +413,11 @@ const findById = async (order_id: string) => {
     where: { order_id },
     paranoid: false,
     include: [
-      { model: OrdersPayment, as: "payment", limit: 1, order: [["createdAt", "DESC"]] },
+      {
+        model: OrdersPayment,
+        as: "payment",
+        where: { payment_status: PaymentStatus.COMPLETED },
+      },
       { model: SubOrders, as: "sub_orders" },
     ],
   });
@@ -435,6 +440,7 @@ const findAll = async (req: Request) => {
   }
   if (order_status) {
     where.order_status = order_status;
+    // where["$sub_orders.order_status$"] = order_status;
   }
   if (coupon_code) {
     where.coupon_code = coupon_code;
@@ -443,7 +449,7 @@ const findAll = async (req: Request) => {
     if (user_id !== current_user && !isAdmin(role)) {
       throw new UnauthorizedError(`Unauthorized to access ${user_id} data`);
     }
-    where.user_id = user_id;
+    where.purchased_by = user_id;
   }
   if (refunded) {
     where.refunded = refunded;
@@ -455,7 +461,11 @@ const findAll = async (req: Request) => {
   const orders = await Orders.findAll({
     where,
     include: [
-      { model: OrdersPayment, as: "payment", limit: 1, order: [["createdAt", "DESC"]] },
+      {
+        model: OrdersPayment,
+        as: "payment",
+        where: { payment_status: PaymentStatus.COMPLETED },
+      },
       { model: SubOrders, as: "sub_orders" },
     ],
 
@@ -474,7 +484,7 @@ const findAllByCouponOrUser = async (coupon_code?: string, user_id?: string, ord
     where.coupon_code = coupon_code;
   }
   if (user_id) {
-    where.user_id = user_id;
+    where.purchased_by = user_id;
   }
   if (order_status) {
     where.order_status = order_status;
@@ -482,22 +492,17 @@ const findAllByCouponOrUser = async (coupon_code?: string, user_id?: string, ord
 
   const orders = await Orders.findAll({
     where,
-    include: [{ model: OrdersPayment, as: "payment", limit: 1, order: [["createdAt", "DESC"]] }],
-  });
-
-  return orders;
-};
-
-//Find User Order
-const findUserOrder = async (order_id: string, user_id: string) => {
-  const order = await Orders.findOne({
-    where: { purchased_by: user_id, order_id },
     include: [
-      { model: OrdersPayment, as: "payment", limit: 1, order: [["createdAt", "DESC"]] },
+      {
+        model: OrdersPayment,
+        as: "payment",
+        where: { payment_status: PaymentStatus.COMPLETED },
+      },
       { model: SubOrders, as: "sub_orders" },
     ],
   });
-  return order;
+
+  return orders;
 };
 
 export default {

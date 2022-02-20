@@ -4,15 +4,15 @@ import Joi from "joi";
 const register: ValidatorInterface = {
   body: Joi.object().keys({
     name: Joi.string().custom(name).required(),
-    phone: Joi.string().required().required(),
+    phone: Joi.string().required(),
     email: Joi.string().custom(email).required(),
-    password: Joi.number().custom(password).required(),
+    password: Joi.custom(password).required(),
   }),
 };
 const login: ValidatorInterface = {
   body: Joi.object().keys({
     email: Joi.string().custom(email).required(),
-    password: Joi.number().custom(password).required(),
+    password: Joi.custom(password).required(),
   }),
 };
 
@@ -22,7 +22,9 @@ const refreshToken: ValidatorInterface = {
   }),
 };
 const logout: ValidatorInterface = {
-  body: Joi.object().keys({}),
+  body: Joi.object().keys({
+    refresh_token: Joi.string().required(),
+  }),
   params: Joi.object().keys({}),
   query: Joi.object().keys({}),
 };

@@ -11,11 +11,10 @@ const create = {
     title: Joi.string().required(),
     start_date: Joi.date().required(),
     end_date: Joi.date(),
-    usage_limit: Joi.number(),
-    usage_limit_per_user: Joi.number(),
-    total_used: Joi.number(),
-    min_product_price: Joi.number(),
-    percentage_discount: Joi.number().required(),
+    product_qty_limit: Joi.number().min(1),
+    usage_limit: Joi.number().min(1),
+    usage_limit_per_user: Joi.number().min(1),
+    percentage_discount: Joi.number().min(5).max(100).required(),
     products: Joi.array()
       .items(
         Joi.object().keys({

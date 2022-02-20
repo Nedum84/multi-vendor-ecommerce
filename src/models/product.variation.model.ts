@@ -1,6 +1,6 @@
 import moment from "moment";
 import { Model, Optional, DataTypes, Sequelize, Op } from "sequelize";
-import { ModelRegistry, ProductDiscount } from ".";
+import { ModelRegistry } from ".";
 import { StockStatus } from "../enum/product.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { ProductDiscountInstance } from "./product.discount.model";
@@ -15,6 +15,7 @@ export interface ProductVariationAttributes {
   with_storehouse_management: boolean; //true-> use qty, false-> use stock status
   stock_status: StockStatus;
   stock_qty: number;
+  max_purchase_qty: number; //Max qty that can be purchase at a time
   is_default: boolean;
   weight: number; //in gram
   length: number; //in cm
@@ -64,6 +65,7 @@ export const ProductVariationModelAttributes: SequelizeAttributes<ProductVariati
     type: DataTypes.INTEGER,
     defaultValue: 10,
   },
+  max_purchase_qty: DataTypes.INTEGER,
   is_default: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -82,18 +84,7 @@ export function ProductVariationFactory(sequelize: Sequelize) {
       tableName: "ProductVariation",
       freezeTableName: true,
       paranoid: true,
-      defaultScope: {
-        include: {
-          // model: sequelize.model("ProductDiscount"),
-          model: sequelize.model(ProductDiscount.tableName),
-          as: "discount",
-          where: {
-            revoke: false,
-            discount_from: { [Op.lt]: moment().toDate() },
-            [Op.or]: [{ discount_to: { [Op.gt]: moment().toDate() } }, { discount_to: null }],
-          },
-        },
-      },
+      defaultScope: {},
       scopes: {
         basic: {},
       },
@@ -103,11 +94,13 @@ export function ProductVariationFactory(sequelize: Sequelize) {
   ProductVariation.associate = function (models: ModelRegistry) {
     const { ProductVariation } = models;
 
-    ProductVariation.hasMany(models.ProductVariationWithAttributeSet, {
+    ProductVariation.belongsToMany(models.ProductAttributeSets, {
       as: "attribute_sets",
+      through: models.ProductVariationWithAttributeSet,
       foreignKey: "variation_id",
-      sourceKey: "variation_id",
+      targetKey: "attribute_set_id",
     });
+
     ProductVariation.belongsTo(models.Product, {
       as: "product",
       foreignKey: "product_id",

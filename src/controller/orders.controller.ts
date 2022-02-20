@@ -36,7 +36,7 @@ const updateDeliveryStatus = async (req: Request, res: Response) => {
 };
 const settleStore = async (req: Request, res: Response) => {
   const result = await ordersService.settleStore(req);
-  ApiResponse.ok(res, { suggestions: result });
+  ApiResponse.ok(res, { settlement: result });
 };
 const findById = async (req: Request, res: Response) => {
   const { order_id } = req.params;

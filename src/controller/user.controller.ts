@@ -10,6 +10,12 @@ const adminUpdateUser = async (req: Request, res: Response) => {
   const result = await userService.adminUpdateUser(req);
   ApiResponse.ok(res, { user: result });
 };
+const updatePassword = async (req: Request, res: Response) => {
+  const { user_id } = req.user!;
+
+  const user = await userService.updatePassword(user_id, req.body);
+  ApiResponse.ok(res, { user });
+};
 const findById = async (req: Request, res: Response) => {
   const { user_id } = req.params;
   const result = await userService.findById(user_id);
@@ -27,7 +33,15 @@ const findByEmail = async (req: Request, res: Response) => {
 };
 const findAll = async (req: Request, res: Response) => {
   const result = await userService.findAll(req);
-  ApiResponse.ok(res, { user: result });
+  ApiResponse.ok(res, { users: result });
 };
 
-export default { update, adminUpdateUser, findById, findMe, findByEmail, findAll };
+export default {
+  update,
+  adminUpdateUser,
+  updatePassword,
+  findById,
+  findMe,
+  findByEmail,
+  findAll,
+};

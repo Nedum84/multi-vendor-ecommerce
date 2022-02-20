@@ -13,38 +13,35 @@ export interface ProductWithAttributeInstance
     ProductWithAttributeAttributes {}
 
 //--> Model attributes
-export const ProductWithAttributeModelAttributes: SequelizeAttributes<ProductWithAttributeAttributes> =
-  {
-    product_id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-    },
-    attribute_id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-    },
-  };
+export const ProductWithAttributeModelAttributes: SequelizeAttributes<ProductWithAttributeAttributes> = {
+  product_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  attribute_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+};
 // --> Factory....
 export function ProductWithAttributeFactory(sequelize: Sequelize) {
-  const ProductWithAttribute = <ModelStatic<ProductWithAttributeInstance>>(
-    sequelize.define(
-      "ProductWithAttribute",
-      ProductWithAttributeModelAttributes as any,
-      {
-        timestamps: true,
-        tableName: "ProductWithAttribute",
-        freezeTableName: true,
-      }
-    )
+  const ProductWithAttribute = <ModelStatic<ProductWithAttributeInstance>>sequelize.define(
+    "ProductWithAttribute",
+    ProductWithAttributeModelAttributes as any,
+    {
+      timestamps: true,
+      tableName: "ProductWithAttribute",
+      freezeTableName: true,
+    }
   );
 
   ProductWithAttribute.associate = function (models: ModelRegistry) {
     const { ProductWithAttribute } = models;
 
-    ProductWithAttribute.belongsTo(models.Product, {
-      as: "Product",
+    ProductWithAttribute.hasMany(models.Product, {
+      as: "products",
       foreignKey: "attribute_id",
-      targetKey: "attribute_id",
+      sourceKey: "attribute_id",
     });
   };
 

@@ -11,46 +11,39 @@ export interface ProductAttributeSetsAttributes {
   image: string;
 }
 
-interface ProductCreationAttributeAttributes
-  extends Optional<ProductAttributeSetsAttributes, "color" | "image"> {}
+interface ProductCreationAttributeAttributes extends Optional<ProductAttributeSetsAttributes, "color" | "image"> {}
 
 export interface ProductAttributeSetsInstance
-  extends Model<
-      ProductAttributeSetsAttributes,
-      ProductCreationAttributeAttributes
-    >,
+  extends Model<ProductAttributeSetsAttributes, ProductCreationAttributeAttributes>,
     ProductAttributeSetsAttributes {}
 
 //--> Model attributes
-export const ProductAttributeSetsModelAttributes: SequelizeAttributes<ProductAttributeSetsAttributes> =
-  {
-    attribute_set_id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-    },
-    attribute_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    value: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    color: DataTypes.STRING,
-    image: DataTypes.STRING,
-  };
+export const ProductAttributeSetsModelAttributes: SequelizeAttributes<ProductAttributeSetsAttributes> = {
+  attribute_set_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  attribute_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  value: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  color: DataTypes.STRING,
+  image: DataTypes.STRING,
+};
 // --> Factory....
 export function ProductAttributeSetsFactory(sequelize: Sequelize) {
-  const ProductAttributeSets = <ModelStatic<ProductAttributeSetsInstance>>(
-    sequelize.define(
-      "ProductAttributeSets",
-      ProductAttributeSetsModelAttributes as any,
-      {
-        timestamps: true,
-        tableName: "ProductAttributeSets",
-        freezeTableName: true,
-      }
-    )
+  const ProductAttributeSets = <ModelStatic<ProductAttributeSetsInstance>>sequelize.define(
+    "ProductAttributeSets",
+    ProductAttributeSetsModelAttributes as any,
+    {
+      timestamps: true,
+      tableName: "ProductAttributeSets",
+      freezeTableName: true,
+    }
   );
 
   ProductAttributeSets.associate = function (models: ModelRegistry) {
@@ -60,6 +53,13 @@ export function ProductAttributeSetsFactory(sequelize: Sequelize) {
       as: "attribute",
       foreignKey: "attribute_id",
       targetKey: "attribute_id",
+    });
+
+    ProductAttributeSets.belongsToMany(models.ProductVariation, {
+      as: "variations",
+      through: models.ProductVariationWithAttributeSet,
+      foreignKey: "attribute_set_id",
+      targetKey: "variation_id",
     });
   };
 

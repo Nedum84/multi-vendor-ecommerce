@@ -6,6 +6,7 @@ export class NotFoundError extends CustomError {
 
   constructor(public message: string = "Not found", public stack?: string) {
     super(message);
+    this.stack = stack;
 
     Object.setPrototypeOf(this, NotFoundError.prototype);
   }

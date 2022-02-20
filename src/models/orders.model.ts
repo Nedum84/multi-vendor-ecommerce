@@ -1,6 +1,7 @@
 import { Optional, Sequelize } from "sequelize";
 import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
+import { OrderStatus } from "../enum/orders.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { OrdersPaymentInstance } from "./orders.payment.model";
 import { SubOrdersInstance } from "./sub.orders.model";
@@ -15,9 +16,11 @@ export interface OrdersAttributes {
   tax_amount: number;
   purchased_by: string;
   payed_from_wallet: boolean;
+  order_status: OrderStatus;
 }
 
-interface OrdersCreationAttributes extends Optional<OrdersAttributes, "order_id" | "payed_from_wallet"> {}
+interface OrdersCreationAttributes
+  extends Optional<OrdersAttributes, "order_id" | "payed_from_wallet" | "order_status"> {}
 
 export interface OrdersInstance extends Model<OrdersAttributes, OrdersCreationAttributes>, OrdersAttributes {
   payment: OrdersPaymentInstance;
@@ -28,8 +31,7 @@ export interface OrdersInstance extends Model<OrdersAttributes, OrdersCreationAt
 export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
   order_id: {
     type: DataTypes.STRING,
-    allowNull: false,
-    unique: true,
+    primaryKey: true,
   },
   amount: {
     type: DataTypes.INTEGER,
@@ -40,7 +42,7 @@ export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
     allowNull: false,
   },
   coupon_code: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.STRING,
     allowNull: false,
   },
   coupon_amount: {
@@ -63,6 +65,11 @@ export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  order_status: {
+    type: DataTypes.ENUM,
+    values: Object.values(OrderStatus),
+    defaultValue: OrderStatus.PENDING,
+  },
 };
 // --> Factory....
 export function OrdersFactory(sequelize: Sequelize) {
@@ -74,12 +81,12 @@ export function OrdersFactory(sequelize: Sequelize) {
   });
 
   Orders.associate = function (models: ModelRegistry) {
-    const { SubOrders: Orders } = models;
+    const { Orders } = models;
 
     Orders.hasMany(models.SubOrders, {
-      as: "orders",
-      foreignKey: "group_id",
-      sourceKey: "group_id",
+      as: "sub_orders",
+      foreignKey: "order_id",
+      sourceKey: "order_id",
     });
 
     Orders.hasOne(models.OrdersPayment, {

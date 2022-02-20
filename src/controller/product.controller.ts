@@ -13,6 +13,15 @@ const update = async (req: Request, res: Response) => {
   ApiResponse.ok(res, { product: result });
 };
 
+const deleteCollection = async (req: Request, res: Response) => {
+  const result = await productService.deleteCollection(req);
+  ApiResponse.ok(res, result);
+};
+const deleteCategory = async (req: Request, res: Response) => {
+  const result = await productService.deleteCategory(req);
+  ApiResponse.ok(res, result);
+};
+
 const findById = async (req: Request, res: Response) => {
   const { product_id } = req.params;
   const result = await productService.findById(product_id);
@@ -24,13 +33,6 @@ const findAll = async (req: Request, res: Response) => {
   ApiResponse.ok(res, { products: result });
 };
 
-const findAllByCollectionId = async (req: Request, res: Response) => {
-  const paginate = Helpers.getPaginate(req.query);
-  const { collection_id } = req.params;
-  const result = await productService.findAllByCollectionId(collection_id, paginate);
-  ApiResponse.ok(res, { products: result });
-};
-
 const findLatestByCollection = async (req: Request, res: Response) => {
   const result = await productService.findLatestByCollection();
   ApiResponse.ok(res, result);
@@ -39,8 +41,9 @@ const findLatestByCollection = async (req: Request, res: Response) => {
 export default {
   create,
   update,
+  deleteCollection,
+  deleteCategory,
   findById,
   findAll,
-  findAllByCollectionId,
   findLatestByCollection,
 };

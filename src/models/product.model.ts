@@ -2,6 +2,7 @@ import { Model, Optional, DataTypes, Sequelize } from "sequelize";
 import { ModelRegistry } from ".";
 import { ProductStatus } from "../enum/product.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
+import { CollectionInstance } from "./collection.model";
 import { ProductVariationInstance } from "./product.variation.model";
 
 export interface ProductAttributes {
@@ -10,9 +11,7 @@ export interface ProductAttributes {
   slug: string;
   desc: string;
   images: string[];
-  category_id: string;
   status: ProductStatus;
-  max_purchase_qty: number; //Max qty that can be purchase at a time
   is_featured: boolean;
   store_id: string;
   is_approved: boolean;
@@ -24,6 +23,7 @@ interface ProductCreationAttributes extends Optional<ProductAttributes, "product
 
 export interface ProductInstance extends Model<ProductAttributes, ProductCreationAttributes>, ProductAttributes {
   variations: ProductVariationInstance[];
+  collections: CollectionInstance[];
 }
 
 //--> Model attributes
@@ -31,7 +31,6 @@ export const ProductModelAttributes: SequelizeAttributes<ProductAttributes> = {
   product_id: {
     type: DataTypes.STRING,
     primaryKey: true,
-    unique: true,
   },
   name: {
     type: DataTypes.STRING,
@@ -42,10 +41,9 @@ export const ProductModelAttributes: SequelizeAttributes<ProductAttributes> = {
     unique: true,
     allowNull: false,
   },
-  desc: DataTypes.STRING,
-  images: DataTypes.ARRAY,
-  category_id: {
-    type: DataTypes.STRING,
+  desc: DataTypes.TEXT,
+  images: {
+    type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: false,
   },
   status: {
@@ -57,7 +55,6 @@ export const ProductModelAttributes: SequelizeAttributes<ProductAttributes> = {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  max_purchase_qty: DataTypes.INTEGER,
   store_id: {
     type: DataTypes.STRING,
     allowNull: false,
@@ -68,7 +65,6 @@ export const ProductModelAttributes: SequelizeAttributes<ProductAttributes> = {
   },
   approved_by: {
     type: DataTypes.STRING,
-    allowNull: false,
   },
   created_by: {
     type: DataTypes.STRING,
@@ -102,10 +98,23 @@ export function ProductFactory(sequelize: Sequelize) {
       foreignKey: "product_id",
       sourceKey: "product_id",
     });
-    Product.belongsTo(models.CollectionProduct, {
-      as: "collection",
+    Product.belongsTo(models.Store, {
+      as: "store",
+      foreignKey: "store_id",
+      targetKey: "store_id",
+    });
+    Product.belongsToMany(models.Category, {
+      as: "categories",
+      through: models.CategoryProduct,
       foreignKey: "product_id",
-      targetKey: "product_id",
+      targetKey: "category_id",
+    });
+    Product.belongsToMany(models.Collection, {
+      as: "collections",
+      through: models.CollectionProduct,
+      // through: models.CollectionProduct.tableName,
+      foreignKey: "product_id",
+      targetKey: "collection_id",
     });
   };
   Product.prototype.toJSON = function () {

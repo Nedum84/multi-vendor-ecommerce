@@ -53,17 +53,18 @@ const findById = async (category_id: string) => {
 //--> Find category categories
 const findCategories = async (limit: number, offset: number, parent_id?: string) => {
   const where = parent_id ? { parent_id, active: true } : { active: true };
-  const categorys = await Category.scope("basic").findAndCountAll({
+  const categories = await Category.findAndCountAll({
     where,
     offset,
     limit,
   });
 
   return {
-    category: categorys.rows,
-    total: categorys.count,
+    category: categories.rows,
+    total: categories.count,
   };
 };
+
 //find parents
 const findParents = async (category_id: string, direction = "top_to_bottom") => {
   const query = CategoryUtils.getParentCategories(category_id, direction);

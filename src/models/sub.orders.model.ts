@@ -27,7 +27,6 @@ export interface SubOrdersAttributes {
   createdAt?: Date;
   updatedAt?: Date;
 }
-//--> TAKE NOTE OF::: RefundPeriod :::ON Orders service.ts
 
 interface SubOrdersCreationAttributes extends Optional<SubOrdersAttributes, "sub_order_id"> {}
 
@@ -50,7 +49,6 @@ export const SubOrdersModelAttributes: SequelizeAttributes<SubOrdersAttributes> 
     type: DataTypes.STRING,
     allowNull: false,
   },
-  // coupon_code: DataTypes.STRING,
   amount: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -121,10 +119,10 @@ export function SubOrdersFactory(sequelize: Sequelize) {
   SubOrders.associate = function (models: ModelRegistry) {
     const { SubOrders } = models;
 
-    SubOrders.belongsTo(models.User, {
-      as: "user",
-      foreignKey: "purchased_by",
-      targetKey: "user_id",
+    SubOrders.belongsTo(models.Orders, {
+      as: "order",
+      foreignKey: "order_id",
+      targetKey: "order_id",
     });
 
     SubOrders.belongsTo(models.Store, {

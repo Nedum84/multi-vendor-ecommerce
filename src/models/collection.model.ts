@@ -57,6 +57,12 @@ export function CollectionFactory(sequelize: Sequelize) {
 
   Collection.associate = function (models: ModelRegistry) {
     const { Collection } = models;
+    Collection.belongsToMany(models.Product, {
+      as: "products",
+      through: models.CollectionProduct,
+      foreignKey: "collection_id",
+      targetKey: "product_id",
+    });
   };
 
   return Collection;

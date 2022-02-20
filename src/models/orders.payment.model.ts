@@ -52,11 +52,11 @@ export function OrdersPaymentFactory(sequelize: Sequelize) {
   OrdersPayment.associate = function (models: ModelRegistry) {
     const { OrdersPayment } = models;
 
-    OrdersPayment.belongsTo(models.SubOrders, {
-      as: "user",
-      foreignKey: "order_id",
-      targetKey: "order_id",
-    });
+    // OrdersPayment.belongsTo(models.Orders, {
+    //   as: "order",
+    //   foreignKey: "order_id",
+    //   targetKey: "order_id",
+    // });
   };
 
   OrdersPayment.prototype.toJSON = function () {

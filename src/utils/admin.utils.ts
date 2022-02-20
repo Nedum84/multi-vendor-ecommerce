@@ -1,6 +1,6 @@
 import { UserRoleStatus } from "../enum/user.enum";
 
-const isAdmin = (role: UserRoleStatus): boolean => {
+const isAdmin = (role: UserRoleStatus) => {
   const allowed = [
     UserRoleStatus.ADMIN1,
     UserRoleStatus.ADMIN2,

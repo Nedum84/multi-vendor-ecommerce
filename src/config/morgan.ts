@@ -5,8 +5,7 @@ import { Response } from "express";
 
 morgan.token("message", (req, res: Response) => res.locals.errorMessage || "");
 
-const getIpFormat = () =>
-  config.env === "production" ? ":remote-addr - " : "";
+const getIpFormat = () => (config.env === "production" ? ":remote-addr - " : "");
 const successResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms`;
 const errorResponseFormat = `${getIpFormat()}:method :url :status - :response-time ms - message: :message`;
 

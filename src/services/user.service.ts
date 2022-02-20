@@ -10,6 +10,7 @@ import { isAdmin } from "../utils/admin.utils";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { Helpers } from "../utils/helpers";
 import { Op } from "sequelize/dist";
+import { UserUtils } from "../utils/user.utils";
 
 const create = async (body: UserAttributes) => {
   const { email } = body;
@@ -28,7 +29,7 @@ const create = async (body: UserAttributes) => {
   try {
     await sequelize.transaction(async (t) => {
       //create user
-      const user = await createModel<UserInstance>(User, body, "user_id", t);
+      user = await createModel<UserInstance>(User, body, "user_id", t);
       const { user_id } = user;
 
       //Add Registration Coins Bonus
@@ -48,13 +49,18 @@ const update = async (req: Request) => {
 
   const user = await findById(user_id);
 
+  if (user.user_id != user_id) {
+    throw new UnauthorizedError();
+  }
+
   Object.assign(user, body);
   await user.save();
   return user.reload();
 };
 
 const adminUpdateUser = async (req: Request) => {
-  const { user_id, role } = req.user!;
+  const { role } = req.user!;
+  const { user_id } = req.params!;
   const body: UserAttributes = req.body;
 
   if (!isAdmin(role)) {
@@ -63,6 +69,29 @@ const adminUpdateUser = async (req: Request) => {
 
   const user = await findById(user_id);
   Object.assign(user, body);
+  await user.save();
+  return user.reload();
+};
+
+const updatePassword = async (user_id: string, updateBody: any) => {
+  const { new_password, old_password } = updateBody;
+
+  const user = await getSecureUserById(user_id);
+  if (!user) {
+    throw new NotFoundError("User not found");
+  }
+
+  if (new_password === old_password) {
+    throw new ErrorResponse("Old password can't be same with new password");
+  }
+
+  //--> Check password match
+  const match = await UserUtils.isPasswordMatch(old_password, user.password);
+
+  if (!match) {
+    throw new NotFoundError("Incorrect old password");
+  }
+  user.password = await UserUtils.hashPassword(new_password);
   await user.save();
   return user.reload();
 };
@@ -83,14 +112,27 @@ const findMe = async (user_id: string) => {
   return user;
 };
 
-const findByEmail = async (email: string) => {
-  const user = await User.findOne({ where: { email } });
+const findByEmail = async (email: string, withPassword = false) => {
+  const include = withPassword ? ["password"] : [];
+  const user = await User.findOne({
+    where: { email },
+    attributes: {
+      include,
+    },
+  });
+
   if (!user) {
     throw new NotFoundError("User not found");
   }
   return user;
 };
 
+const getSecureUserById = async (user_id: string) => {
+  const user = await User.scope("withSecretColumns").findOne({
+    where: { user_id },
+  });
+  return user;
+};
 const getSecureUserByEmail = async (email: string) => {
   const user = await User.scope("withSecretColumns").findOne({
     where: { email },
@@ -134,6 +176,7 @@ const findAll = async (req: Request) => {
 export default {
   create,
   update,
+  updatePassword,
   adminUpdateUser,
   findById,
   findMe,

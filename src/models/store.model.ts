@@ -12,6 +12,8 @@ export interface StoreAttributes {
   slug: string;
   logo: string;
   address: string;
+  city: string;
+  state: string;
   country: string;
   description: string;
   verified: boolean;
@@ -27,6 +29,7 @@ export const StoreModelAttributes: SequelizeAttributes<StoreAttributes> = {
   store_id: {
     type: DataTypes.STRING,
     primaryKey: true,
+    unique: true,
   },
   user_id: {
     type: DataTypes.STRING,
@@ -50,11 +53,19 @@ export const StoreModelAttributes: SequelizeAttributes<StoreAttributes> = {
     type: DataTypes.STRING,
     allowNull: false,
   },
+  city: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  state: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
   country: {
     type: DataTypes.STRING,
     defaultValue: "US",
   },
-  description: DataTypes.STRING,
+  description: DataTypes.TEXT,
   verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

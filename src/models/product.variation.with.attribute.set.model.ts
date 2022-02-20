@@ -9,10 +9,7 @@ export interface ProductVariationWithAttributeSetAttributes {
 }
 
 export interface ProductVariationWithAttributeSetInstance
-  extends Model<
-      ProductVariationWithAttributeSetAttributes,
-      ProductVariationWithAttributeSetAttributes
-    >,
+  extends Model<ProductVariationWithAttributeSetAttributes, ProductVariationWithAttributeSetAttributes>,
     ProductVariationWithAttributeSetAttributes {}
 
 //--> Model attributes
@@ -29,29 +26,18 @@ export const ProductVariationWithAttributeSetModelAttributes: SequelizeAttribute
   };
 // --> Factory....
 export function ProductVariationWithAttributeSetFactory(sequelize: Sequelize) {
-  const ProductVariationWithAttributeSet = <
-    ModelStatic<ProductVariationWithAttributeSetInstance>
-  >sequelize.define(
+  const ProductVariationWithAttributeSet = <ModelStatic<ProductVariationWithAttributeSetInstance>>sequelize.define(
     "ProductVariationWithAttributeSet",
     ProductVariationWithAttributeSetModelAttributes as any,
     {
       timestamps: true,
       tableName: "ProductVariationWithAttributeSet",
       freezeTableName: true,
-      paranoid: true,
     }
   );
 
-  ProductVariationWithAttributeSet.associate = function (
-    models: ModelRegistry
-  ) {
+  ProductVariationWithAttributeSet.associate = function (models: ModelRegistry) {
     const { ProductVariationWithAttributeSet } = models;
-
-    ProductVariationWithAttributeSet.belongsTo(models.ProductVariation, {
-      as: "variation",
-      foreignKey: "variation_id",
-      targetKey: "variation_id",
-    });
   };
 
   ProductVariationWithAttributeSet.prototype.toJSON = function () {

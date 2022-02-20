@@ -1,7 +1,7 @@
 import { Request } from "express";
-import { Transaction } from "sequelize/dist";
+import { Op, Transaction } from "sequelize/dist";
 import { ErrorResponse } from "../apiresponse/error.response";
-import { Cart, Product, ProductVariation } from "../models";
+import { Cart, Product, ProductDiscount, ProductVariation } from "../models";
 import { CartInstance } from "../models/cart.model";
 import productVariationService from "./product.variation.service";
 
@@ -9,7 +9,8 @@ const create = async (req: Request) => {
   const { user_id } = req.user!;
   const { variation_id } = req.body!;
 
-  const { product } = await productVariationService.findById(variation_id);
+  const variation = await productVariationService.findById(variation_id);
+  const { product } = variation;
 
   const cart = await findOneByUserAndProduct(user_id, variation_id);
   if (!cart) {
@@ -20,41 +21,36 @@ const create = async (req: Request) => {
       qty: 1,
     });
   } else {
+    //validate product qty
+    productVariationService.validateProductQty(variation, cart.qty + 1);
+
     cart.qty = cart.qty + 1;
-    cart.save();
+    await cart.save();
   }
 
   return findAllByUserId(user_id);
 };
 
 const update = async (req: Request) => {
-  const { variation_id, action, qty }: { variation_id: string; action: "add" | "remove"; qty: number } = req.body;
+  const { variation_id, action }: { variation_id: string; action: "add" | "remove" } = req.body;
   const { user_id } = req.user!;
 
   const cart = await findOneByUserAndProduct(user_id, variation_id);
 
   const variation = await productVariationService.findById(variation_id);
 
-  if (!action && !qty) {
-    throw new ErrorResponse("Qty or action required!");
-  }
   if (cart) {
-    if (qty) {
+    if (action === "add") {
       //validate product qty
-      productVariationService.validateProductQty(variation, qty);
-      cart.qty = qty;
-      cart.save();
-    } else if (action === "add") {
-      //validate product qty
-      productVariationService.validateProductQty(variation);
+      productVariationService.validateProductQty(variation, cart.qty + 1);
       cart.qty = cart.qty + 1;
-      cart.save();
+      await cart.save();
     } else {
       if (cart.qty == 1) {
         await clearCart(user_id, variation_id);
       } else {
         cart.qty = cart.qty - 1;
-        cart.save();
+        await cart.save();
       }
     }
   }
@@ -78,6 +74,16 @@ const findAllByUserId = async (user_id: string) => {
         {
           model: Product,
           as: "product",
+        },
+        {
+          model: ProductDiscount,
+          as: "discount",
+          required: false,
+          where: {
+            revoke: false,
+            discount_from: { [Op.lt]: new Date() },
+            discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+          },
         },
       ],
     },

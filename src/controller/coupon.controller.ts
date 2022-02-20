@@ -16,7 +16,7 @@ const revokeCoupon = async (req: Request, res: Response) => {
 };
 const applyCoupon = async (req: Request, res: Response) => {
   const { user_id } = req.user!;
-  const { coupon_code } = req.query as any;
+  const { coupon_code } = req.body as any;
   const result = await couponService.applyCoupon(user_id, coupon_code);
   ApiResponse.ok(res, result);
 };
@@ -32,11 +32,11 @@ const findByCouponCode = async (req: Request, res: Response) => {
 };
 const findAllByStoreId = async (req: Request, res: Response) => {
   const result = await couponService.findAllByStoreId(req);
-  ApiResponse.ok(res, { coupon: result });
+  ApiResponse.ok(res, { coupons: result });
 };
 const findAll = async (req: Request, res: Response) => {
   const result = await couponService.findAll(req);
-  ApiResponse.ok(res, { coupon: result });
+  ApiResponse.ok(res, { coupons: result });
 };
 
 export default {

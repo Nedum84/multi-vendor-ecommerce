@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { Op } from "sequelize";
 import { StoreAttributes, StoreInstance } from "../models/store.model";
-import { Store, SubOrders } from "../models";
+import sequelize, { Store, SubOrders } from "../models";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { Helpers } from "../utils/helpers";
 import { createModel, genSlugColId } from "../utils/random.string";
@@ -11,6 +11,9 @@ import CONSTANTS from "../utils/constants";
 import { OrderStatus } from "../enum/orders.enum";
 import { isAdmin } from "../utils/admin.utils";
 import { generateSlug } from "../utils/function.utils";
+import userService from "./user.service";
+import { UserRoleStatus } from "../enum/user.enum";
+import { ErrorResponse } from "../apiresponse/error.response";
 
 const create = async (req: Request) => {
   const body: StoreAttributes = req.body;
@@ -49,10 +52,23 @@ const adminVerifyStore = async (req: Request) => {
   }
   const store = await findById(store_id);
 
-  store.verified = true;
-  store.verified_at = new Date();
-  await store.save();
-  return store.reload();
+  const user = await userService.findById(store.user_id);
+
+  try {
+    return sequelize.transaction(async (transaction) => {
+      if (user.role != UserRoleStatus.VENDOR) {
+        user.role = UserRoleStatus.VENDOR;
+        await user.save({ transaction });
+      }
+
+      store.verified = true;
+      store.verified_at = new Date();
+      await store.save({ transaction });
+      return store.reload({ transaction });
+    });
+  } catch (error: any) {
+    throw new ErrorResponse(error);
+  }
 };
 
 const findById = async (store_id: string) => {
@@ -102,7 +118,14 @@ const findAll = async (req: Request) => {
 };
 
 //--> store/Vendor Balance
-const storeBalance = async (store_id: string) => {
+const storeBalance = async (req: Request) => {
+  const { stores, role } = req.user!;
+  const { store_id } = req.params;
+
+  if (!stores.includes(store_id) && !isAdmin(role)) {
+    throw new UnauthorizedError("Access denied");
+  }
+
   const TOLERABLE_PERIOD = moment(moment().unix() - CONSTANTS.GUARANTEE_PERIOD * 3600).toDate(); //days
 
   //pending orders ()....

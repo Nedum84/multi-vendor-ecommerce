@@ -59,21 +59,21 @@ const findAllNestedFolders = async (req: Request, res: Response) => {
   const { folder_id } = req.params;
   const { include_files = false } = req.query as any;
   const result = await mediaService.findAllNestedFolders(folder_id, include_files);
-  ApiResponse.ok(res, { folder: result });
+  ApiResponse.ok(res, { folders: result });
 };
 const findAllNestedFiles = async (req: Request, res: Response) => {
   const { folder_id } = req.query as any; //optional
   const result = await mediaService.findAllNestedFiles(folder_id);
-  ApiResponse.ok(res, { file: result });
+  ApiResponse.ok(res, { files: result });
 };
 const getParentFolders = async (req: Request, res: Response) => {
   const result = await mediaService.getParentFolders(req);
-  ApiResponse.ok(res, { file: result });
+  ApiResponse.ok(res, { folders: result });
 };
 const getChildrenFolders = async (req: Request, res: Response) => {
   const { folder_id, direction } = req.query as any; //direction=>optional
   const result = await mediaService.getChildrenFolders(folder_id, direction);
-  ApiResponse.ok(res, { file: result });
+  ApiResponse.ok(res, { files: result });
 };
 
 export default {

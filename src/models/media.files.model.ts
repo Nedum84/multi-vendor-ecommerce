@@ -14,16 +14,10 @@ export interface MediaFilesAttributes {
   url: string;
   size_in_mb: number;
   ext: string;
-  duration: number;
-  page_no: number;
   file_type: FileType;
 }
 
-interface MediaFilesCreationAttributes
-  extends Optional<
-    MediaFilesAttributes,
-    "folder_id" | "desc" | "icon" | "duration" | "page_no"
-  > {}
+interface MediaFilesCreationAttributes extends Optional<MediaFilesAttributes, "folder_id" | "desc" | "icon"> {}
 
 export interface MediaFilesInstance
   extends Model<MediaFilesAttributes, MediaFilesCreationAttributes>,
@@ -32,60 +26,53 @@ export interface MediaFilesInstance
 }
 
 //--> Model attributes
-export const MediaFilesModelAttributes: SequelizeAttributes<MediaFilesAttributes> =
-  {
-    file_id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-      comment: "MediaFiles Id",
-      allowNull: false,
-      unique: true,
-    },
-    folder_id: DataTypes.STRING,
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    desc: DataTypes.STRING,
-    icon: DataTypes.STRING,
-    uploaded_by: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      comment: "Creator of the folder",
-    },
-    url: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    size_in_mb: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    ext: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    duration: DataTypes.INTEGER,
-    page_no: DataTypes.INTEGER,
-    file_type: {
-      type: DataTypes.ENUM,
-      values: Object.values(FileType),
-      defaultValue: FileType.TEXT,
-    },
-  };
+export const MediaFilesModelAttributes: SequelizeAttributes<MediaFilesAttributes> = {
+  file_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    comment: "MediaFiles Id",
+    allowNull: false,
+    unique: true,
+  },
+  folder_id: DataTypes.STRING,
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  desc: DataTypes.STRING,
+  icon: DataTypes.STRING,
+  uploaded_by: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: "Creator of the folder",
+  },
+  url: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  size_in_mb: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
+  ext: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  file_type: {
+    type: DataTypes.ENUM,
+    values: Object.values(FileType),
+    defaultValue: FileType.IMAGE,
+  },
+};
 
 // --> Factory....
 export function MediaFilesFactory(sequelize: Sequelize) {
-  const MediaFiles = <ModelStatic<MediaFilesInstance>>sequelize.define(
-    "MediaFiles",
-    MediaFilesModelAttributes as any,
-    {
-      timestamps: true,
-      tableName: "MediaFiles",
-      freezeTableName: true,
-      paranoid: true,
-    }
-  );
+  const MediaFiles = <ModelStatic<MediaFilesInstance>>sequelize.define("MediaFiles", MediaFilesModelAttributes as any, {
+    timestamps: true,
+    tableName: "MediaFiles",
+    freezeTableName: true,
+    paranoid: true,
+  });
 
   MediaFiles.associate = function (models: ModelRegistry) {
     const { MediaFiles } = models;

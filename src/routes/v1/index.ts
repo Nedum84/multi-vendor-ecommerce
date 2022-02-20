@@ -1,40 +1,45 @@
 import express from "express";
 import authRoute from "./auth.route";
-import agoraRoute from "./agora.route";
+import cartRoute from "./cart.route";
 import categoryRoute from "./category.route";
-import coinsRoute from "./coins.route";
-import faqsRoute from "./faqs.route";
-import feedbackRoute from "./feedback.route";
-import productChatsRoute from "./product.chats.route";
-import productImageRoute from "./product.image.route";
+import collectionRoute from "./collection.route";
+import couponRoute from "./coupon.route";
+import mediaRoute from "./media.route";
+import orderAddressRoute from "./order.address.route";
+import ordersRoute from "./orders.route";
 import productRoute from "./product.route";
-import productViewsRoute from "./product.views.route";
-import reportedProductsRoute from "./reported.products.route";
-import savedProductRoute from "./saved.products.route";
-import subcategoryRoute from "./subcategory.route";
+import productVariationRoute from "./product.variation.route";
+import storeRoute from "./store.route";
+import subOrdersProductRoute from "./sub.orders.product.route";
+import subOrdersRoute from "./sub.orders.route";
+import userAddressRoute from "./user.address.route";
 import userRoute from "./user.route";
-import { requireAuth } from "../../middlewares/auth.middleware";
-import appSettingsRoute from "./app.settings.route";
+import userWalletRoute from "./user.wallet.route";
+import variationAttributesRoute from "./variation.attributes.route";
+import vendorSettlementRoute from "./vendor.settlement.route";
+import wishlistRoute from "./wishlist.route";
 
 const router = express.Router();
 
 router.use("/auth", authRoute);
-router.use("/appsettings", appSettingsRoute);
-
-router.use(requireAuth);
-
-router.use("/users", userRoute);
-router.use("/agora", agoraRoute);
+router.use("/cart", cartRoute);
 router.use("/category", categoryRoute);
-router.use("/subcategory", subcategoryRoute);
-router.use("/productchats", productChatsRoute);
-router.use("/productimage", productImageRoute);
-router.use("/coins", coinsRoute);
-router.use("/saved", savedProductRoute);
-router.use("/productviews", productViewsRoute);
-router.use("/faqs", faqsRoute);
-router.use("/feedback", feedbackRoute);
-router.use("/reportedproducts", reportedProductsRoute);
-router.use("/products", productRoute);
+router.use("/collection", collectionRoute);
+router.use("/coupon", couponRoute);
+router.use("/media", mediaRoute);
+router.use("/order-address", orderAddressRoute);
+
+router.use("/orders", ordersRoute);
+router.use("/product", productRoute);
+router.use("/variation", productVariationRoute);
+router.use("/store", storeRoute);
+router.use("/sub-orders-products", subOrdersProductRoute);
+router.use("/sub-orders", subOrdersRoute);
+router.use("/user-address", userAddressRoute);
+router.use("/user", userRoute);
+router.use("/wallet", userWalletRoute);
+router.use("/attributes", variationAttributesRoute);
+router.use("/settlement", vendorSettlementRoute);
+router.use("/wishlist", wishlistRoute);
 
 export default router;

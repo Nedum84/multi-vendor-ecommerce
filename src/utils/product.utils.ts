@@ -1,7 +1,16 @@
-import { FindOptions } from "sequelize";
+import { FindOptions, Op } from "sequelize";
 import { Sequelize } from "sequelize";
 import { ProductStatus } from "../enum/product.enum";
-import { Category, ProductVariation, ProductWithAttribute, Store } from "../models";
+import {
+  Category,
+  Collection,
+  ProductAttribute,
+  ProductAttributeSets,
+  ProductDiscount,
+  ProductVariation,
+  ProductWithAttribute,
+  Store,
+} from "../models";
 
 class ProductUtils {
   static storeSubQuery = () => {
@@ -59,35 +68,44 @@ class ProductUtils {
         `;
   };
 
-  static sequelizeFindOptions = (prop: { limit: number; offset: number }) => {
-    const { limit, offset } = prop;
+  static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {
     const options: FindOptions = {
-      limit,
-      offset,
+      ...(paginate ?? {}),
+      subQuery: false,
       include: [
-        {
-          model: Store,
-          as: "store",
-          attributes: ["store_id", "name"],
-        },
-        {
-          model: Category,
-          as: "category",
-        },
+        { model: Store, as: "store", attributes: ["store_id", "name"], required: true },
+        { model: Category, as: "categories" },
         {
           model: ProductVariation,
           as: "variations",
+          include: [
+            {
+              model: ProductAttributeSets,
+              as: "attribute_sets",
+              include: [
+                {
+                  model: ProductAttribute,
+                  as: "attribute",
+                },
+              ],
+            },
+            {
+              model: ProductDiscount,
+              as: "discount",
+              required: false,
+              where: {
+                revoke: false,
+                discount_from: { [Op.lt]: new Date() },
+                discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+              },
+            },
+          ],
         },
-        {
-          model: ProductWithAttribute,
-          as: "attributes",
-        },
+        { model: Collection, as: "collections" },
+        { model: ProductWithAttribute, as: "attributes" },
       ],
       attributes: {
-        include: [
-          // [Sequelize.literal(this.noOfViewsSubQuery()), "no_of_views"],
-          [Sequelize.literal(this.imgSubQuery()), "images"],
-        ],
+        include: [[Sequelize.literal(this.imgSubQuery()), "images"]],
       },
     };
     return options;

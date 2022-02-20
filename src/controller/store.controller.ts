@@ -29,8 +29,7 @@ const findAll = async (req: Request, res: Response) => {
   ApiResponse.ok(res, { stores: result });
 };
 const storeBalance = async (req: Request, res: Response) => {
-  const { store_id } = req.query as any;
-  const result = await storeService.storeBalance(store_id);
+  const result = await storeService.storeBalance(req);
   ApiResponse.ok(res, result);
 };
 

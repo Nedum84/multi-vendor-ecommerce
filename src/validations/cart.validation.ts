@@ -8,8 +8,7 @@ const create = {
 const update = {
   body: Joi.object().keys({
     variation_id: Joi.string().required(),
-    action: Joi.string().valid("add", "remove"),
-    qty: Joi.number(),
+    action: Joi.string().valid("add", "remove").required(),
   }),
 };
 const clearCart = {

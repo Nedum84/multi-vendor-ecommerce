@@ -6,35 +6,38 @@ const create = {
   body: Joi.object().keys({
     name: Joi.string().required(),
     desc: Joi.string().required(),
-    images: Joi.array().items(Joi.string().required()).required(),
-    category_id: Joi.string().required(),
+    images: Joi.array().items(Joi.string().required()).required().min(1),
     status: Joi.string()
       .valid(...Object.values(ProductStatus))
       .default(ProductStatus.PENDING),
-    max_purchase_qty: Joi.number(),
-    is_featured: Joi.boolean().default(true),
+    is_featured: Joi.boolean().default(false),
     store_id: Joi.string().required(),
 
     //Default variationsszz...
-    sku: Joi.string(),
-    price: Joi.number().required(),
-    with_storehouse_management: Joi.boolean().default(true),
-    stock_status: Joi.string()
-      .valid(...Object.values(StockStatus))
-      .default(StockStatus.IN_STOCK),
-    stock_qty: Joi.number(),
-    weight: Joi.number(),
-    length: Joi.number(),
-    height: Joi.number(),
-    width: Joi.number(),
+    variation: Joi.object().keys({
+      sku: Joi.string(),
+      price: Joi.number().required(),
+      with_storehouse_management: Joi.boolean().default(true),
+      stock_status: Joi.string()
+        .valid(...Object.values(StockStatus))
+        .default(StockStatus.IN_STOCK),
+      stock_qty: Joi.number(),
+      max_purchase_qty: Joi.number(),
+      weight: Joi.number(),
+      length: Joi.number(),
+      height: Joi.number(),
+      width: Joi.number(),
+    }),
     //Discountszz
     discount: Joi.object().keys({
       price: Joi.number().required(),
       discount_from: Joi.date().required(),
       discount_to: Joi.date(),
     }),
+    //Categoryzz
+    category_ids: Joi.array().items(Joi.string().required()).required(),
     //Collectionszz
-    collection_id: Joi.string(),
+    collection_ids: Joi.array().items(Joi.string().required()),
   }),
 };
 const update = {
@@ -45,10 +48,22 @@ const update = {
     name: Joi.string(),
     desc: Joi.string(),
     images: Joi.array().items(Joi.string().required()),
-    category_id: Joi.string(),
+    category_ids: Joi.array().items(Joi.string().required()),
+    collection_ids: Joi.array().items(Joi.string().required()),
     status: Joi.string().valid(...Object.values(ProductStatus)),
-    max_purchase_qty: Joi.number(),
     is_featured: Joi.boolean(),
+  }),
+};
+const deleteCollection = {
+  body: Joi.object().keys({
+    product_id: Joi.string().required(),
+    collection_ids: Joi.array().items(Joi.string().required()).required(),
+  }),
+};
+const deleteCategory = {
+  body: Joi.object().keys({
+    product_id: Joi.string().required(),
+    category_ids: Joi.array().items(Joi.string().required()).required(),
   }),
 };
 const findById = {
@@ -60,16 +75,10 @@ const findAll = {
   query: Joi.object().keys({
     store_id: Joi.string(),
     category_id: Joi.string(),
+    collection_id: Joi.string(),
     search_query: Joi.string(),
     is_approved: Joi.boolean(),
-    ...paginateDefault,
-  }),
-};
-const findAllByCollectionId = {
-  params: Joi.object().keys({
-    collection_id: Joi.string().required(),
-  }),
-  query: Joi.object().keys({
+    is_featured: Joi.boolean(),
     ...paginateDefault,
   }),
 };
@@ -81,8 +90,9 @@ const findLatestByCollection = {
 export default {
   create,
   update,
+  deleteCollection,
+  deleteCategory,
   findById,
   findAll,
-  findAllByCollectionId,
   findLatestByCollection,
 };

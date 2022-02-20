@@ -33,6 +33,7 @@ import { UserWalletFactory } from "./user.wallet.model";
 import { OrdersFactory } from "./orders.model";
 import { CollectionFactory } from "./collection.model";
 import { CollectionProductFactory } from "./collection.product.model";
+import { CategoryProductFactory } from "./category.product.model";
 pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
 
 // @ts-ignore
@@ -44,6 +45,7 @@ const sequelize = new Sequelize(database.dbname, database.username, database.pas
 
 export const Cart = CartFactory(sequelize);
 export const Category = CategoryFactory(sequelize);
+export const CategoryProduct = CategoryProductFactory(sequelize);
 export const Collection = CollectionFactory(sequelize);
 export const CollectionProduct = CollectionProductFactory(sequelize);
 export const CouponProduct = CouponProductFactory(sequelize);
@@ -75,6 +77,7 @@ export const Wishlist = WishlistFactory(sequelize);
 const models = {
   Cart,
   Category,
+  CategoryProduct,
   Collection,
   CollectionProduct,
   CouponProduct,
@@ -114,8 +117,5 @@ Object.values(models).forEach((model: any) => {
 
 (async () => {
   // await sequelize.sync({ force: true });
-  // await sequelize.sync();
 })();
 export default sequelize;
-
-//someone that would want to learn, take challenges, fits in to anything...
