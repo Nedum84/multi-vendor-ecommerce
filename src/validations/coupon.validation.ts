@@ -65,13 +65,10 @@ const findByCouponCode = {
   query: Joi.object().keys({}),
 };
 const findAllByStoreId = {
-  params: Joi.object().keys({
-    store_id: Joi.string().required(),
-  }),
+  params: Joi.object().keys({}),
   query: Joi.object().keys({
-    coupon_type: Joi.string()
-      .required()
-      .valid(...Object.values(CouponType)),
+    store_id: Joi.string().required(),
+    coupon_type: Joi.string().valid(...Object.values(CouponType)),
     ...paginateDefault,
   }),
   body: Joi.object().keys({}),
@@ -80,6 +77,8 @@ const findAll = {
   params: Joi.object().keys({}),
   query: Joi.object().keys({
     coupon_type: Joi.string().valid(...Object.values(CouponType)),
+    store_id: Joi.string(),
+    search_query: Joi.string(),
     ...paginateDefault,
   }),
   body: Joi.object().keys({}),

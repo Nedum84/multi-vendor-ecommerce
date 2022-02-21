@@ -1,10 +1,11 @@
 import { CREATED, OK } from "http-status";
+import CouponUtils from "../../src/utils/coupon.utils";
 import { generateChars } from "../../src/utils/random.string";
 import cartFake from "../factories/cart.fake";
 import couponFake from "../factories/coupon.fake";
 import productVariationFake from "../factories/product.variation.fake";
 import storeFake from "../factories/store.fake";
-import { expectSuccess } from "../testing.utils";
+import { expectError, expectSuccess } from "../testing.utils";
 
 const request = global.buildRequest;
 beforeAll(async () => {});
@@ -105,11 +106,21 @@ describe("Coupon Tests", () => {
     expect(response.body.data.coupon.revoke).toBeTruthy();
   });
 
-  it("Can apply store coupon", async () => {
+  it("Can apply coupon", async () => {
     const { store_id: store_id1 } = await storeFake.rawCreate();
     const { store_id: store_id2 } = await storeFake.rawCreate();
-    const { variation_id: variation_id1, price: price1, discount: discount1 } = await productVariationFake.rawCreate();
-    const { variation_id: variation_id2, price: price2, discount: discount2 } = await productVariationFake.rawCreate();
+    const {
+      variation_id: variation_id1,
+      product: product1,
+      price: price1,
+      discount: discount1,
+    } = await productVariationFake.rawCreate();
+    const {
+      variation_id: variation_id2,
+      product: product2,
+      price: price2,
+      discount: discount2,
+    } = await productVariationFake.rawCreate();
     const { user, tokens } = await global.signin();
 
     //Add to cart
@@ -120,174 +131,212 @@ describe("Coupon Tests", () => {
       variation_id: variation_id1,
     });
     const cart2 = await cartFake.rawCreate({
-      qty: 2,
+      qty: 40,
       store_id: store_id2,
       user_id: user.user_id,
       variation_id: variation_id2,
     });
 
-    //Generatec coupon
-    const coupon_code = generateChars();
+    //vary the length to avoid duplicate
+    const stores_coupon_code = generateChars(20);
+    const users_coupon_code = generateChars(21);
+    const products_coupon_code = generateChars(22);
+    const user_products_coupon_code = generateChars(23);
+    const all_orders_coupon_code = generateChars(24);
 
     const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
+    const users = [{ user_id: user.user_id }];
+    const products = [{ product_id: product1.product_id }, { product_id: product2.product_id }];
+    //payloads
+    const storesPayload = await couponFake.storeCreate({ stores });
+    const usersPayload = await couponFake.userCreate({ users });
+    const productsPayload = await couponFake.productCreate({ products });
+    const userProductsPayload = await couponFake.userProductCreate({ users, products });
+    const allOrdersPayload = await couponFake.allOrdersCreate({ users, products });
+
+    //apply store coupon
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...storesPayload, coupon_code: stores_coupon_code },
+    });
+    const storesResponse = await request({
+      path: `/coupon/apply`,
+      method: "post",
+      payload: { coupon_code: stores_coupon_code },
+      token: tokens.access.token,
+    });
+
+    //apply user coupon
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...usersPayload, coupon_code: users_coupon_code },
+    });
+    const usersResponse = await request({
+      path: `/coupon/apply`,
+      method: "post",
+      payload: { coupon_code: users_coupon_code },
+      token: tokens.access.token,
+    });
+
+    //apply product coupon
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...productsPayload, coupon_code: products_coupon_code },
+    });
+    const productsResponse = await request({
+      path: `/coupon/apply`,
+      method: "post",
+      payload: { coupon_code: products_coupon_code },
+      token: tokens.access.token,
+    });
+    //apply user & product  coupon
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...userProductsPayload, coupon_code: user_products_coupon_code },
+    });
+    const userProductsResponse = await request({
+      path: `/coupon/apply`,
+      method: "post",
+      payload: { coupon_code: user_products_coupon_code },
+      token: tokens.access.token,
+    });
+    //apply user & product  coupon
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...allOrdersPayload, coupon_code: all_orders_coupon_code },
+    });
+    const allOrdersResponse = await request({
+      path: `/coupon/apply`,
+      method: "post",
+      payload: { coupon_code: all_orders_coupon_code },
+      token: tokens.access.token,
+    });
+
+    const { coupon: stores_coupon } = storesResponse.body.data;
+    const { coupon: users_coupon } = usersResponse.body.data;
+    const { coupon: products_coupon } = productsResponse.body.data;
+    const { coupon: user_products_coupon } = userProductsResponse.body.data;
+    const { coupon: all_orders_coupon } = allOrdersResponse.body.data;
+
+    const storesCouponAmount =
+      CouponUtils.calcCouponAmount(stores_coupon, cart1.qty, price1, discount1) +
+      CouponUtils.calcCouponAmount(stores_coupon, cart2.qty, price2, discount2);
+    const usersCouponAmount =
+      CouponUtils.calcCouponAmount(users_coupon, cart1.qty, price1, discount1) +
+      CouponUtils.calcCouponAmount(users_coupon, cart2.qty, price2, discount2);
+    const productsCouponAmount =
+      CouponUtils.calcCouponAmount(products_coupon, cart1.qty, price1, discount1) +
+      CouponUtils.calcCouponAmount(products_coupon, cart2.qty, price2, discount2);
+    const userProductsCouponAmount =
+      CouponUtils.calcCouponAmount(user_products_coupon, cart1.qty, price1, discount1) +
+      CouponUtils.calcCouponAmount(user_products_coupon, cart2.qty, price2, discount2);
+    const allOrdersCouponAmount =
+      CouponUtils.calcCouponAmount(all_orders_coupon, cart1.qty, price1, discount1) +
+      CouponUtils.calcCouponAmount(all_orders_coupon, cart2.qty, price2, discount2);
+
+    expectSuccess(storesResponse);
+    expectSuccess(usersResponse);
+    expectSuccess(productsResponse);
+    expectSuccess(userProductsResponse);
+    expectSuccess(allOrdersResponse);
+    expect(storesResponse.body.data.coupon_amount).toBe(storesCouponAmount);
+    expect(usersResponse.body.data.coupon_amount).toBe(usersCouponAmount);
+    expect(productsResponse.body.data.coupon_amount).toBe(productsCouponAmount);
+    expect(userProductsResponse.body.data.coupon_amount).toBe(userProductsCouponAmount);
+    expect(allOrdersResponse.body.data.coupon_amount).toBe(allOrdersCouponAmount);
+  });
+
+  it("Can check if coupon exist", async () => {
+    const coupon_code1 = await CouponUtils.generateCoupon();
+    const coupon_code2 = await CouponUtils.generateCoupon();
+    const payload = await couponFake.allOrdersCreate();
+
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...payload, coupon_code: coupon_code1 },
+    });
+    const notExistResponse = await request({
+      path: `/coupon/check-exist`,
+      method: "post",
+      payload: { coupon_code: coupon_code1 },
+    });
+    const couponExistResponse = await request({
+      path: `/coupon/check-exist`,
+      method: "post",
+      payload: { coupon_code: coupon_code2 },
+    });
+
+    expectSuccess(couponExistResponse);
+    expectError(notExistResponse);
+  });
+
+  it("Can find coupon by coupon_code", async () => {
+    const { coupon_code } = await couponFake.rawCreateProduct();
+
+    const response = await request(`/coupon/${coupon_code}`);
+    expectSuccess(response);
+    expect(response.body.data.coupon.coupon_code).toBe(coupon_code);
+  });
+
+  it("Can find all by store id", async () => {
+    const { store_id: store_id1 } = await storeFake.rawCreate();
+    const { store_id: store_id2 } = await storeFake.rawCreate();
+    const coupon_code1 = generateChars(18);
+    const coupon_code2 = generateChars(19);
+
+    const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
+
+    const storesPayload = await couponFake.storeCreate({ stores });
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...storesPayload, coupon_code: coupon_code1 },
+    });
+    await request({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...storesPayload, coupon_code: coupon_code2 },
+    });
+
+    const response = await request(`/coupon/stores-coupon?store_id=${store_id1}`);
+    const response2 = await request(`/coupon/stores-coupon?store_id=${store_id1}`);
+
+    expectSuccess(response);
+    expect(response.body.data.coupons.length).not.toBe(0);
+
+    expectSuccess(response2);
+    expect(response2.body.data.coupons.length).not.toBe(0);
+  });
+
+  it("Can find all coupon", async () => {
+    const { store_id: store_id1 } = await storeFake.rawCreate();
+    const { store_id: store_id2 } = await storeFake.rawCreate();
+    const coupon_code1 = generateChars(18);
+    const coupon_code2 = generateChars(19);
+
+    const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
+
     const payload = await couponFake.storeCreate({ stores });
     await request({
       path: `/coupon`,
       method: "post",
-      payload: { ...payload, coupon_code },
+      payload: { ...payload, coupon_code: coupon_code1 },
     });
-
-    // const response = await request({
-    //   path: `/coupon/apply`,
-    //   method: "post",
-    //   payload: { coupon_code },
-    //   token: tokens.access.token,
-    // });
-
-    // const { percentage_discount } = response.body.data.coupon;
-    // const couponPercent = percentage_discount / 100;
-
-    // let couponAmount = 0;
-    // if (discount1) {
-    //   couponAmount += cart1.qty * discount1.price * couponPercent;
-    // } else {
-    //   couponAmount += cart1.qty * price1 * couponPercent;
-    // }
-    // if (discount2) {
-    //   couponAmount += cart2.qty * discount2.price * couponPercent;
-    // } else {
-    //   couponAmount += cart2.qty * price2 * couponPercent;
-    // }
-
-    // expectSuccess(response);
-    // expect(response.body.data.coupon_amount).toBe(couponAmount);
-  });
-
-  it("Can apply user coupon", async () => {
-    const { store_id: store_id1 } = await storeFake.rawCreate();
-    const { store_id: store_id2 } = await storeFake.rawCreate();
-    const {
-      variation_id: variation_id1,
-      price: price1,
-      discount: discount1,
-    } = await productVariationFake.rawCreate({ discount: null });
-    const {
-      variation_id: variation_id2,
-      price: price2,
-      discount: discount2,
-    } = await productVariationFake.rawCreate({ discount: null });
-    const { user, tokens } = await global.signin();
-
-    //Add to cart
-    const cart1 = await cartFake.rawCreate({
-      qty: 2,
-      store_id: store_id1,
-      user_id: user.user_id,
-      variation_id: variation_id1,
-    });
-    const cart2 = await cartFake.rawCreate({
-      qty: 2,
-      store_id: store_id2,
-      user_id: user.user_id,
-      variation_id: variation_id2,
-    });
-
-    //Generatec coupon
-    const coupon_code = generateChars();
-
-    const users = [{ user_id: user.user_id }];
-    const payload = await couponFake.userCreate({ users });
     await request({
       path: `/coupon`,
       method: "post",
-      payload: { ...payload, coupon_code },
+      payload: { ...payload, coupon_code: coupon_code2 },
     });
 
-    const response = await request({
-      path: `/coupon/apply`,
-      method: "post",
-      payload: { coupon_code },
-      token: tokens.access.token,
-    });
-
-    const { percentage_discount } = response.body.data.coupon;
-    const couponPercent = percentage_discount / 100;
-
-    let couponAmount = 0;
-    if (discount1) {
-      couponAmount += cart1.qty * discount1.price * couponPercent;
-    } else {
-      couponAmount += cart1.qty * price1 * couponPercent;
-    }
-    if (discount2) {
-      couponAmount += cart2.qty * discount2.price * couponPercent;
-    } else {
-      couponAmount += cart2.qty * price2 * couponPercent;
-    }
-
-    console.log(couponAmount, response.body);
+    const response = await request(`/coupon?store_id=${store_id1}&search_query=${payload.title}`);
 
     expectSuccess(response);
-    expect(response.body.data.coupon_amount).toBe(couponAmount);
-  });
-
-  it("Can apply product coupon", async () => {
-    const { store_id: store_id1 } = await storeFake.rawCreate();
-    const { store_id: store_id2 } = await storeFake.rawCreate();
-    const { variation_id: variation_id1, discount, price } = await productVariationFake.rawCreate({ discount: null });
-    const { variation_id: variation_id2 } = await productVariationFake.rawCreate();
-    const { user, tokens } = await global.signin();
-
-    console.log(discount, "====");
-
-    //Add to cart
-    await cartFake.rawCreate({
-      qty: 2,
-      store_id: store_id1,
-      user_id: user.user_id,
-      variation_id: variation_id1,
-    });
-    await cartFake.rawCreate({
-      qty: 2,
-      store_id: store_id2,
-      user_id: user.user_id,
-      variation_id: variation_id2,
-    });
-
-    //Generatec coupon
-    // const coupon_code = generateChars();
-
-    // const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
-    // const payload = await couponFake.storeCreate({ stores });
-    // await request({
-    //   path: `/coupon`,
-    //   method: "post",
-    //   payload: { ...payload, coupon_code },
-    // });
-
-    // const response = await request({
-    //   path: `/coupon/apply`,
-    //   method: "post",
-    //   payload: { coupon_code },
-    //   token: tokens.access.token,
-    // });
-    // console.log(coupon_code, user.user_id, response.body);
-
-    // expectSuccess(response);
-    // expect(response.body.data.author.name).toBe("updated");
-    // expect(response.body.data.author.name).toBe(authorsFake.update.name);
-  });
-
-  it("Can get an author by id", async () => {
-    // const { author_id } = await authorsFake.rawCreate();
-    // const response = await request(`/coupon/${author_id}`);
-    // expectSuccess(response);
-    // expect(response.body.data.author.name).not.toBeNull();
-  });
-
-  it("Can find all", async () => {
-    // const response = await request(`/coupon?limit=12`);
-    // expectSuccess(response);
-    // expect(response.body.data.author.length).not.toBe(0);
+    expect(response.body.data.coupons.length).not.toBe(0);
   });
 });

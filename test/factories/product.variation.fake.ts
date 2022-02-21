@@ -6,15 +6,17 @@ import { generateChars } from "../../src/utils/random.string";
 
 export default {
   rawCreate: async function (props?: any) {
-    const { product_id } = await productFake.rawCreate();
+    const product = await productFake.rawCreate();
     const data = {
       ...this.create,
       variation_id: generateChars(),
-      product_id,
+      product_id: product.product_id,
       ...props,
     };
 
     const variation = await ProductVariation.create(data);
+    variation.product = product;
+    //add discount if available
     if (data.discount) {
       data.discount.variation_id = variation.variation_id;
       variation.discount = await ProductDiscount.create(data.discount);

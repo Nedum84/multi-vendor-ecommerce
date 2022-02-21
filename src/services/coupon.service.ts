@@ -1,6 +1,5 @@
 import { Request } from "express";
-import sequelize, { Coupon, CouponProduct, CouponStore, CouponUser, User } from "../models";
-import { NOT_FOUND } from "http-status";
+import sequelize, { Coupon, CouponProduct, CouponStore, CouponUser } from "../models";
 import { Op } from "sequelize/dist";
 import { CouponAttributes, CouponInstance } from "../models/coupon.model";
 import { CouponType } from "../enum/coupon.enum";
@@ -20,7 +19,7 @@ import { genUniqueColId } from "../utils/random.string";
 import { isAdmin } from "../utils/admin.utils";
 import productService from "./product.service";
 import { NotFoundError } from "../apiresponse/not.found.error";
-import { ProductDiscountInstance } from "../models/product.discount.model";
+import CouponUtils from "../utils/coupon.utils";
 
 //--> create
 const create = async (req: Request) => {
@@ -135,9 +134,7 @@ const create = async (req: Request) => {
 
 /**  Generate coupon */
 const generateCoupon = async () => {
-  const coupon_code = await genUniqueColId(Coupon, "coupon_code", 12, "alphanumeric", "uppercase");
-
-  return coupon_code;
+  return CouponUtils.generateCoupon();
 };
 /**  Destroy coupon */
 const revokeCoupon = async (req: Request) => {
@@ -177,29 +174,27 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
   }
 
   //check if usage limit is exceeded(if usage limit is not unlimited(not null))
-  const codeOrders = await ordersService.findAllByCouponOrUser(coupon_code, undefined, OrderStatus.COMPLETED);
-  if (coupon.usage_limit && codeOrders.length >= coupon.usage_limit) {
-    throw new ErrorResponse("Coupon usage limit exceeded");
+  if (coupon.usage_limit) {
+    const codeOrders = await ordersService.findAllByCouponOrUser(coupon_code, undefined, OrderStatus.COMPLETED);
+    if (codeOrders.length >= coupon.usage_limit) {
+      throw new ErrorResponse("Coupon usage limit exceeded");
+    }
   }
-  //check if I have used/applied this code;
-  const myOrders = await ordersService.findAllByCouponOrUser(coupon_code, user_id, OrderStatus.COMPLETED);
-
-  if (myOrders.length && myOrders.length >= coupon.usage_limit_per_user) {
-    throw new ErrorResponse("You have exceeded your limit of this coupon");
+  //check if I have used/applied this code more than each user limit
+  if (coupon.usage_limit_per_user) {
+    const myOrders = await ordersService.findAllByCouponOrUser(coupon_code, user_id, OrderStatus.COMPLETED);
+    if (myOrders.length && myOrders.length >= coupon.usage_limit_per_user) {
+      throw new ErrorResponse("You have exceeded your limit of this coupon");
+    }
   }
 
   const { carts, sub_total } = await cartService.findAllByUserId(user_id);
-
-  carts.forEach(({ variation, qty }, idx) => {
-    console.log(`#${idx + 1}PRICE: Qty(${qty})`, variation.price, `#DISCOUNT: `, variation.discount?.price);
-  });
-
   let couponAmount = 0;
 
   switch (coupon.coupon_type) {
     case CouponType.PRODUCT:
       const couponProductIds = coupon.products.map((x) => x.product_id);
-      //check each product
+      //check each cart product
       carts.forEach((cart) => {
         const { product_id, discount, price } = cart.variation;
         const { qty } = cart;
@@ -210,7 +205,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
           //   couponAmount += qty * price * couponPercent;
           // }
 
-          couponAmount += calcCouponAmount(coupon, qty, price, discount);
+          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
         }
       });
       break;
@@ -223,12 +218,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
         const { store_id, qty } = cart;
 
         if (couponStoreIds.includes(store_id)) {
-          // if (discount) {
-          //   couponAmount += qty * discount.price * couponPercent;
-          // } else {
-          //   couponAmount += qty * price * couponPercent;
-          // }
-          couponAmount += calcCouponAmount(coupon, qty, price, discount);
+          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
         }
       });
       break;
@@ -239,12 +229,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
         carts.forEach((cart) => {
           const { discount, price } = cart.variation;
           const { qty } = cart;
-          // if (discount) {
-          //   couponAmount += qty * discount.price * couponPercent;
-          // } else {
-          //   couponAmount += qty * price * couponPercent;
-          // }
-          couponAmount += calcCouponAmount(coupon, qty, price, discount);
+          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
         });
       } else {
         throw new ErrorResponse("You are not eligible to use this coupon");
@@ -260,12 +245,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
           const { product_id, discount, price } = cart.variation;
           const { qty } = cart;
           if (couponProductIds_.includes(product_id)) {
-            // if (discount) {
-            //   couponAmount += qty * discount.price * couponPercent;
-            // } else {
-            //   couponAmount += qty * price * couponPercent;
-            // }
-            couponAmount += calcCouponAmount(coupon, qty, price, discount);
+            couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
           }
         });
       } else {
@@ -276,12 +256,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       carts.forEach((cart) => {
         const { discount, price } = cart.variation;
         const { qty } = cart;
-        // if (discount) {
-        //   couponAmount += qty * discount.price * couponPercent;
-        // } else {
-        //   couponAmount += qty * price * couponPercent;
-        // }
-        couponAmount += calcCouponAmount(coupon, qty, price, discount);
+        couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
       });
       // --> OR simply...
       // couponAmount += userCarts.sub_total * couponPercent;
@@ -302,74 +277,6 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
   };
 };
 
-/**
- * Calculates coupon amount using coupon, product (variation) & cart xtericts/properties/values
- * @param coupon CouponInstance
- * @param qty Cart Qty
- * @param price Product(Variation) Price
- * @param discount Discount Price(If any)
- * @returns coupon amount
- */
-const calcCouponAmount = (coupon: CouponInstance, qty: number, price: number, discount?: ProductDiscountInstance) => {
-  const { product_qty_limit, percentage_discount } = coupon; //no of prod to apply coupon to
-  const couponPercent = percentage_discount / 100;
-
-  //Qty to be applied
-  let couponableQty: number = 0;
-  if (product_qty_limit) {
-    //Check if the cart qty is gt than product_qty_limit
-    if (qty > product_qty_limit) {
-      //if gt, use product_qty_limit
-      couponableQty = product_qty_limit;
-    } else {
-      //else use cart qty
-      couponableQty = qty;
-    }
-  } else {
-    //check if product_qty_limit is not set, use cart qty
-    couponableQty = qty;
-  }
-
-  if (discount) {
-    return couponableQty * discount.price * couponPercent;
-  } else {
-    return couponableQty * price * couponPercent;
-  }
-
-  // OR
-  //if discount,
-  // if (discount) {
-  //   //check if product_qty_limit is set
-  //   if (product_qty_limit) {
-  //     //Check if the cart qty is gt than product_qty_limit
-  //     if (qty > product_qty_limit) {
-  //       //if gt, use product_qty_limit
-  //       return product_qty_limit * discount.price * couponPercent;
-  //     } else {
-  //       //else use cart qty
-  //       return qty * discount.price * couponPercent;
-  //     }
-  //   } else {
-  //     //check if product_qty_limit is not set, use cart qty
-  //     return qty * discount.price * couponPercent;
-  //   }
-  // } else {
-  //   //check if product_qty_limit is set
-  //   if (product_qty_limit) {
-  //     //Check if the cart qty is gt than product_qty_limit
-  //     if (qty > product_qty_limit) {
-  //       //if gt, use product_qty_limit
-  //       return product_qty_limit * price * couponPercent;
-  //     } else {
-  //       //else use cart qty
-  //       return qty * price * couponPercent;
-  //     }
-  //   } else {
-  //     //check if product_qty_limit is not set, use cart qty
-  //     return qty * price * couponPercent;
-  //   }
-  // }
-};
 //-->  Get Store Coupon Amount
 const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], store_id: string, user_id: string) => {
   let storeCouponAmount = 0;
@@ -390,7 +297,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
           // } else {
           //   storeCouponAmount += qty * price * coupon.percentage_discount;
           // }
-          storeCouponAmount += calcCouponAmount(coupon, qty, price, discount);
+          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
         }
       }
     });
@@ -404,7 +311,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
       if (couponProductIds.includes(product_id)) {
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += calcCouponAmount(coupon, qty, price, discount);
+          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
         }
       }
     });
@@ -417,7 +324,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
         const { qty, store_id: each_store_id } = cart;
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += calcCouponAmount(coupon, qty, price, discount);
+          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
         }
       });
     }
@@ -434,7 +341,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
         if (couponProductIds_.includes(product_id)) {
           //if this product belongs to this store
           if (each_store_id === store_id) {
-            storeCouponAmount += calcCouponAmount(coupon, qty, price, discount);
+            storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
           }
         }
       });
@@ -445,7 +352,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
       const { qty, store_id: each_store_id } = cart;
       //if this product belongs to this coupon
       if (each_store_id === store_id) {
-        storeCouponAmount += calcCouponAmount(coupon, qty, price, discount);
+        storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
       }
     });
   }
@@ -467,11 +374,7 @@ const validateCouponExist = async (coupon_code: string) => {
 const findByCouponCode = async (coupon_code: string) => {
   const coupon = await Coupon.findOne({
     where: { coupon_code },
-    include: [
-      { model: CouponProduct, as: "products" },
-      { model: CouponStore, as: "stores" },
-      { model: CouponUser, as: "users" },
-    ],
+    ...CouponUtils.sequelizeFindOptions(),
   });
   if (!coupon) {
     throw new NotFoundError("Coupon not found");
@@ -482,27 +385,23 @@ const findByCouponCode = async (coupon_code: string) => {
 //--> find all by store id(or any user_id)
 const findAllByStoreId = async (req: Request) => {
   const { limit, offset } = Helpers.getPaginate(req.query);
-  const { store_id } = req.params;
   const { role, stores } = req.user!;
-  const { coupon_type }: { coupon_type: CouponType } = req.query as any;
+  const { coupon_type, store_id }: { coupon_type: CouponType; store_id: string } = req.query as any;
 
   if (!isAdmin(role) && !stores.includes(store_id)) {
     throw new UnauthorizedError();
   }
-  const where: { [k: string]: string } = { created_by: store_id };
+  const where: { [k: string]: string } = {};
   if (coupon_type) {
     where.coupon_type = coupon_type;
+  }
+  if (store_id) {
+    where["$stores.store_id$"] = store_id;
   }
 
   const coupons = await Coupon.findAll({
     where,
-    limit,
-    offset,
-    include: [
-      { model: CouponProduct, as: "products" },
-      { model: CouponStore, as: "stores" },
-      { model: User, as: "users" },
-    ],
+    ...CouponUtils.sequelizeFindOptions({ limit, offset }),
   });
 
   return coupons;
@@ -512,7 +411,7 @@ const findAllByStoreId = async (req: Request) => {
 const findAll = async (req: Request) => {
   const { limit, offset } = Helpers.getPaginate(req.query);
   const { role } = req.user!;
-  const { coupon_type, search_query } = req.query as any;
+  const { coupon_type, search_query, store_id, user_id } = req.query as any;
 
   if (!isAdmin(role)) {
     throw new UnauthorizedError("Not authorized to access this resources");
@@ -520,6 +419,9 @@ const findAll = async (req: Request) => {
   const where: { [k: string]: any } = {};
   if (coupon_type) {
     where.coupon_type = coupon_type;
+  }
+  if (store_id) {
+    where["$stores.store_id$"] = store_id;
   }
   if (search_query) {
     where[Op.or as any] = [
@@ -529,13 +431,7 @@ const findAll = async (req: Request) => {
   }
   const coupons = await Coupon.findAll({
     where,
-    limit,
-    offset,
-    include: [
-      { model: CouponProduct, as: "products" },
-      { model: CouponStore, as: "stores" },
-      { model: User, as: "users" },
-    ],
+    ...CouponUtils.sequelizeFindOptions({ limit, offset }),
   });
 
   return coupons;

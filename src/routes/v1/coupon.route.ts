@@ -15,7 +15,7 @@ router.post("/revoke", validateReq(couponValidation.revokeCoupon), couponControl
 router.post("/apply", validateReq(couponValidation.applyCoupon), couponController.applyCoupon);
 router.post("/check-exist", validateReq(couponValidation.validateCouponExist), couponController.validateCouponExist);
 router.get(
-  "/stores-coupon/:store_id", //?=limit,offset,coupon_type
+  "/stores-coupon", //?=limit,offset,coupon_type
   validateReq(couponValidation.findAllByStoreId),
   couponController.findAllByStoreId
 );

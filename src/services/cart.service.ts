@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { Op, Transaction } from "sequelize/dist";
-import { ErrorResponse } from "../apiresponse/error.response";
+import { performance } from "perf_hooks";
 import { Cart, Product, ProductDiscount, ProductVariation } from "../models";
 import { CartInstance } from "../models/cart.model";
 import productVariationService from "./product.variation.service";
@@ -112,18 +112,16 @@ const getSubTotal = (carts: CartInstance[]) => {
     }
   });
 
-  //For testing if the two would be equal
-  const sub_total2 = carts.reduce((total, cart) => {
-    const { discount, price } = cart.variation;
-    const { qty } = cart;
-    if (discount) {
-      return total + qty * discount.price;
-    } else {
-      return total + qty * price;
-    }
-  }, 0);
-
-  console.log(`CART getsubtotal: sub_total=>${sub_total}, sub_total2=>${sub_total2}`);
+  // OR
+  // const sub_total2 = carts.reduce((total, cart) => {
+  //   const { discount, price } = cart.variation;
+  //   const { qty } = cart;
+  //   if (discount) {
+  //     return total + qty * discount.price;
+  //   } else {
+  //     return total + qty * price;
+  //   }
+  // }, 0);
 
   return sub_total;
 };

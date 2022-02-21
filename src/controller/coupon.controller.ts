@@ -21,7 +21,7 @@ const applyCoupon = async (req: Request, res: Response) => {
   ApiResponse.ok(res, result);
 };
 const validateCouponExist = async (req: Request, res: Response) => {
-  const { coupon_code } = req.params;
+  const { coupon_code } = req.body;
   const result = await couponService.validateCouponExist(coupon_code);
   ApiResponse.ok(res, { coupon: result });
 };

@@ -9,11 +9,12 @@ import storeFake from "./store.fake";
 export default {
   rawCreateProduct: async function (props?: any) {
     const create = await this.productCreate();
+    const { user_id: created_by } = await userFake.rawCreate();
 
     const data = {
       ...create,
-      coupon_code: generateChars(),
-      user_id: generateChars(),
+      coupon_code: generateChars(30),
+      created_by,
       ...props,
     };
 

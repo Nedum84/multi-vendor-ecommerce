@@ -35,6 +35,7 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     type: DataTypes.STRING,
     comment: "Class Comment Id",
     allowNull: false,
+    primaryKey: true,
     unique: true,
   },
   coupon_type: {
