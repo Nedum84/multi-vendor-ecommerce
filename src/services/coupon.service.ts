@@ -15,7 +15,6 @@ import ordersService from "./orders.service";
 import cartService from "./cart.service";
 import { OrderStatus } from "../enum/orders.enum";
 import { CartInstance } from "../models/cart.model";
-import { genUniqueColId } from "../utils/random.string";
 import { isAdmin } from "../utils/admin.utils";
 import productService from "./product.service";
 import { NotFoundError } from "../apiresponse/not.found.error";
@@ -47,10 +46,12 @@ const create = async (req: Request) => {
   }
 
   //--> only admin can create all coupons
-  // But stores can only create STORE & USER_AND_PRODUCT coupon
-  const storeList = [CouponType.STORE, CouponType.USER_AND_PRODUCT];
+  // But stores can only create STORE, PRODUCT & USER_AND_PRODUCT coupon
+  const storeList = [CouponType.STORE, CouponType.PRODUCT, CouponType.USER_AND_PRODUCT];
   if (!storeList.includes(coupon_type) && !isAdmin(role)) {
-    throw new UnauthorizedError("Not authorized to create a coupon except STORE & USER_AND_PRODUCT COUPON TYPE");
+    throw new UnauthorizedError(
+      "Not authorized to create a coupon except STORE, PRODUCT & USER_AND_PRODUCT COUPON TYPE"
+    );
   }
 
   //--> for non-admin(only store)
@@ -68,7 +69,7 @@ const create = async (req: Request) => {
         //OR !stores.includes(store_id)
         throw new ErrorResponse(`Not authorized to create coupon on this store(${store.name})`);
       }
-    } else if (coupon_code === CouponType.USER_AND_PRODUCT) {
+    } else if (coupon_code === CouponType.PRODUCT || coupon_code === CouponType.USER_AND_PRODUCT) {
       const products = await Promise.all(
         body.products.map(({ product_id }) => {
           return productService.findById(product_id);
@@ -175,14 +176,14 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
 
   //check if usage limit is exceeded(if usage limit is not unlimited(not null))
   if (coupon.usage_limit) {
-    const codeOrders = await ordersService.findAllByCouponOrUser(coupon_code, undefined, OrderStatus.COMPLETED);
+    const codeOrders = await ordersService.findAllByCouponOrUser(coupon_code);
     if (codeOrders.length >= coupon.usage_limit) {
       throw new ErrorResponse("Coupon usage limit exceeded");
     }
   }
   //check if I have used/applied this code more than each user limit
   if (coupon.usage_limit_per_user) {
-    const myOrders = await ordersService.findAllByCouponOrUser(coupon_code, user_id, OrderStatus.COMPLETED);
+    const myOrders = await ordersService.findAllByCouponOrUser(coupon_code, user_id);
     if (myOrders.length && myOrders.length >= coupon.usage_limit_per_user) {
       throw new ErrorResponse("You have exceeded your limit of this coupon");
     }

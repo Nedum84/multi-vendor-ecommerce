@@ -17,10 +17,12 @@ export const CategoryProductModelAttributes: SequelizeAttributes<CategoryProduct
   product_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   category_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
 };
 // --> Factory....

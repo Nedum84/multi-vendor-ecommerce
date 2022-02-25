@@ -8,26 +8,42 @@ const create = {
   body: Joi.object()
     .keys({
       coupon_code: Joi.string(),
-      payment_id: Joi.string().required(),
+      address_id: Joi.string().required(),
     })
     .min(1),
 };
 const updatePayment = {
-  params: Joi.object().keys({
+  params: Joi.object().keys({}),
+  body: Joi.object().keys({
     order_id: Joi.string().required(),
+    payed_from_wallet: Joi.boolean().required(),
+
+    payment_reference: Joi.string().when("payed_from_wallet", {
+      is: false,
+      then: Joi.string().required(),
+    }),
+    payment_status: Joi.string().when("payed_from_wallet", {
+      is: false,
+      then: Joi.string()
+        .valid(...Object.values(PaymentStatus))
+        .required(),
+    }),
+    payment_channel: Joi.string().when("payed_from_wallet", {
+      is: false,
+      then: Joi.string()
+        .valid(...Object.values(PaymentChannel))
+        .required(),
+    }),
   }),
-  body: Joi.object()
-    .keys({
-      payment_status: Joi.string()
-        .required()
-        .valid(...Object.values(PaymentStatus)),
-      payment_channel: Joi.string()
-        .required()
-        .valid(...Object.values(PaymentChannel)),
-      payment_id: Joi.string().required(),
-      payed_from_wallet: Joi.boolean(),
-    })
-    .min(1),
+};
+const adminUpdatePayment = {
+  params: Joi.object().keys({}),
+  body: Joi.object().keys({
+    order_id: Joi.string().required(),
+    payment_status: Joi.string()
+      .valid(...Object.values(PaymentStatus))
+      .required(),
+  }),
 };
 
 const storeUnsettledOrders = {
@@ -53,7 +69,9 @@ const processRefund: ValidatorInterface = {
   params: Joi.object().keys({
     sub_order_id: Joi.string().required(),
   }),
-  body: Joi.object().keys({}),
+  body: Joi.object().keys({
+    amount: Joi.number().min(1),
+  }),
 };
 const updateOrderStatus: ValidatorInterface = {
   params: Joi.object().keys({
@@ -76,12 +94,10 @@ const updateDeliveryStatus: ValidatorInterface = {
   }),
 };
 const settleStore: ValidatorInterface = {
-  params: Joi.object().keys({
-    sub_order_id: Joi.string().required(),
-  }),
+  params: Joi.object().keys({}),
   body: Joi.object().keys({
     store_id: Joi.string().required(),
-    order_ids: Joi.array().required().items(Joi.string().required()),
+    sub_order_ids: Joi.array().items(Joi.string().required()).min(2),
   }),
 };
 const findById: ValidatorInterface = {
@@ -94,17 +110,19 @@ const findAll: ValidatorInterface = {
   params: Joi.object().keys({}),
   query: Joi.object().keys({
     search_query: Joi.string(),
-    variation_id: Joi.string(),
     order_status: Joi.string().valid(...Object.values(OrderStatus)),
     coupon_code: Joi.string(),
     user_id: Joi.string(),
     refunded: Joi.boolean(),
+    store_id: Joi.string(),
+    amount: Joi.number(),
   }),
 };
 
 export default {
   create,
   updatePayment,
+  adminUpdatePayment,
   storeUnsettledOrders,
   userCancelOrder,
   adminCancelOrder,

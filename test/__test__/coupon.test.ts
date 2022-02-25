@@ -65,6 +65,7 @@ describe("Coupon Tests", () => {
     expect(response.body.data.coupon.products.length).toBeGreaterThan(0);
     expect(response.body.data.coupon.users.length).toBeGreaterThan(0);
   });
+
   it("Can create all orders coupon", async () => {
     const coupon_code = generateChars();
 
@@ -77,6 +78,7 @@ describe("Coupon Tests", () => {
 
     expectSuccess(response, CREATED);
   });
+
   it("Can generate coupon code", async () => {
     const response = await request({
       path: `/coupon/generate`,
@@ -86,6 +88,7 @@ describe("Coupon Tests", () => {
     expectSuccess(response, OK);
     expect(response.body.data.coupon).toBeDefined();
   });
+
   it("Can revoke coupon", async () => {
     const coupon_code = generateChars();
 
@@ -107,8 +110,10 @@ describe("Coupon Tests", () => {
   });
 
   it("Can apply coupon", async () => {
-    const { store_id: store_id1 } = await storeFake.rawCreate();
-    const { store_id: store_id2 } = await storeFake.rawCreate();
+    const { user, tokens } = await global.signin();
+    const { token } = tokens.access;
+    const { user_id } = user;
+
     const {
       variation_id: variation_id1,
       product: product1,
@@ -121,19 +126,21 @@ describe("Coupon Tests", () => {
       price: price2,
       discount: discount2,
     } = await productVariationFake.rawCreate();
-    const { user, tokens } = await global.signin();
+
+    const { store_id: store_id1 } = product1;
+    const { store_id: store_id2 } = product2;
 
     //Add to cart
     const cart1 = await cartFake.rawCreate({
       qty: 2,
       store_id: store_id1,
-      user_id: user.user_id,
+      user_id,
       variation_id: variation_id1,
     });
     const cart2 = await cartFake.rawCreate({
       qty: 40,
       store_id: store_id2,
-      user_id: user.user_id,
+      user_id,
       variation_id: variation_id2,
     });
 
@@ -145,7 +152,7 @@ describe("Coupon Tests", () => {
     const all_orders_coupon_code = generateChars(24);
 
     const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
-    const users = [{ user_id: user.user_id }];
+    const users = [{ user_id }];
     const products = [{ product_id: product1.product_id }, { product_id: product2.product_id }];
     //payloads
     const storesPayload = await couponFake.storeCreate({ stores });
@@ -164,7 +171,7 @@ describe("Coupon Tests", () => {
       path: `/coupon/apply`,
       method: "post",
       payload: { coupon_code: stores_coupon_code },
-      token: tokens.access.token,
+      token,
     });
 
     //apply user coupon
@@ -177,7 +184,7 @@ describe("Coupon Tests", () => {
       path: `/coupon/apply`,
       method: "post",
       payload: { coupon_code: users_coupon_code },
-      token: tokens.access.token,
+      token,
     });
 
     //apply product coupon
@@ -190,7 +197,7 @@ describe("Coupon Tests", () => {
       path: `/coupon/apply`,
       method: "post",
       payload: { coupon_code: products_coupon_code },
-      token: tokens.access.token,
+      token,
     });
     //apply user & product  coupon
     await request({
@@ -202,7 +209,7 @@ describe("Coupon Tests", () => {
       path: `/coupon/apply`,
       method: "post",
       payload: { coupon_code: user_products_coupon_code },
-      token: tokens.access.token,
+      token,
     });
     //apply user & product  coupon
     await request({
@@ -214,7 +221,7 @@ describe("Coupon Tests", () => {
       path: `/coupon/apply`,
       method: "post",
       payload: { coupon_code: all_orders_coupon_code },
-      token: tokens.access.token,
+      token,
     });
 
     const { coupon: stores_coupon } = storesResponse.body.data;

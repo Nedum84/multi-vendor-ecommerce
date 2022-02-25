@@ -1,12 +1,11 @@
 import { Request } from "express";
-import { Op } from "sequelize";
+import { Op, Transaction } from "sequelize";
 import { StoreAttributes, StoreInstance } from "../models/store.model";
-import sequelize, { Store, SubOrders } from "../models";
+import sequelize, { Product, Store, SubOrders } from "../models";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { Helpers } from "../utils/helpers";
 import { createModel, genSlugColId } from "../utils/random.string";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
-import moment from "moment";
 import CONSTANTS from "../utils/constants";
 import { OrderStatus } from "../enum/orders.enum";
 import { isAdmin } from "../utils/admin.utils";
@@ -14,6 +13,7 @@ import { generateSlug } from "../utils/function.utils";
 import userService from "./user.service";
 import { UserRoleStatus } from "../enum/user.enum";
 import { ErrorResponse } from "../apiresponse/error.response";
+import { ProductStatus } from "../enum/product.enum";
 
 const create = async (req: Request) => {
   const body: StoreAttributes = req.body;
@@ -22,8 +22,6 @@ const create = async (req: Request) => {
   const slug = generateSlug(body.name);
   body.slug = await genSlugColId(Store, "slug", slug);
   body.user_id = user_id;
-  body.verified = true;
-  body.verified_at = new Date();
   const store = await createModel<StoreInstance>(Store, body, "store_id");
   return store;
 };
@@ -52,6 +50,10 @@ const adminVerifyStore = async (req: Request) => {
   }
   const store = await findById(store_id);
 
+  if (store.verified) {
+    throw new ErrorResponse("Store already verified");
+  }
+
   const user = await userService.findById(store.user_id);
 
   try {
@@ -70,10 +72,29 @@ const adminVerifyStore = async (req: Request) => {
     throw new ErrorResponse(error);
   }
 };
+const adminUpdateStore = async (req: Request) => {
+  const { store_id } = req.params;
+  const { role } = req.user!;
+  const { body }: { body: StoreAttributes } = req;
 
-const findById = async (store_id: string) => {
+  if (!isAdmin(role)) {
+    throw new UnauthorizedError();
+  }
+  const store = await findById(store_id);
+  //Disable store products
+  if (body.disable_store && !store.disable_store) {
+    await Product.update({ status: ProductStatus.PENDING }, { where: { store_id } });
+  }
+  //update store
+  Object.assign(store, body);
+  await store.save();
+  return findById(store_id);
+};
+
+const findById = async (store_id: string, transaction?: Transaction) => {
   const store = await Store.findOne({
     where: { [Op.or]: [{ store_id }, { slug: store_id }] },
+    transaction,
   });
 
   if (!store) {
@@ -91,17 +112,11 @@ const findUserStores = async (user_id: string, verified?: boolean) => {
 
 const findAll = async (req: Request) => {
   const { limit, offset } = Helpers.getPaginate(req.query);
-  const { store_id, email, phone, verified, search_query } = req.query as any;
+  const { store_id, verified, search_query } = req.query as any;
   const where: { [k: string]: any } = {};
 
   if (store_id) {
     where.store_id = store_id;
-  }
-  if (email) {
-    where.email = email;
-  }
-  if (phone) {
-    where.phone = phone;
   }
   if (verified) {
     where.verified = verified;
@@ -110,6 +125,7 @@ const findAll = async (req: Request) => {
     where[Op.or as any] = [
       { name: { [Op.iLike]: `%${search_query}%` } },
       { email: { [Op.iLike]: `%${search_query}%` } },
+      { phone: { [Op.iLike]: `%${search_query}%` } },
     ];
   }
 
@@ -126,27 +142,31 @@ const storeBalance = async (req: Request) => {
     throw new UnauthorizedError("Access denied");
   }
 
-  const TOLERABLE_PERIOD = moment(moment().unix() - CONSTANTS.GUARANTEE_PERIOD * 3600).toDate(); //days
+  const RETURNABLE_PERIOD = CONSTANTS.RETURNABLE_PERIOD;
 
-  //pending orders ()....
+  //Completed orders{{ OrderStatus.COMPLETED }}, not setled, not refunded, may/maynot be delivered
+  //if delivered, the returnable days have not passed
   const totalPending = await SubOrders.sum("store_price", {
     where: {
       store_id,
       order_status: OrderStatus.COMPLETED,
       settled: false,
       refunded: false,
-      delivered_at: { [Op.or]: [{ [Op.gt]: TOLERABLE_PERIOD }, { [Op.eq]: null }] },
+      delivered_at: { [Op.or]: [{ [Op.gt]: RETURNABLE_PERIOD }, { [Op.eq]: null }] },
     },
   });
 
+  //Order delivered & returnable days passed
+  //awaiting admins settlement
   const totalUnsettled = await SubOrders.sum("store_price", {
     where: {
       store_id,
       delivered: true,
       settled: false,
-      delivered_at: { [Op.lte]: TOLERABLE_PERIOD },
+      delivered_at: { [Op.lte]: RETURNABLE_PERIOD },
     },
   });
+  //Total orders settled
   const totalEarned = await SubOrders.sum("store_price", {
     where: {
       store_id,
@@ -167,6 +187,7 @@ export default {
   create,
   update,
   adminVerifyStore,
+  adminUpdateStore,
   findById,
   findUserStores,
   findAll,

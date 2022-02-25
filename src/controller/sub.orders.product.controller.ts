@@ -6,7 +6,7 @@ const findAllBySubOrderId = async (req: Request, res: Response) => {
   const { sub_order_id } = req.params;
 
   const result = await subOrdersProductService.findAllBySubOrderId(sub_order_id);
-  ApiResponse.ok(res, { sub_products: result });
+  ApiResponse.ok(res, { order_products: result });
 };
 
 export default {

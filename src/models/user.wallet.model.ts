@@ -1,17 +1,19 @@
 import { Sequelize } from "sequelize/dist";
 import { Model, Optional, DataTypes } from "sequelize/dist";
+import { ModelRegistry } from ".";
+import { ErrorResponse } from "../apiresponse/error.response";
 import { FundingTypes } from "../enum/payment.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 
 export interface UserWalletAttributes {
   user_id: string;
-  order_id: string;
+  sub_order_id: string;
   amount: number;
   fund_type: FundingTypes;
-  payment_id: string;
+  payment_reference: string;
 }
 
-interface UserWalletCreationAttributes extends Optional<UserWalletAttributes, "order_id" | "payment_id"> {}
+interface UserWalletCreationAttributes extends Optional<UserWalletAttributes, "sub_order_id" | "payment_reference"> {}
 
 export interface UserWalletInstance
   extends Model<UserWalletAttributes, UserWalletCreationAttributes>,
@@ -21,11 +23,10 @@ export interface UserWalletInstance
 export const UserWalletModelAttributes: SequelizeAttributes<UserWalletAttributes> = {
   user_id: {
     type: DataTypes.STRING,
-    primaryKey: true,
-    comment: "UserWallets Id",
+    comment: "User's' Id",
     allowNull: false,
   },
-  order_id: DataTypes.STRING, //not null for refund
+  sub_order_id: DataTypes.STRING, //not null for refund
   amount: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -35,15 +36,10 @@ export const UserWalletModelAttributes: SequelizeAttributes<UserWalletAttributes
     values: Object.values(FundingTypes),
     defaultValue: FundingTypes.REFUND,
   },
-  payment_id: {
-    type: DataTypes.STRING, //null for only refund
-    validate: {
-      customValidator(value: string) {
-        if (value === null && this.fund_type !== FundingTypes.REFUND) {
-          throw new Error("Payment ID can't be null unless except for refund");
-        }
-      },
-    },
+  payment_reference: {
+    type: DataTypes.STRING,
+    unique: true,
+    allowNull: false,
   },
 };
 
@@ -53,7 +49,24 @@ export function UserWalletFactory(sequelize: Sequelize) {
     timestamps: true,
     tableName: "UserWallet",
     freezeTableName: true,
+    validate: {
+      paymentReferenceErr() {
+        if (!this.payment_reference && this.fund_type !== FundingTypes.REFUND) {
+          throw new Error("Payment Reference can't be null unless except for refund");
+        }
+      },
+    },
   });
+
+  UserWallet.associate = function (models: ModelRegistry) {
+    const { UserWallet } = models;
+
+    UserWallet.belongsTo(models.User, {
+      as: "user",
+      foreignKey: "user_id",
+      targetKey: "user_id",
+    });
+  };
 
   UserWallet.prototype.toJSON = function () {
     const values = { ...this.get() };

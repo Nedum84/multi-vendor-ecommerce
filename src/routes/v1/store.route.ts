@@ -20,5 +20,10 @@ router.get("/balance/:store_id", validateReq(storeValidation.storeBalance), stor
 //....
 router.post("/", validateReq(storeValidation.create), storeController.create);
 router.patch("/:store_id", validateReq(storeValidation.update), storeController.update);
+router.patch(
+  "/admin-update/:store_id",
+  validateReq(storeValidation.adminUpdateStore),
+  storeController.adminUpdateStore
+);
 router.patch("/verify/:store_id", validateReq(storeValidation.adminVerifyStore), storeController.adminVerifyStore);
 export default router;

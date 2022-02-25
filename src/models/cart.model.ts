@@ -20,14 +20,17 @@ export const CartModelAttributes: SequelizeAttributes<CartAttributes> = {
   user_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   variation_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   store_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   qty: {
     type: DataTypes.INTEGER,

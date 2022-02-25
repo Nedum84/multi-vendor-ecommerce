@@ -6,7 +6,7 @@ import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 export interface VendorSettlementAttributes {
   settlement_id: string;
   sub_order_ids: string[];
-  total: number;
+  amount: number;
   store_id: string;
 }
 
@@ -24,7 +24,7 @@ export const VendorSettlementModelAttributes: SequelizeAttributes<VendorSettleme
     type: DataTypes.ARRAY(DataTypes.STRING),
     allowNull: false,
   },
-  total: {
+  amount: {
     type: DataTypes.INTEGER,
     allowNull: false,
   },

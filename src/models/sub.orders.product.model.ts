@@ -9,6 +9,7 @@ export interface SubOrdersProductAttributes {
   variation_id: string;
   product_id: string;
   price: number;
+  purchased_price: number;
   name: string;
   desc: string;
   qty: number;
@@ -38,12 +39,16 @@ export const SubOrdersProductModelAttributes: SequelizeAttributes<SubOrdersProdu
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  purchased_price: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   name: {
     type: DataTypes.STRING,
     allowNull: false,
   },
   desc: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
   },
   qty: {
@@ -55,7 +60,7 @@ export const SubOrdersProductModelAttributes: SequelizeAttributes<SubOrdersProdu
     allowNull: false,
   },
   variation_snapshot: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
   },
 };
@@ -68,13 +73,17 @@ export function SubOrdersProductFactory(sequelize: Sequelize) {
       timestamps: false,
       tableName: "SubOrdersProduct",
       freezeTableName: true,
-      defaultScope: {},
+      defaultScope: {
+        attributes: {
+          exclude: ["variation_snapshot"],
+        },
+      },
       hooks: {
-        beforeCreate: async (product: SubOrdersProductInstance) => {
-          product.variation_snapshot = JSON.stringify(product.variation_snapshot.toJSON()) as any;
+        beforeUpsert: (product: SubOrdersProductInstance) => {
+          // product.variation_snapshot = JSON.stringify(product.variation_snapshot.toJSON()) as any;
         },
         afterFind: async (product: SubOrdersProductInstance) => {
-          product.variation_snapshot = JSON.parse(product.variation_snapshot as any);
+          // product.variation_snapshot = JSON.parse(product.variation_snapshot as any);
         },
       },
     }

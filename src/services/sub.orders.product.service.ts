@@ -15,12 +15,14 @@ const create = async (sub_order_id: string, cart: CartInstance, transaction: Tra
       product_id: variation.product.product_id,
       name: variation.product.name,
       qty,
-      price: variation_price,
+      price: price,
+      purchased_price: variation_price,
       desc: variation.product.desc,
       weight: variation.weight,
-      variation_snapshot: variation,
+      variation_snapshot: JSON.stringify(variation.toJSON()) as any,
     },
-    { transaction }
+
+    { transaction, hooks: true }
   );
   return product;
 };

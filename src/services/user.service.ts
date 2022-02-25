@@ -33,10 +33,10 @@ const create = async (body: UserAttributes) => {
       const { user_id } = user;
 
       //Add Registration Coins Bonus
-      const payment_id = await genUniqueColId(UserWallet, "payment_id", 14);
+      const payment_reference = await genUniqueColId(UserWallet, "payment_reference", 14);
       const amount = 50; //USD
 
-      await userWalletService.createCredit(user_id, amount, FundingTypes.REG_BONUS, payment_id, t);
+      await userWalletService.createCredit(user_id, amount, FundingTypes.REG_BONUS, payment_reference, undefined, t);
     });
   } catch (error: any) {
     throw new ErrorResponse(error);

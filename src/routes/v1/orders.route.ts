@@ -10,6 +10,7 @@ router.use(requireAuth);
 
 router.post("/", validateReq(ordersValidation.create), ordersController.create);
 router.patch("/payment", validateReq(ordersValidation.updatePayment), ordersController.updatePayment);
+router.patch("/payment/admin", validateReq(ordersValidation.adminUpdatePayment), ordersController.adminUpdatePayment);
 router.get(
   "/unsettled/:store_id",
   validateReq(ordersValidation.storeUnsettledOrders),
@@ -19,11 +20,6 @@ router.patch(
   "/user/cancel/:sub_order_id",
   validateReq(ordersValidation.userCancelOrder),
   ordersController.userCancelOrder
-);
-router.patch(
-  "/admin/cancel/:sub_order_id",
-  validateReq(ordersValidation.adminCancelOrder),
-  ordersController.adminCancelOrder
 );
 router.patch("/refund/:sub_order_id", validateReq(ordersValidation.processRefund), ordersController.processRefund);
 router.patch(
@@ -38,6 +34,6 @@ router.patch(
 );
 router.post("/settlestore", validateReq(ordersValidation.settleStore), ordersController.settleStore);
 
-router.patch("/:order_id", validateReq(ordersValidation.findById), ordersController.findById);
-router.patch("/", validateReq(ordersValidation.findAll), ordersController.findAll);
+router.get("/:order_id", validateReq(ordersValidation.findById), ordersController.findById);
+router.get("/", validateReq(ordersValidation.findAll), ordersController.findAll);
 export default router;

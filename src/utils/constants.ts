@@ -1,11 +1,23 @@
 import moment from "moment";
-// import { v4 as uuidv4 } from "uuid";
 
 class CONSTANTS {
-  static NOW = moment().toDate(); //Date
+  static NOW = moment().toDate();
 
-  // static UUID = () => uuidv4();
-  static GUARANTEE_PERIOD: number = 7; //days
+  /**
+   * Guarantee period in days that must elapse before vendors
+   * can claim their cash after order delivery
+   * @abstract Past this time(days), user cannot return this product
+   */
+  static RETURNABLE_DAYS: number = 7; //7days
+
+  static RETURNABLE_DAYS_MILLISECONDS: number = CONSTANTS.RETURNABLE_DAYS * 24 * 3600 * 1000;
+
+  /**
+   * @override calcs time between now to the guanrantee period,
+   * @inner i.e => now() - GUARANTEE_PERIOD
+   * @return Date
+   */
+  static RETURNABLE_PERIOD = new Date(Date.now() - CONSTANTS.RETURNABLE_DAYS_MILLISECONDS);
 }
 
 export default CONSTANTS;

@@ -1,7 +1,6 @@
 import { Optional, Sequelize } from "sequelize";
 import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
-import { OrderStatus } from "../enum/orders.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { OrdersPaymentInstance } from "./orders.payment.model";
 import { SubOrdersInstance } from "./sub.orders.model";
@@ -16,11 +15,11 @@ export interface OrdersAttributes {
   tax_amount: number;
   purchased_by: string;
   payed_from_wallet: boolean;
-  order_status: OrderStatus;
+  payment_completed: boolean;
 }
 
 interface OrdersCreationAttributes
-  extends Optional<OrdersAttributes, "order_id" | "payed_from_wallet" | "order_status"> {}
+  extends Optional<OrdersAttributes, "order_id" | "payed_from_wallet" | "payment_completed"> {}
 
 export interface OrdersInstance extends Model<OrdersAttributes, OrdersCreationAttributes>, OrdersAttributes {
   payment: OrdersPaymentInstance;
@@ -34,16 +33,15 @@ export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
     primaryKey: true,
   },
   amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.BIGINT,
     allowNull: false,
   },
   sub_total: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.BIGINT,
     allowNull: false,
   },
   coupon_code: {
     type: DataTypes.STRING,
-    allowNull: false,
   },
   coupon_amount: {
     type: DataTypes.INTEGER,
@@ -65,10 +63,9 @@ export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
-  order_status: {
-    type: DataTypes.ENUM,
-    values: Object.values(OrderStatus),
-    defaultValue: OrderStatus.PENDING,
+  payment_completed: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
   },
 };
 // --> Factory....
@@ -91,6 +88,12 @@ export function OrdersFactory(sequelize: Sequelize) {
 
     Orders.hasOne(models.OrdersPayment, {
       as: "payment",
+      foreignKey: "order_id",
+      sourceKey: "order_id",
+    });
+
+    Orders.hasOne(models.OrdersAddress, {
+      as: "address",
       foreignKey: "order_id",
       sourceKey: "order_id",
     });

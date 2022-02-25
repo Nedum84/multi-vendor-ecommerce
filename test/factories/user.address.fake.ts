@@ -22,7 +22,7 @@ export default {
     city: faker.random.words(1),
     state: faker.random.words(1),
     country: faker.random.words(1),
-    zip_code: faker.random.words(1),
+    zip_code: faker.datatype.number(),
     is_default: false,
   },
   update: {
@@ -33,7 +33,7 @@ export default {
     city: faker.random.words(1),
     state: faker.random.words(1),
     country: faker.random.words(1),
-    zip_code: faker.random.words(1),
+    zip_code: faker.datatype.number(),
     is_default: false,
   },
 };

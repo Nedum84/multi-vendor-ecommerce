@@ -21,6 +21,7 @@ const update = {
   body: Joi.object()
     .keys({
       name: Joi.string(),
+      email: Joi.string(),
       phone: Joi.string(),
       logo: Joi.string(),
       address: Joi.string(),
@@ -28,6 +29,15 @@ const update = {
       state: Joi.string(),
       country: Joi.string(),
       description: Joi.string(),
+      settings: Joi.object().keys({
+        auto_complete_order: Joi.boolean().required(),
+        bank_details: Joi.object({
+          acc_name: Joi.string().required(),
+          acc_number: Joi.string().required(),
+          bank_code: Joi.string().required(),
+          bank_name: Joi.string().required(),
+        }),
+      }),
     })
     .min(1),
 };
@@ -36,6 +46,34 @@ const adminVerifyStore = {
   params: Joi.object().keys({
     store_id: Joi.string().required(),
   }),
+};
+
+const adminUpdateStore = {
+  params: Joi.object().keys({
+    store_id: Joi.string().required(),
+  }),
+  body: Joi.object({
+    name: Joi.string(),
+    email: Joi.string(),
+    phone: Joi.string(),
+    logo: Joi.string(),
+    address: Joi.string(),
+    city: Joi.string(),
+    state: Joi.string(),
+    country: Joi.string(),
+    description: Joi.string(),
+    disable_store: Joi.boolean(),
+    store_percentage: Joi.number().min(1).max(99),
+    settings: Joi.object().keys({
+      auto_complete_order: Joi.boolean().required(),
+      bank_details: Joi.object({
+        acc_name: Joi.string().required(),
+        acc_number: Joi.string().required(),
+        bank_code: Joi.string().required(),
+        bank_name: Joi.string().required(),
+      }),
+    }),
+  }).min(1),
 };
 
 const findById = {
@@ -71,6 +109,7 @@ export default {
   create,
   update,
   adminVerifyStore,
+  adminUpdateStore,
   findById,
   findUserStores,
   findAll,

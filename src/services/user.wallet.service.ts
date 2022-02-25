@@ -6,34 +6,37 @@ import { Helpers } from "../utils/helpers";
 import { ErrorResponse } from "../apiresponse/error.response";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { isAdmin } from "../utils/admin.utils";
+import { genUniqueColId } from "../utils/random.string";
 
 //admin reward
 const adminCreateCreditReward = async (req: Request) => {
-  const { user_id, amount, payment_id }: { user_id: string; amount: number; payment_id: string } = req.body;
+  const { user_id, amount }: { user_id: string; amount: number } = req.body;
 
   const { role } = req.user!;
+  const payment_reference = await genUniqueColId(UserWallet, "payment_reference", 17);
 
   if (!isAdmin(role)) {
     throw new UnauthorizedError();
   }
 
-  return createCredit(user_id, amount, FundingTypes.ADMIN_REWARD, payment_id);
+  return createCredit(user_id, amount, FundingTypes.ADMIN_REWARD, payment_reference);
 };
 //From payment
 const userCreateCreditReward = async (req: Request) => {
   const { user_id } = req.user!;
-  const { payment_id, amount }: { payment_id: string; amount: number } = req.body;
+  const { payment_reference, amount }: { payment_reference: string; amount: number } = req.body;
 
-  //TODO:: verify the payment with the payment_id
+  //TODO:: verify the payment with the payment_reference
 
-  return createCredit(user_id, amount, FundingTypes.PAYMENT, payment_id);
+  return createCredit(user_id, amount, FundingTypes.PAYMENT, payment_reference);
 };
 
 const createCredit = async (
   user_id: string,
   amount: number,
   fund_type: FundingTypes,
-  payment_id?: string,
+  payment_reference: string,
+  sub_order_id?: string,
   t?: Transaction
 ) => {
   if (fund_type == FundingTypes.REG_BONUS) {
@@ -42,12 +45,14 @@ const createCredit = async (
       throw new ErrorResponse("Already received bonus");
     }
   }
+
   const credit = await UserWallet.create(
     {
       amount,
       fund_type,
       user_id,
-      payment_id,
+      payment_reference,
+      sub_order_id,
     },
     { transaction: t }
   );
@@ -57,26 +62,31 @@ const createCredit = async (
 
 //get balance
 const getWalletBalance = async (user_id: string): Promise<number> => {
-  const totalBalance2: any[] = await UserWallet.findAll({
+  const totalBalance_: any[] = await UserWallet.findAll({
     where: { user_id },
     attributes: [[Sequelize.fn("sum", Sequelize.col("amount")), "total_balance"]],
     raw: true,
   });
-  const totalBalance = await UserWallet.sum("amount", {
-    where: { user_id },
-  });
 
-  const usedBalance: any[] = await Orders.findAll({
+  const usedBalance_: any[] = await Orders.findAll({
     where: { purchased_by: user_id, payed_from_wallet: true },
     attributes: [[Sequelize.fn("sum", Sequelize.col("amount")), "used_balance"]],
     raw: true,
   });
 
-  // const totalBalance_ = parseInt(totalBalance[0]?.total_balance ?? 0);
-  const totalBalance_ = totalBalance;
-  const usedBalance_ = parseInt(usedBalance[0]?.used_balance ?? 0);
+  // const totalBalance = parseInt(totalBalance_[0]?.total_balance ?? 0);
+  // const usedBalance = parseInt(usedBalance_[0]?.used_balance ?? 0);
+  // OR
+  const totalBalance = await UserWallet.sum("amount", {
+    where: { user_id },
+  });
+  ///---> This(Below) remains correct, you know why,
+  ///===> EVen if the order was refunded, It would reflect on UserWallet table (as a new credit) and the we are good
+  const usedBalance = await Orders.sum("amount", {
+    where: { purchased_by: user_id, payed_from_wallet: true },
+  });
 
-  const balance = totalBalance_ - usedBalance_;
+  const balance = totalBalance - usedBalance;
 
   return balance;
 };

@@ -1,4 +1,3 @@
-import { CREATED } from "http-status";
 import { UserRoleStatus } from "../../src/enum/user.enum";
 import userFake from "../factories/user.fake";
 import { expectSuccess } from "../testing.utils";

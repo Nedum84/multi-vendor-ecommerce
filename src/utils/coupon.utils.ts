@@ -25,11 +25,11 @@ class CouponUtils {
     qty: number,
     price: number,
     discount?: ProductDiscountInstance
-  ) => {
+  ): number => {
     const { product_qty_limit, percentage_discount } = coupon; //{{ product_qty_limit }} == no of prod to apply coupon to
     const couponPercent = percentage_discount / 100;
 
-    //Qty to be applied
+    /*Qty to be applied */
     let couponableQty: number = 0;
     if (product_qty_limit) {
       //Check if the cart qty is gt than product_qty_limit
@@ -45,11 +45,8 @@ class CouponUtils {
       couponableQty = qty;
     }
 
-    if (discount) {
-      return couponableQty * discount.price * couponPercent;
-    } else {
-      return couponableQty * price * couponPercent;
-    }
+    const actualPrice = discount ? discount.price : price;
+    return couponableQty * actualPrice * couponPercent;
 
     // OR
     //if discount,

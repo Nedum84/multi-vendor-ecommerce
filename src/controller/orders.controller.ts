@@ -10,21 +10,9 @@ const updatePayment = async (req: Request, res: Response) => {
   const result = await ordersService.updatePayment(req);
   ApiResponse.ok(res, { order: result });
 };
-const storeUnsettledOrders = async (req: Request, res: Response) => {
-  const result = await ordersService.storeUnsettledOrders(req);
-  ApiResponse.ok(res, { sub_orders: result });
-};
-const userCancelOrder = async (req: Request, res: Response) => {
-  const result = await ordersService.userCancelOrder(req);
-  ApiResponse.ok(res, { sub_order: result });
-};
-const adminCancelOrder = async (req: Request, res: Response) => {
-  const result = await ordersService.adminCancelOrder(req);
-  ApiResponse.ok(res, { sub_order: result });
-};
-const processRefund = async (req: Request, res: Response) => {
-  const result = await ordersService.processRefund(req);
-  ApiResponse.ok(res, { sub_order: result });
+const adminUpdatePayment = async (req: Request, res: Response) => {
+  const result = await ordersService.adminUpdatePayment(req);
+  ApiResponse.ok(res, { order: result });
 };
 const updateOrderStatus = async (req: Request, res: Response) => {
   const result = await ordersService.updateOrderStatus(req);
@@ -34,9 +22,21 @@ const updateDeliveryStatus = async (req: Request, res: Response) => {
   const result = await ordersService.updateDeliveryStatus(req);
   ApiResponse.ok(res, { sub_order: result });
 };
+const userCancelOrder = async (req: Request, res: Response) => {
+  const result = await ordersService.userCancelOrder(req);
+  ApiResponse.ok(res, { sub_order: result });
+};
+const processRefund = async (req: Request, res: Response) => {
+  const result = await ordersService.processRefund(req);
+  ApiResponse.ok(res, { sub_order: result });
+};
 const settleStore = async (req: Request, res: Response) => {
   const result = await ordersService.settleStore(req);
   ApiResponse.ok(res, { settlement: result });
+};
+const storeUnsettledOrders = async (req: Request, res: Response) => {
+  const result = await ordersService.storeUnsettledOrders(req);
+  ApiResponse.ok(res, { sub_orders: result });
 };
 const findById = async (req: Request, res: Response) => {
   const { order_id } = req.params;
@@ -51,9 +51,9 @@ const findAll = async (req: Request, res: Response) => {
 export default {
   create,
   updatePayment,
+  adminUpdatePayment,
   storeUnsettledOrders,
   userCancelOrder,
-  adminCancelOrder,
   processRefund,
   updateOrderStatus,
   updateDeliveryStatus,

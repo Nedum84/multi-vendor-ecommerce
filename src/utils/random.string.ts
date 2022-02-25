@@ -51,7 +51,7 @@ export const genSlugColId = async (model: SequelizeModel, column: string, slug: 
   let isInitial = true;
   do {
     if (!isInitial) {
-      string = `${slug}-${generateChars(length, "alphanumeric", "lowercase")}`;
+      string = `${slug}-${generateChars(5, "alphanumeric", "lowercase")}`;
     } else string = slug;
 
     isInitial = false;

@@ -5,7 +5,7 @@ import cartService from "../services/cart.service";
 const create = async (req: Request, res: Response) => {
   const result = await cartService.create(req);
 
-  ApiResponse.created(res, result);
+  ApiResponse.ok(res, result);
 };
 const update = async (req: Request, res: Response) => {
   const result = await cartService.update(req);

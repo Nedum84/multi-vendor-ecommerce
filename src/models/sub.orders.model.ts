@@ -3,6 +3,7 @@ import { Model, DataTypes } from "sequelize/dist";
 import { ModelRegistry } from ".";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
+import { OrdersInstance } from "./orders.model";
 
 export interface SubOrdersAttributes {
   sub_order_id: string;
@@ -32,7 +33,9 @@ interface SubOrdersCreationAttributes extends Optional<SubOrdersAttributes, "sub
 
 export interface SubOrdersInstance
   extends Model<SubOrdersAttributes, SubOrdersCreationAttributes>,
-    SubOrdersAttributes {}
+    SubOrdersAttributes {
+  order: OrdersInstance;
+}
 
 //--> Model attributes
 export const SubOrdersModelAttributes: SequelizeAttributes<SubOrdersAttributes> = {
@@ -129,6 +132,11 @@ export function SubOrdersFactory(sequelize: Sequelize) {
       as: "store",
       foreignKey: "store_id",
       targetKey: "store_id",
+    });
+    SubOrders.hasMany(models.SubOrdersProduct, {
+      as: "products",
+      foreignKey: "sub_order_id",
+      sourceKey: "sub_order_id",
     });
   };
 

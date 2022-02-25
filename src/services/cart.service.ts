@@ -38,6 +38,7 @@ const update = async (req: Request) => {
   const cart = await findOneByUserAndProduct(user_id, variation_id);
 
   const variation = await productVariationService.findById(variation_id);
+  const { product } = variation;
 
   if (cart) {
     if (action === "add") {
@@ -53,6 +54,8 @@ const update = async (req: Request) => {
         await cart.save();
       }
     }
+  } else {
+    await Cart.create({ user_id, variation_id, store_id: product.store_id, qty: 1 });
   }
 
   return findAllByUserId(user_id);
@@ -60,8 +63,9 @@ const update = async (req: Request) => {
 
 const clearCart = async (user_id: string, variation_id?: string, transaction?: Transaction) => {
   const variation = variation_id ? { variation_id } : {};
-  const clear = await Cart.destroy({ where: { user_id, ...variation }, transaction });
-  return !!clear;
+  //clear cart...
+  await Cart.destroy({ where: { user_id, ...variation }, transaction });
+  return findAllByUserId(user_id);
 };
 
 const findAllByUserId = async (user_id: string) => {

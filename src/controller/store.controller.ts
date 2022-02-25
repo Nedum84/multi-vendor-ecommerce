@@ -14,6 +14,10 @@ const adminVerifyStore = async (req: Request, res: Response) => {
   const result = await storeService.adminVerifyStore(req);
   ApiResponse.ok(res, { store: result });
 };
+const adminUpdateStore = async (req: Request, res: Response) => {
+  const result = await storeService.adminUpdateStore(req);
+  ApiResponse.ok(res, { store: result });
+};
 const findById = async (req: Request, res: Response) => {
   const { store_id } = req.params;
   const result = await storeService.findById(store_id);
@@ -37,6 +41,7 @@ export default {
   create,
   update,
   adminVerifyStore,
+  adminUpdateStore,
   findById,
   findUserStores,
   findAll,

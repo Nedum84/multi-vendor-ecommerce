@@ -23,6 +23,7 @@ export interface OrdersAddressInstance
 export const OrdersAddressModelAttributes: SequelizeAttributes<OrdersAddressAttributes> = {
   order_id: {
     type: DataTypes.STRING,
+    primaryKey: true,
     allowNull: false,
   },
   name: {

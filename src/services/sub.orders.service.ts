@@ -1,6 +1,6 @@
 import { Transaction } from "sequelize/dist";
 import { NotFoundError } from "../apiresponse/not.found.error";
-import { OrderStatus } from "../enum/orders.enum";
+import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { Orders, SubOrders, SubOrdersProduct } from "../models";
 import { CartInstance } from "../models/cart.model";
 import { CouponInstance } from "../models/coupon.model";
@@ -10,6 +10,7 @@ import { genUniqueColId } from "../utils/random.string";
 import cartService from "./cart.service";
 import couponService from "./coupon.service";
 import shippingService from "./shipping.service";
+import storeService from "./store.service";
 import subOrdersProductService from "./sub.orders.product.service";
 
 const create = async (
@@ -21,7 +22,11 @@ const create = async (
   transaction: Transaction,
   couponData?: { coupon_amount: number; sub_total: number; coupon: CouponInstance }
 ) => {
-  const storeCarts = carts.filter((c) => (c.store_id = store_id));
+  // OR removing carts from params and passing user_id,
+  // With that you can access the carts via
+  // const {carts} = await cartService.findAllByUserId(user_id);
+  const store = await storeService.findById(store_id);
+  const storeCarts = carts.filter((c) => c.store_id === store_id);
   const variation_ids = storeCarts.map((c) => c.variation_id);
 
   const sub_total = cartService.getSubTotal(storeCarts);
@@ -35,7 +40,7 @@ const create = async (
   const store_shipping = await shippingService.getStoreShipping(store_id, variation_ids, address_id);
   const store_tax_amount = 0;
   const amount = sub_total - storeCouponAmount + store_shipping + store_tax_amount;
-  const store_price = (sub_total - storeCouponAmount) * 0.9; //90% for store, 10% for US....🤪
+  const store_price = (sub_total - storeCouponAmount) * (store.store_percentage / 100);
 
   const sub_order_id = await genUniqueColId(SubOrders, "sub_order_id", 10, "alphanumeric", "uppercase");
 
@@ -49,6 +54,7 @@ const create = async (
     tax_amount: store_tax_amount, //As above, do same to this guy later with each product(variation) taxz....
     order_id,
     order_status: OrderStatus.PENDING,
+    delivery_status: DeliveryStatus.NOT_PICKED,
     store_price,
     purchased_by: user_id,
     ...({} as any),
@@ -69,7 +75,10 @@ const findById = async (sub_order_id: string) => {
   const order = await SubOrders.findOne({
     where: { sub_order_id },
     paranoid: false,
-    include: [{ model: Orders, as: "order" }],
+    include: [
+      { model: Orders, as: "order" },
+      { model: SubOrdersProduct, as: "products" },
+    ],
   });
   if (!order) {
     throw new NotFoundError("Sub Order not found");
@@ -82,7 +91,10 @@ const findAllByOrderId = async (order_id: string, transaction?: Transaction) => 
   const orders = await SubOrders.findAll({
     where: { order_id },
     transaction,
-    include: [{ model: Orders, as: "order" }],
+    include: [
+      { model: Orders, as: "order" },
+      { model: SubOrdersProduct, as: "products" },
+    ],
   });
   return orders;
 };

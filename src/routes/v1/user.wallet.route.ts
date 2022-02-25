@@ -17,7 +17,7 @@ router.post(
   validateReq(userWalletValidation.adminCreateCreditReward),
   userWalletController.adminCreateCreditReward
 );
-router.patch(
+router.post(
   "/user-credit",
   validateReq(userWalletValidation.userCreateCreditReward),
   userWalletController.userCreateCreditReward

@@ -17,10 +17,12 @@ export const CollectionProductModelAttributes: SequelizeAttributes<CollectionPro
   product_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   collection_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
 };
 // --> Factory....

@@ -7,7 +7,6 @@ const adminCreateCreditReward = {
   body: Joi.object().keys({
     user_id: Joi.string().required(),
     amount: Joi.number().required(),
-    payment_id: Joi.number().required(),
   }),
 };
 
@@ -15,7 +14,7 @@ const userCreateCreditReward = {
   params: Joi.object().keys({}),
   body: Joi.object().keys({
     amount: Joi.number().required(),
-    payment_id: Joi.number().required(),
+    payment_reference: Joi.string().required(),
   }),
 };
 

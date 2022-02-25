@@ -81,6 +81,17 @@ export function UserFactory(sequelize: Sequelize) {
 
   User.associate = function (models: ModelRegistry) {
     const { User } = models;
+
+    User.hasMany(models.UserWallet, {
+      as: "funds",
+      foreignKey: "user_id",
+      sourceKey: "user_id",
+    });
+    User.hasMany(models.UserAddress, {
+      as: "addresses",
+      foreignKey: "user_id",
+      sourceKey: "user_id",
+    });
   };
 
   User.prototype.toJSON = function () {

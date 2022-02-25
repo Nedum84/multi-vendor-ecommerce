@@ -33,7 +33,7 @@ export default {
     }
     if (data.variation) {
       data.variation.product_id = product.product_id;
-      await productVariationService.create(data.variation, data.discount, []);
+      product.variations = [await productVariationService.create(data.variation, data.discount, [])];
     }
     return product;
   },

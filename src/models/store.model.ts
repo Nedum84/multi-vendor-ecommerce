@@ -18,9 +18,21 @@ export interface StoreAttributes {
   description: string;
   verified: boolean;
   verified_at: Date;
+  disable_store: boolean; //admin can only change this...
+  store_percentage: number; //Store's percentage share for every product sold
+  //Extract to a new table later if you care
+  settings: {
+    auto_complete_order: boolean; //auto complete order on checkout
+    bank_details: {
+      acc_name: string;
+      acc_number: string;
+      bank_code: string;
+      bank_name: string;
+    };
+  };
 }
 
-interface StoreCreationAttributes extends Optional<StoreAttributes, "logo" | "description"> {}
+interface StoreCreationAttributes extends Optional<StoreAttributes, "logo" | "description" | "settings"> {}
 
 export interface StoreInstance extends Model<StoreAttributes, StoreCreationAttributes>, StoreAttributes {}
 
@@ -46,6 +58,7 @@ export const StoreModelAttributes: SequelizeAttributes<StoreAttributes> = {
   phone: DataTypes.STRING,
   slug: {
     type: DataTypes.STRING,
+    allowNull: false,
     unique: true,
   },
   logo: DataTypes.STRING,
@@ -73,6 +86,26 @@ export const StoreModelAttributes: SequelizeAttributes<StoreAttributes> = {
   verified_at: {
     type: DataTypes.DATE,
     defaultValue: new Date(),
+  },
+  disable_store: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  store_percentage: {
+    type: DataTypes.INTEGER,
+    defaultValue: 90,
+  },
+  settings: {
+    type: DataTypes.JSONB,
+    defaultValue: {
+      auto_complete_order: true,
+      bank_details: {
+        acc_name: null,
+        acc_nnumber: null,
+        bank_code: null,
+        bank_name: null,
+      },
+    },
   },
 };
 // --> Factory....

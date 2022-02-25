@@ -8,7 +8,7 @@ const create = async (req: Request, res: Response) => {
 };
 const findAllForUser = async (req: Request, res: Response) => {
   const result = await wishlistService.findAllForUser(req);
-  ApiResponse.ok(res, { wishlist: result });
+  ApiResponse.ok(res, { wishlists: result });
 };
 
 export default { create, findAllForUser };

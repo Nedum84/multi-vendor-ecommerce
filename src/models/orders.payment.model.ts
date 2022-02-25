@@ -8,7 +8,7 @@ export interface OrdersPaymentAttributes {
   order_id: string;
   payment_status: PaymentStatus;
   payment_channel: PaymentChannel;
-  payment_id: string;
+  payment_reference: string;
 }
 
 export interface OrdersPaymentInstance
@@ -31,9 +31,10 @@ export const OrdersPaymentModelAttributes: SequelizeAttributes<OrdersPaymentAttr
     values: Object.values(PaymentChannel),
     allowNull: false,
   },
-  payment_id: {
+  payment_reference: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
 };
 // --> Factory....
@@ -52,11 +53,11 @@ export function OrdersPaymentFactory(sequelize: Sequelize) {
   OrdersPayment.associate = function (models: ModelRegistry) {
     const { OrdersPayment } = models;
 
-    // OrdersPayment.belongsTo(models.Orders, {
-    //   as: "order",
-    //   foreignKey: "order_id",
-    //   targetKey: "order_id",
-    // });
+    OrdersPayment.belongsTo(models.Orders, {
+      as: "order",
+      foreignKey: "order_id",
+      targetKey: "order_id",
+    });
   };
 
   OrdersPayment.prototype.toJSON = function () {

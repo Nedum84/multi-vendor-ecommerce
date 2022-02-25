@@ -116,6 +116,11 @@ export function ProductFactory(sequelize: Sequelize) {
       foreignKey: "product_id",
       targetKey: "collection_id",
     });
+    Product.hasMany(models.Wishlist, {
+      as: "wishlists",
+      foreignKey: "product_id",
+      sourceKey: "product_id",
+    });
   };
   Product.prototype.toJSON = function () {
     const values = { ...this.get() };
