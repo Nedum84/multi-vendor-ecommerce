@@ -14,10 +14,7 @@ export interface MediaFolderAttributes {
 }
 
 interface MediaFolderCreationAttributes
-  extends Optional<
-    MediaFolderAttributes,
-    "folder_id" | "parent_id" | "desc" | "icon"
-  > {}
+  extends Optional<MediaFolderAttributes, "folder_id" | "parent_id" | "desc" | "icon"> {}
 
 export interface MediaFolderInstance
   extends Model<MediaFolderAttributes, MediaFolderCreationAttributes>,
@@ -28,28 +25,27 @@ export interface MediaFolderInstance
 }
 
 //--> Model attributes
-export const MediaFolderModelAttributes: SequelizeAttributes<MediaFolderAttributes> =
-  {
-    folder_id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-      comment: "MediaFolder Id",
-      allowNull: false,
-      unique: true,
-    },
-    parent_id: DataTypes.STRING,
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    desc: DataTypes.STRING,
-    icon: DataTypes.STRING,
-    created_by: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      comment: "Creator of the folder",
-    },
-  };
+export const MediaFolderModelAttributes: SequelizeAttributes<MediaFolderAttributes> = {
+  folder_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+    comment: "MediaFolder Id",
+    allowNull: false,
+    unique: true,
+  },
+  parent_id: DataTypes.STRING,
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  desc: DataTypes.STRING,
+  icon: DataTypes.STRING,
+  created_by: {
+    type: DataTypes.STRING,
+    allowNull: false,
+    comment: "Creator of the folder",
+  },
+};
 
 // --> Factory....
 export function MediaFolderFactory(sequelize: Sequelize) {
@@ -60,6 +56,14 @@ export function MediaFolderFactory(sequelize: Sequelize) {
       timestamps: true,
       tableName: "MediaFolder",
       freezeTableName: true,
+      paranoid: true,
+      validate: {
+        paymentReferenceErr() {
+          if (this.folder_id === this.parent_id) {
+            throw new Error("Folder can't be parent of itself");
+          }
+        },
+      },
     }
   );
 

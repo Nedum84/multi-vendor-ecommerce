@@ -4,6 +4,7 @@ import { ModelRegistry } from ".";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { OrdersInstance } from "./orders.model";
+import { SubOrdersProductInstance } from "./sub.orders.product.model";
 
 export interface SubOrdersAttributes {
   sub_order_id: string;
@@ -35,6 +36,7 @@ export interface SubOrdersInstance
   extends Model<SubOrdersAttributes, SubOrdersCreationAttributes>,
     SubOrdersAttributes {
   order: OrdersInstance;
+  products: SubOrdersProductInstance;
 }
 
 //--> Model attributes

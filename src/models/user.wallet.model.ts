@@ -1,19 +1,21 @@
 import { Sequelize } from "sequelize/dist";
 import { Model, Optional, DataTypes } from "sequelize/dist";
 import { ModelRegistry } from ".";
-import { ErrorResponse } from "../apiresponse/error.response";
 import { FundingTypes } from "../enum/payment.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 
 export interface UserWalletAttributes {
   user_id: string;
-  sub_order_id: string;
   amount: number;
   fund_type: FundingTypes;
   payment_reference: string;
+  action_performed_by: string;
+  sub_order_id?: string;
+  credit_code?: string;
 }
 
-interface UserWalletCreationAttributes extends Optional<UserWalletAttributes, "sub_order_id" | "payment_reference"> {}
+interface UserWalletCreationAttributes
+  extends Optional<UserWalletAttributes, "sub_order_id" | "payment_reference" | "credit_code"> {}
 
 export interface UserWalletInstance
   extends Model<UserWalletAttributes, UserWalletCreationAttributes>,
@@ -26,7 +28,6 @@ export const UserWalletModelAttributes: SequelizeAttributes<UserWalletAttributes
     comment: "User's' Id",
     allowNull: false,
   },
-  sub_order_id: DataTypes.STRING, //not null for refund
   amount: {
     type: DataTypes.INTEGER,
     allowNull: false,
@@ -41,6 +42,12 @@ export const UserWalletModelAttributes: SequelizeAttributes<UserWalletAttributes
     unique: true,
     allowNull: false,
   },
+  action_performed_by: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  sub_order_id: DataTypes.STRING, //not null for refund
+  credit_code: DataTypes.STRING, // not null for credit redeem code
 };
 
 // --> Factory....

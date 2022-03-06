@@ -38,6 +38,8 @@ const create = {
     category_ids: Joi.array().items(Joi.string().required()).required(),
     //Collectionszz
     collection_ids: Joi.array().items(Joi.string().required()),
+    //Tagszz
+    tag_ids: Joi.array().items(Joi.string().required()),
   }),
 };
 const update = {
@@ -48,10 +50,14 @@ const update = {
     name: Joi.string(),
     desc: Joi.string(),
     images: Joi.array().items(Joi.string().required()),
-    category_ids: Joi.array().items(Joi.string().required()),
-    collection_ids: Joi.array().items(Joi.string().required()),
     status: Joi.string().valid(...Object.values(ProductStatus)),
     is_featured: Joi.boolean(),
+    //Categoryzz
+    category_ids: Joi.array().items(Joi.string().required()),
+    //Collectionszz
+    collection_ids: Joi.array().items(Joi.string()),
+    //Tagszz
+    tag_ids: Joi.array().items(Joi.string()),
   }),
 };
 const deleteCollection = {
@@ -64,6 +70,12 @@ const deleteCategory = {
   body: Joi.object().keys({
     product_id: Joi.string().required(),
     category_ids: Joi.array().items(Joi.string().required()).required(),
+  }),
+};
+const deleteTag = {
+  body: Joi.object().keys({
+    product_id: Joi.string().required(),
+    tag_ids: Joi.array().items(Joi.string().required()).required(),
   }),
 };
 const findById = {
@@ -86,13 +98,21 @@ const findLatestByCollection = {
   params: Joi.object().keys({}),
   query: Joi.object().keys({ ...paginateDefault }),
 };
+const findFlashProducts = {
+  params: Joi.object().keys({}),
+  query: Joi.object().keys({
+    ...paginateDefault,
+  }),
+};
 
 export default {
   create,
   update,
   deleteCollection,
   deleteCategory,
+  deleteTag,
   findById,
   findAll,
   findLatestByCollection,
+  findFlashProducts,
 };

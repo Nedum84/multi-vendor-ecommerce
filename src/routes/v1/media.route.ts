@@ -15,13 +15,12 @@ router.patch("/folder/:folder_id", validateReq(mediaValidation.updateFolder), me
 router.patch("/file/:file_id", validateReq(mediaValidation.updateFile), mediaController.updateFile);
 router.post("/copy", validateReq(mediaValidation.copy), mediaController.copy);
 router.post("/move", validateReq(mediaValidation.move), mediaController.move);
-router.delete("/folder/delete", validateReq(mediaValidation.deleteFolder), mediaController.deleteFolder);
-router.delete("/file/delete", validateReq(mediaValidation.deleteFile), mediaController.deleteFile);
+router.delete("/folder/:folder_id", validateReq(mediaValidation.deleteFolder), mediaController.deleteFolder);
+router.delete("/file/:file_id", validateReq(mediaValidation.deleteFile), mediaController.deleteFile);
 
-router.get("/home", validateReq(mediaValidation.homeMedia), mediaController.homeMedia);
-router.get("/folder", validateReq(mediaValidation.folderMedia), mediaController.folderMedia);
 router.get("/folder/nested", validateReq(mediaValidation.findAllNestedFolders), mediaController.findAllNestedFolders);
-router.get("/file/nested", validateReq(mediaValidation.findAllNestedFiles), mediaController.findAllNestedFiles);
+router.get("/home", validateReq(mediaValidation.homeMedia), mediaController.homeMedia);
+router.get("/folder/:folder_id", validateReq(mediaValidation.folderMedia), mediaController.folderMedia);
 router.get("/parent/:folder_id", validateReq(mediaValidation.getParentFolders), mediaController.getParentFolders);
 router.get("/children/:folder_id", validateReq(mediaValidation.getChildrenFolders), mediaController.getChildrenFolders);
 

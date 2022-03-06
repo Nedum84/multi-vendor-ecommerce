@@ -15,7 +15,6 @@ import { genUniqueColId } from "../utils/random.string";
 import { asyncForEach } from "../utils/function.utils";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { Helpers } from "../utils/helpers";
-import { OrdersInstance } from "../models/orders.model";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { isAdmin } from "../utils/admin.utils";
 import storeService from "./store.service";
@@ -25,6 +24,10 @@ import orderAddressService from "./order.address.service";
 import subOrdersService from "./sub.orders.service";
 import productVariationService from "./product.variation.service";
 import { VendorSettlementInstance } from "../models/vendor.settlement.model";
+import { UserWalletAttributes } from "../models/user.wallet.model";
+import { OrdersInstance } from "../models/orders.model";
+import CouponUtils from "../utils/coupon.utils";
+import { StockStatus } from "../enum/product.enum";
 
 //create
 const create = async (req: Request) => {
@@ -39,7 +42,7 @@ const create = async (req: Request) => {
     throw new ErrorResponse("No product found on the cart");
   }
   // -->check product qty avaialability
-  if (!productVariationService.validateCartProductQty(carts)) {
+  if (!cartService.validateCartProductQty(carts)) {
     throw new ErrorResponse("One or more Item is currently out of stock");
   }
 
@@ -87,16 +90,13 @@ const create = async (req: Request) => {
     await orderAddressService.create(userAddress, order_id, transaction);
     //clear the cart
     await cartService.clearCart(user_id, undefined, transaction);
-    //Update product variation qty(Minus the bought qty from the total)
-    await productVariationService.updateQtyRemaining(carts, transaction);
     //get all orders
     const sub_orders = await subOrdersService.findAllByOrderId(order_id, transaction);
-    // await transaction.commit(); //not needed since this is sequelize managed transaction
+
     return { order, sub_orders };
   }); //Transaction ends...
 
   return findById(result.order.order_id);
-  // return result;
 };
 
 //update order payment
@@ -122,10 +122,7 @@ const updatePayment = async (req: Request) => {
 
   const order = await Orders.findOne({
     where: { order_id: orderId },
-    include: [
-      { model: OrdersPayment, as: "payment", required: false },
-      { model: SubOrders, as: "sub_orders" },
-    ],
+    include: [{ model: SubOrders, as: "sub_orders" }],
   });
 
   if (!order) {
@@ -158,7 +155,7 @@ const updatePayment = async (req: Request) => {
     //Completed payment
     if (payment_status == PaymentStatus.COMPLETED || payed_from_wallet) {
       // update all the sub orders for stores with auto_complete_order == true
-      asyncForEach(order.sub_orders, async (sub_order) => {
+      await asyncForEach(order.sub_orders, async (sub_order) => {
         const { store_id } = sub_order;
         const { settings } = await storeService.findById(store_id, transaction);
         if (settings.auto_complete_order) {
@@ -174,6 +171,9 @@ const updatePayment = async (req: Request) => {
 
       order.payment_completed = true;
       await order.save({ transaction });
+
+      //Validate orders + Update product qty &/or product flashsale sold
+      await validateOrder(order, transaction);
     }
 
     if (!payed_from_wallet) {
@@ -189,7 +189,7 @@ const updatePayment = async (req: Request) => {
     throw new ErrorResponse(error);
   }
 
-  return findById(order!.order_id);
+  return findById(order.order_id);
 };
 //Admin update order payment
 const adminUpdatePayment = async (req: Request) => {
@@ -243,6 +243,9 @@ const adminUpdatePayment = async (req: Request) => {
 
       order.payment_completed = true;
       await order.save({ transaction });
+
+      //Validate orders + Update product qty &/or product flashsale sold
+      await validateOrder(order, transaction);
     }
 
     const payment_channel = PaymentChannel.ADMIN;
@@ -259,6 +262,66 @@ const adminUpdatePayment = async (req: Request) => {
   }
 
   return findById(order!.order_id);
+};
+
+const validateOrder = async (order: OrdersInstance, transaction: Transaction) => {
+  let calcSubTotal = 0;
+  let couponAmount = 0;
+
+  await asyncForEach(order.sub_orders, async (sub_order) => {
+    const { variation_id, qty } = sub_order.products;
+    const { discount, flash_discount, price } = await productVariationService.findById(variation_id);
+
+    if (flash_discount) {
+      calcSubTotal += qty * flash_discount.price;
+    } else if (discount) {
+      calcSubTotal += qty * discount.price;
+    } else {
+      calcSubTotal += qty * price;
+    }
+
+    if (order.coupon_code) {
+      const coupon = await couponService.findByCouponCode(order.coupon_code);
+      couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
+    }
+  });
+
+  const amount = calcSubTotal - couponAmount;
+
+  if (amount !== order.amount) {
+    throw new Error("Order couldn't be validated");
+  }
+
+  //Update qty remaining...
+  //Extra validation(s) could be removed shaaa...
+  await asyncForEach(order.sub_orders, async (sub_order) => {
+    const { variation_id, qty } = sub_order.products;
+    const variation = await productVariationService.findById(variation_id, transaction);
+    const { flash_discount } = variation;
+
+    if (variation.with_storehouse_management) {
+      if (variation.stock_qty < qty) {
+        throw new Error(`Item(${variation.product.name}) is currently out of stock`);
+      }
+
+      variation.stock_qty = variation.stock_qty - qty;
+      await variation.save({ transaction });
+    } else {
+      if (variation.stock_status !== StockStatus.IN_STOCK) {
+        throw new Error(`Item ${variation.product.name} is currently out of stock`);
+      }
+    }
+    //If flashsale is included
+    if (flash_discount) {
+      if (flash_discount.qty < flash_discount.sold + qty) {
+        const qtyRem = flash_discount.qty - flash_discount.sold;
+        throw new Error(`Item(${variation.product.name}) quantity remaining on flash sale is ${qtyRem}`);
+      }
+      flash_discount.sold = flash_discount.sold + qty;
+      await flash_discount.save({ transaction });
+    }
+  });
+  return true;
 };
 
 // update order status (can't be changed once it's marked completed)
@@ -429,14 +492,15 @@ const processRefund = async (req: Request) => {
 
       //refund the user wallet
       const payment_reference = await genUniqueColId(UserWallet, "payment_reference", 17);
-      await userWalletService.createCredit(
-        order.purchased_by,
+      const creditPayload: UserWalletAttributes = {
+        user_id: order.purchased_by,
         amount,
-        FundingTypes.REFUND,
+        fund_type: FundingTypes.REFUND,
         payment_reference,
+        action_performed_by: order.purchased_by,
         sub_order_id,
-        t
-      );
+      };
+      await userWalletService.createCredit(creditPayload, t);
     });
   } catch (error: any) {
     throw new ErrorResponse(error);
@@ -511,7 +575,7 @@ const storeUnsettledOrders = async (req: Request) => {
 };
 
 //find one
-const findById = async (order_id: string) => {
+const findById = async (order_id: string, transaction?: Transaction) => {
   const order = await Orders.findOne({
     where: { order_id },
     paranoid: false,

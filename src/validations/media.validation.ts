@@ -1,6 +1,6 @@
 import Joi from "joi";
 import { paginateDefault } from ".";
-import { FileType } from "../enum/media.enum";
+import { FileType, MediaType } from "../enum/media.enum";
 
 const createFolder = {
   body: Joi.object().keys({
@@ -103,7 +103,7 @@ const findFileById = {
 
 const homeMedia = {
   query: Joi.object().keys({
-    media_type: Joi.string().valid("file", "folder"),
+    media_type: Joi.string().valid(...Object.values(MediaType)),
     ...paginateDefault,
   }),
   body: Joi.object().keys({}),
@@ -113,27 +113,20 @@ const folderMedia = {
     folder_id: Joi.string().required(),
   }),
   query: Joi.object().keys({
-    media_type: Joi.string().valid("file", "folder"),
+    media_type: Joi.string().valid(...Object.values(MediaType)),
     ...paginateDefault,
   }),
   body: Joi.object().keys({}),
 };
 const findAllNestedFolders = {
-  params: Joi.object().keys({
-    folder_id: Joi.string().required(),
-  }),
+  params: Joi.object().keys({}),
   query: Joi.object().keys({
+    folder_id: Joi.string(),
     include_files: Joi.boolean(),
   }),
   body: Joi.object().keys({}),
 };
-const findAllNestedFiles = {
-  params: Joi.object().keys({}),
-  query: Joi.object().keys({
-    folder_id: Joi.string(),
-  }),
-  body: Joi.object().keys({}),
-};
+
 const getParentFolders = {
   params: Joi.object().keys({
     folder_id: Joi.string().required(),
@@ -167,7 +160,6 @@ export default {
   homeMedia,
   folderMedia,
   findAllNestedFolders,
-  findAllNestedFiles,
   getParentFolders,
   getChildrenFolders,
 };

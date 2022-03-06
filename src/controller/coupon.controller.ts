@@ -23,7 +23,7 @@ const applyCoupon = async (req: Request, res: Response) => {
 const validateCouponExist = async (req: Request, res: Response) => {
   const { coupon_code } = req.body;
   const result = await couponService.validateCouponExist(coupon_code);
-  ApiResponse.ok(res, { coupon: result });
+  ApiResponse.ok(res, result);
 };
 const findByCouponCode = async (req: Request, res: Response) => {
   const { coupon_code } = req.params;

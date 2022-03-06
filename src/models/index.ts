@@ -34,6 +34,15 @@ import { OrdersFactory } from "./orders.model";
 import { CollectionFactory } from "./collection.model";
 import { CollectionProductFactory } from "./collection.product.model";
 import { CategoryProductFactory } from "./category.product.model";
+import { CreditCodeFactory } from "./credit.code.model";
+import { CreditCodeUserFactory } from "./credit.code.user.model";
+import { FlashSalesFactory } from "./flash.sales.model";
+import { FlashSalesProductsFactory } from "./flash.sales.products.model";
+import { RelatedProductFactory } from "./related.product.model";
+import { TagFactory } from "./tag.model";
+import { TagProductFactory } from "./tag.product.model";
+import { WithdrawalFactory } from "./withdrawal.model";
+import { ProductRatingFactory } from "./product.rating.model";
 pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
 
 // @ts-ignore
@@ -52,6 +61,10 @@ export const CouponProduct = CouponProductFactory(sequelize);
 export const Coupon = CouponFactory(sequelize);
 export const CouponStore = CouponStoreFactory(sequelize);
 export const CouponUser = CouponUserFactory(sequelize);
+export const CreditCode = CreditCodeFactory(sequelize);
+export const CreditCodeUser = CreditCodeUserFactory(sequelize);
+export const FlashSales = FlashSalesFactory(sequelize);
+export const FlashSalesProducts = FlashSalesProductsFactory(sequelize);
 export const MediaFiles = MediaFilesFactory(sequelize);
 export const MediaFolder = MediaFolderFactory(sequelize);
 export const OrdersAddress = OrdersAddressFactory(sequelize);
@@ -63,16 +76,21 @@ export const ProductAttribute = ProductAttributeFactory(sequelize);
 export const ProductAttributeSets = ProductAttributeSetsFactory(sequelize);
 export const ProductDiscount = ProductDiscountFactory(sequelize);
 export const Product = ProductFactory(sequelize);
+export const ProductRating = ProductRatingFactory(sequelize);
 export const ProductVariation = ProductVariationFactory(sequelize);
 export const ProductVariationWithAttributeSet = ProductVariationWithAttributeSetFactory(sequelize);
 export const ProductWithAttribute = ProductWithAttributeFactory(sequelize);
+export const RelatedProduct = RelatedProductFactory(sequelize);
 export const Store = StoreFactory(sequelize);
+export const Tag = TagFactory(sequelize);
+export const TagProduct = TagProductFactory(sequelize);
 export const Token = TokenFactory(sequelize);
 export const VendorSettlement = VendorSettlementFactory(sequelize);
 export const UserAddress = UserAddressFactory(sequelize);
 export const User = UserFactory(sequelize);
 export const UserWallet = UserWalletFactory(sequelize);
 export const Wishlist = WishlistFactory(sequelize);
+export const Withdrawal = WithdrawalFactory(sequelize);
 
 const models = {
   Cart,
@@ -84,6 +102,10 @@ const models = {
   Coupon,
   CouponStore,
   CouponUser,
+  CreditCode,
+  CreditCodeUser,
+  FlashSales,
+  FlashSalesProducts,
   MediaFiles,
   MediaFolder,
   OrdersAddress,
@@ -95,16 +117,21 @@ const models = {
   ProductAttributeSets,
   ProductDiscount,
   Product,
+  ProductRating,
   ProductVariation,
   ProductVariationWithAttributeSet,
   ProductWithAttribute,
+  RelatedProduct,
   Store,
+  Tag,
+  TagProduct,
   Token,
   VendorSettlement,
   UserAddress,
   User,
   UserWallet,
   Wishlist,
+  Withdrawal,
 };
 
 export type ModelRegistry = typeof models;

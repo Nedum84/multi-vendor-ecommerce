@@ -4,6 +4,8 @@ import { ProductStatus } from "../enum/product.enum";
 import {
   Category,
   Collection,
+  FlashSales,
+  FlashSalesProducts,
   ProductAttribute,
   ProductAttributeSets,
   ProductDiscount,
@@ -82,12 +84,7 @@ class ProductUtils {
             {
               model: ProductAttributeSets,
               as: "attribute_sets",
-              include: [
-                {
-                  model: ProductAttribute,
-                  as: "attribute",
-                },
-              ],
+              include: [{ model: ProductAttribute, as: "attribute" }],
             },
             {
               model: ProductDiscount,
@@ -98,6 +95,23 @@ class ProductUtils {
                 discount_from: { [Op.lt]: new Date() },
                 discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
               },
+            },
+            {
+              model: FlashSalesProducts,
+              as: "flash_discount",
+              required: false,
+              include: [
+                {
+                  model: FlashSales,
+                  as: "flash_sale",
+                  attributes: ["flash_sale_id"],
+                  where: {
+                    revoke: false,
+                    start_date: { [Op.lt]: new Date() },
+                    end_date: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+                  },
+                },
+              ],
             },
           ],
         },

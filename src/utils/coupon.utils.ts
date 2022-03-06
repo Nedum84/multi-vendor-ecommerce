@@ -1,6 +1,7 @@
 import { FindOptions } from "sequelize";
 import { Coupon, CouponProduct, CouponStore, CouponUser } from "../models";
 import { CouponInstance } from "../models/coupon.model";
+import { FlashSalesProductsInstance } from "../models/flash.sales.products.model";
 import { ProductDiscountInstance } from "../models/product.discount.model";
 import { genUniqueColId } from "./random.string";
 
@@ -24,7 +25,8 @@ class CouponUtils {
     coupon: CouponInstance,
     qty: number,
     price: number,
-    discount?: ProductDiscountInstance
+    discount?: ProductDiscountInstance,
+    flash_discount?: FlashSalesProductsInstance
   ): number => {
     const { product_qty_limit, percentage_discount } = coupon; //{{ product_qty_limit }} == no of prod to apply coupon to
     const couponPercent = percentage_discount / 100;
@@ -45,7 +47,14 @@ class CouponUtils {
       couponableQty = qty;
     }
 
-    const actualPrice = discount ? discount.price : price;
+    let actualPrice = 0;
+    if (flash_discount) {
+      actualPrice = flash_discount.price;
+    } else if (discount) {
+      actualPrice = discount.price;
+    } else {
+      actualPrice = price;
+    }
     return couponableQty * actualPrice * couponPercent;
 
     // OR

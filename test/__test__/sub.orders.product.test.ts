@@ -19,6 +19,7 @@ describe("Sub Order Products Tests...", () => {
 
     //create order
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+
     const { sub_order_id } = body.data.order.sub_orders[0];
 
     const response = await request(`/sub-orders-products/${sub_order_id}`);

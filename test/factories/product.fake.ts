@@ -11,6 +11,8 @@ import storeFake from "./store.fake";
 import collectionProductService from "../../src/services/collection.product.service";
 import categoryProductService from "../../src/services/category.product.service";
 import productVariationService from "../../src/services/product.variation.service";
+import tagFake from "./tag.fake";
+import tagProductService from "../../src/services/tag.product.service";
 
 export default {
   rawCreate: async function (props?: any) {
@@ -31,6 +33,9 @@ export default {
     if (data.category_ids) {
       await categoryProductService.createProduct(product.product_id, data.category_ids);
     }
+    if (data.tag_ids) {
+      await tagProductService.createProduct(product.product_id, data.tag_ids);
+    }
     if (data.variation) {
       data.variation.product_id = product.product_id;
       product.variations = [await productVariationService.create(data.variation, data.discount, [])];
@@ -41,6 +46,7 @@ export default {
     const { category_id } = await categoryFake.rawCreate();
     const { store_id } = await storeFake.rawCreate();
     const { collection_id } = await collectionFake.rawCreate();
+    const { tag_id } = await tagFake.rawCreate();
 
     const { file_id: img1 } = await mediaFake.rawCreateFile();
     const { file_id: img2 } = await mediaFake.rawCreateFile();
@@ -77,6 +83,8 @@ export default {
       category_ids: [category_id, category_id],
       //Collectionszz
       collection_ids: [collection_id],
+      //Tagszzz
+      tag_ids: [tag_id],
     };
   },
   update: {

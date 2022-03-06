@@ -3,6 +3,7 @@ import { CollectStatus } from "../../src/enum/collection.enum";
 import categoryFake from "../factories/category.fake";
 import collectionFake from "../factories/collection.fake";
 import productFake from "../factories/product.fake";
+import tagFake from "../factories/tag.fake";
 import { expectSuccess } from "../testing.utils";
 
 const request = global.buildRequest;
@@ -10,7 +11,6 @@ beforeAll(async () => {});
 
 describe("Product Tests...", () => {
   it("Can create a product", async () => {
-    const { tokens } = await global.signin();
     const payload = await productFake.create();
 
     const response = await request({
@@ -62,6 +62,21 @@ describe("Product Tests...", () => {
       method: "delete",
     });
 
+    expectSuccess(response);
+  });
+
+  it("Can delete product tag", async () => {
+    const { tag_id: id1 } = await tagFake.rawCreate();
+    const { tag_id: id2 } = await tagFake.rawCreate();
+    const { product_id } = await productFake.rawCreate({ tag_ids: [id1, id2] });
+
+    const response = await request({
+      path: `/product/tag`,
+      payload: { product_id, tag_ids: [id1] },
+      method: "delete",
+    });
+
+    expect(response.body.data).toBeTruthy();
     expectSuccess(response);
   });
   it("Can get a product by id", async () => {

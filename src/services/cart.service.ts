@@ -1,9 +1,12 @@
 import { Request } from "express";
 import { Op, Transaction } from "sequelize/dist";
 import { performance } from "perf_hooks";
-import { Cart, Product, ProductDiscount, ProductVariation } from "../models";
+import { Cart, FlashSales, FlashSalesProducts, Product, ProductDiscount, ProductVariation } from "../models";
 import { CartInstance } from "../models/cart.model";
 import productVariationService from "./product.variation.service";
+import { ProductVariationInstance } from "../models/product.variation.model";
+import { ErrorResponse } from "../apiresponse/error.response";
+import { StockStatus } from "../enum/product.enum";
 
 const create = async (req: Request) => {
   const { user_id } = req.user!;
@@ -22,7 +25,7 @@ const create = async (req: Request) => {
     });
   } else {
     //validate product qty
-    productVariationService.validateProductQty(variation, cart.qty + 1);
+    validateProductQty(variation, cart.qty + 1);
 
     cart.qty = cart.qty + 1;
     await cart.save();
@@ -43,7 +46,7 @@ const update = async (req: Request) => {
   if (cart) {
     if (action === "add") {
       //validate product qty
-      productVariationService.validateProductQty(variation, cart.qty + 1);
+      validateProductQty(variation, cart.qty + 1);
       cart.qty = cart.qty + 1;
       await cart.save();
     } else {
@@ -67,6 +70,55 @@ const clearCart = async (user_id: string, variation_id?: string, transaction?: T
   await Cart.destroy({ where: { user_id, ...variation }, transaction });
   return findAllByUserId(user_id);
 };
+const validateCartProductQty = (carts: CartInstance[]) => {
+  carts.forEach((cart) => {
+    const { variation, qty } = cart;
+    const { flash_discount } = variation;
+
+    if (variation.with_storehouse_management) {
+      if (variation.stock_qty < qty) {
+        throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
+      }
+    } else {
+      if (variation.stock_status !== StockStatus.IN_STOCK) {
+        throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
+      }
+    }
+    //Validate qty remaining for flash sale...
+    if (flash_discount) {
+      if (flash_discount.qty < flash_discount.sold + qty) {
+        const qtyRem = flash_discount.qty - flash_discount.sold;
+        throw new Error(`Product(${variation.product.name}) quantity remaining on flash sale is ${qtyRem}`);
+      }
+    }
+  });
+  return true;
+};
+
+const validateProductQty = (variation: ProductVariationInstance, qty: number) => {
+  if (variation.with_storehouse_management) {
+    if (variation.stock_qty < 1) {
+      throw new Error(`Item ${variation.product.name} is currently out of stock`);
+    }
+
+    if (variation.stock_qty < qty) {
+      throw new Error(`Item ${variation.product.name} is out of stock`);
+    }
+  } else {
+    if (variation.stock_status !== StockStatus.IN_STOCK) {
+      throw new Error(`Item ${variation.product.name} is currently out of stock`);
+    }
+  }
+  /// Check Max product qty that can be bought once
+  if (variation.max_purchase_qty) {
+    if (variation.max_purchase_qty < qty) {
+      throw new Error(
+        `You can only purchase ${variation.max_purchase_qty} quantity of ${variation.product.name} at a time`
+      );
+    }
+  }
+  return true;
+};
 
 const findAllByUserId = async (user_id: string) => {
   const carts = await Cart.findAll({
@@ -89,6 +141,23 @@ const findAllByUserId = async (user_id: string) => {
             discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
           },
         },
+        {
+          model: FlashSalesProducts,
+          as: "flash_discount",
+          required: false,
+          include: [
+            {
+              model: FlashSales,
+              as: "flash_sale",
+              attributes: ["flash_sale_id"],
+              where: {
+                revoke: false,
+                start_date: { [Op.lt]: new Date() },
+                end_date: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+              },
+            },
+          ],
+        },
       ],
     },
   });
@@ -107,9 +176,12 @@ const findOneByUserAndProduct = async (user_id: string, variation_id: string) =>
 const getSubTotal = (carts: CartInstance[]) => {
   var sub_total = 0;
   carts.forEach((cart) => {
-    const { discount, price } = cart.variation;
+    const { discount, flash_discount, price } = cart.variation;
     const { qty } = cart;
-    if (discount) {
+
+    if (flash_discount) {
+      sub_total += qty * flash_discount.price;
+    } else if (discount) {
       sub_total += qty * discount.price;
     } else {
       sub_total += qty * price;
@@ -134,6 +206,7 @@ export default {
   create,
   update,
   clearCart,
+  validateCartProductQty,
   findAllByUserId,
   getSubTotal,
 };

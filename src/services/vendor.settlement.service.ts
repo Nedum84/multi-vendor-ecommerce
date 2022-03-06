@@ -5,7 +5,7 @@ import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { SubOrders, VendorSettlement } from "../models";
 import { VendorSettlementInstance } from "../models/vendor.settlement.model";
 import { isAdmin } from "../utils/admin.utils";
-import { Helpers, Paginate } from "../utils/helpers";
+import { Helpers } from "../utils/helpers";
 import { createModel } from "../utils/random.string";
 
 const create = async (sub_order_ids: string[], amount: number, store_id: string, transaction: Transaction) => {
@@ -16,7 +16,49 @@ const create = async (sub_order_ids: string[], amount: number, store_id: string,
     transaction
   );
 
-  return settlement;
+  const processedSettlement = await processSettlement(settlement, transaction);
+
+  return processedSettlement;
+};
+
+const adminProcessSettlement = async (req: Request) => {
+  const { settlement_id } = req.params;
+  const { role } = req.user!;
+
+  if (!isAdmin(role)) {
+    throw new UnauthorizedError("Access denied");
+  }
+  const settlement = await VendorSettlement.findOne({
+    where: { settlement_id },
+  });
+
+  if (!settlement) {
+    throw new NotFoundError("Settlement not found");
+  }
+
+  if (settlement.processed) {
+    throw new NotFoundError("Settlement already processed");
+  }
+
+  const processedSettlement = await processSettlement(settlement);
+
+  return processedSettlement;
+};
+const processSettlement = async (settlement: VendorSettlementInstance, transaction?: Transaction) => {
+  if (!settlement) {
+    return;
+  }
+
+  if (settlement.processed) {
+    return;
+  }
+  /// Do any necessary money transaction here...
+
+  settlement.processed = true;
+  settlement.processed_at = new Date();
+  await settlement.save({ transaction });
+
+  return settlement.reload({ transaction });
 };
 
 const findById = async (req: Request) => {
@@ -57,6 +99,7 @@ const findAllByStoreId = async (req: Request) => {
 
 export default {
   create,
+  adminProcessSettlement,
   findById,
   findAllByStoreId,
 };

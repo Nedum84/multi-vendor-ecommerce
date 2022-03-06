@@ -1,31 +1,27 @@
 class MediaUtils {
-  //Get all User's folder(nested)
+  //Get all folders/files(nested)
   static allFolders(folder_id?: string, include_files = false) {
     const folderUtils = new MediaUtils();
 
-    const where = folder_id
-      ? `d1.folder_id = '${folder_id}'`
-      : "d1.parent_id IS NULL ";
+    const where = folder_id ? `d1.folder_id = '${folder_id}'` : "d1.parent_id IS NULL ";
 
-    // const cc = ["", folderUtils.template({ depth: 13 })].reduce(
-    //   (prev, cur, index) => {
-    //     return folderUtils.template({
-    //       depth: 13,
-    //       include_files,
-    //       child: cur,
-    //     });
-    //   },
-    //   folderUtils.template({ depth: 13 })
-    // `SELECT d1.*,
-    //     ${folderUtils.allFoldersSubQuery(include_files)} as folders
-    //   FROM "MediaFolder" d1 ${where}`
-    // );
+    const fileStr = include_files
+      ? `, (
+        select array_to_json(array_agg(row_to_json(file)))
+        from (
+          select file.*
+          from "MediaFiles" file
+          where d1.folder_id = file.folder_id        
+        ) file
+      ) AS files`
+      : "";
 
     return `
         SELECT d1.*,
           ${folderUtils.allFoldersSubQuery(include_files)} as folders
+          ${fileStr}
 
-      FROM "MediaFolder" d1 ${where}`;
+      FROM "MediaFolder" d1 WHERE ${where}`;
   }
 
   //TEMPLATE BUILD TO GET MANY
@@ -80,11 +76,7 @@ class MediaUtils {
     });
   }
 
-  private template(prop: {
-    child?: string;
-    depth: number;
-    include_files?: boolean;
-  }): string {
+  private template(prop: { child?: string; depth: number; include_files?: boolean }) {
     const { depth, child, include_files = false } = prop;
 
     let fileStr = "";
@@ -107,14 +99,13 @@ class MediaUtils {
       (
         SELECT array_to_json(array_agg(row_to_json(d${depth})))
           FROM (
-            SELECT d${depth}.*,
+            SELECT d${depth}.*
 
             ${str}
             ${fileStr}
 
             FROM "MediaFolder" d${depth}
             WHERE d${depth}.parent_id = d${depth - 1}.folder_id
-            AND d${depth}."deletedAt" IS NULL    
           ) d${depth}
         )
     `;
@@ -137,7 +128,7 @@ class MediaUtils {
           ON n.folder_id = cte.parent_id
       )
       SELECT cte.name, cte.folder_id, cte.parent_id FROM cte
-      ORDER BY cte.id ${orderBy}
+      -- ORDER BY cte.id ${orderBy}
     `;
   };
   //get children
@@ -157,7 +148,7 @@ class MediaUtils {
           ON n.parent_id = cte.folder_id
       )
       SELECT cte.name, cte.folder_id, cte.parent_id FROM cte
-      ORDER BY cte."createdAt" ${orderBy}
+      -- ORDER BY cte."createdAt" ${orderBy}
     `;
   };
 }

@@ -2,6 +2,7 @@ import { Request } from "express";
 import { NOT_FOUND } from "http-status";
 import { Op, QueryTypes, Transaction } from "sequelize/dist";
 import { ErrorResponse } from "../apiresponse/error.response";
+import { MediaType } from "../enum/media.enum";
 import sequelize, { MediaFiles, MediaFolder } from "../models";
 import { MediaFilesAttributes, MediaFilesInstance } from "../models/media.files.model";
 import { MediaFolderAttributes, MediaFolderInstance } from "../models/media.folder.model";
@@ -87,18 +88,27 @@ const copy = async (req: Request) => {
     });
   }
 
-  try {
-    sequelize.transaction(async (transaction) => {
+  await sequelize
+    .transaction(async (transaction) => {
       /*Loop through each & copy to parent*/
       // for await (const eachItem of body) {}
       await asyncForEach(body, async (eachItem) => {
         const { parent_id, type, id } = eachItem;
+        //Checking if User is copying to child folder
+        if (type == "folder") {
+          const children = await getChildrenFolders(id);
+          const checkIfParentIsChild = children.find((f) => f.folder_id === parent_id);
+          if (checkIfParentIsChild) {
+            throw new Error("You can't copy folder(s) to a child folder");
+          }
+        }
 
         //IS FOLDER
         if (type == "folder") {
-          const folders = await findAllNestedFolders(id, true); //id===folder_id
+          //Return plain objects(with no sequelize meta rubbish). Reason for @false param
+          const folders = await findAllNestedFolders(id, true, false); //id===folder_id
 
-          await mapAsync(folders, async function (folder, index, arr) {
+          await asyncForEach(folders, async function (folder, index) {
             folder.parent_id = parent_id; //parent_id or null(FOR HOME)
             const { folder_id } = await createFolder(folder, transaction); //depth 1{d1}
 
@@ -106,34 +116,42 @@ const copy = async (req: Request) => {
               const files = await getFileBody(folder.files, folder_id);
               await MediaFiles.bulkCreate(files, { transaction });
             }
-            //Check for Nested folders
-            if (folder.folders.length) {
-              await mapAsync(folder.folders, async function (folder, index) {
+            //-----> Check for Nested folders
+            if (folder.folders?.length) {
+              // --> update parent_id to the parent folder_id
+              folder.folders = folder.folders.map((f) => ({ ...f, parent_id: folder_id })) as any;
+              await asyncForEach(folder.folders, async function (folder, index) {
                 const { folder_id } = await createFolder(folder, transaction); //d2
                 if (folder.files) {
                   const files = await getFileBody(folder.files, folder_id);
                   await MediaFiles.bulkCreate(files, { transaction });
                 }
-                //Check for Nested folders
-                if (folder.folders.length) {
-                  await mapAsync(folder.folders, async function (folder, index) {
+                //-----> Check for Nested folders
+                if (folder.folders?.length) {
+                  // --> update parent_id to the parent folder_id
+                  folder.folders = folder.folders.map((f) => ({ ...f, parent_id: folder_id })) as any;
+                  await asyncForEach(folder.folders, async function (folder, index) {
                     const { folder_id } = await createFolder(folder, transaction); //d3
                     if (folder.files) {
                       const uid = await fileUid();
                       const files = await getFileBody(folder.files, folder_id);
                       await MediaFiles.bulkCreate(files, { transaction });
                     }
-                    //Check for Nested folders
-                    if (folder.folders.length) {
-                      await mapAsync(folder.folders, async function (folder, index) {
+                    //-----> Check for Nested folders
+                    if (folder.folders?.length) {
+                      // --> update parent_id to the parent folder_id
+                      folder.folders = folder.folders.map((f) => ({ ...f, parent_id: folder_id })) as any;
+                      await asyncForEach(folder.folders, async function (folder, index) {
                         const { folder_id } = await createFolder(folder, transaction); //d4
                         if (folder.files) {
                           const files = await getFileBody(folder.files, folder_id);
                           await MediaFiles.bulkCreate(files, { transaction });
                         }
-                        //Check for Nested folders
-                        if (folder.folders.length) {
-                          await mapAsync(folder.folders, async function (folder) {
+                        //-----> Check for Nested folders
+                        if (folder.folders?.length) {
+                          // --> update parent_id to the parent folder_id
+                          folder.folders = folder.folders.map((f) => ({ ...f, parent_id: folder_id })) as any;
+                          await asyncForEach(folder.folders, async function (folder) {
                             const { folder_id } = await createFolder(folder, transaction); //d5
                             if (folder.files) {
                               const files = await getFileBody(folder.files, folder_id);
@@ -152,13 +170,13 @@ const copy = async (req: Request) => {
           const file = await findFileById(id); //id===file_id
           file.folder_id = parent_id;
           //-->inserts
-          await createModel<MediaFilesInstance>(MediaFiles, file, "file_id", transaction);
+          await createModel<MediaFilesInstance>(MediaFiles, file.toJSON(), "file_id", transaction);
         }
       });
+    })
+    .catch((e) => {
+      throw new Error(e);
     });
-  } catch (error: any) {
-    throw new ErrorResponse(error);
-  }
 
   return "Files/Folders successfully copied";
 };
@@ -193,22 +211,22 @@ const deleteFolder = async (req: Request) => {
   const children = await getChildrenFolders(folder_id);
   const ids = children.map((i) => i.folder_id);
 
-  await MediaFolder.destroy({
+  const del = await MediaFolder.destroy({
     where: {
       folder_id: { [Op.in]: [...ids, folder_id] }, //delete parent & children
     },
   });
 
-  return "Successfully deleted this folder ";
+  return !!del;
 };
 
 //delete a folder
 const deleteFile = async (req: Request) => {
   const { file_id } = req.params;
 
-  await MediaFiles.destroy({ where: { file_id } });
+  const del = await MediaFiles.destroy({ where: { file_id } });
 
-  return "Successfully deleted this file ";
+  return !!del;
 };
 
 const findFolderById = async (folder_id: string) => {
@@ -233,25 +251,23 @@ const findFileById = async (file_id: string) => {
 };
 
 /**Immediate Folders or files or both under home */
-const homeMedia = async (query?: any, media_type?: "file" | "folder") => {
+const homeMedia = async (query?: any, media_type?: MediaType) => {
   const options = Helpers.getPaginate(query ?? {});
   const result: { [k: string]: any } = {};
 
-  if (!media_type || media_type == "folder") {
-    const folders = await MediaFolder.findAll({
+  if (!media_type || media_type === MediaType.FOLDER) {
+    result.folders = await MediaFolder.findAll({
       where: { parent_id: null },
       order: [["createdAt", "ASC"]],
       ...options,
     });
-    result.folders = folders;
   }
-  if (!media_type || media_type == "file") {
-    const files = await MediaFiles.findAll({
+  if (!media_type || media_type === MediaType.FILE) {
+    result.files = await MediaFiles.findAll({
       where: { folder_id: null },
       order: [["createdAt", "ASC"]],
       ...options,
     });
-    result.files = files;
   }
 
   return result as {
@@ -261,25 +277,23 @@ const homeMedia = async (query?: any, media_type?: "file" | "folder") => {
 };
 
 //Immediate media(folders/files) under a folder
-const folderMedia = async (folder_id: string, query?: any, media_type?: "file" | "folder") => {
+const folderMedia = async (folder_id: string, query?: any, media_type?: MediaType) => {
   const options = Helpers.getPaginate(query ?? {});
   const result: { [k: string]: any } = {};
 
-  if (!media_type || media_type == "folder") {
-    const folders = await MediaFolder.findAll({
+  if (!media_type || media_type === MediaType.FOLDER) {
+    result.folders = await MediaFolder.findAll({
       where: { parent_id: folder_id },
       order: [["createdAt", "ASC"]],
       ...options,
     });
-    result.folders = folders;
   }
-  if (!media_type || media_type == "file") {
-    const files = await MediaFiles.findAll({
+  if (!media_type || media_type === MediaType.FILE) {
+    result.files = await MediaFiles.findAll({
       where: { folder_id },
       order: [["createdAt", "ASC"]],
       ...options,
     });
-    result.files = files;
   }
 
   return result as {
@@ -292,14 +306,14 @@ const folderMedia = async (folder_id: string, query?: any, media_type?: "file" |
  * find all nested folders(using sequelize raw query {pros: max can be of depth n, 😀})
  * @returns Array<MediaFolderInstance>
  */
-const findAllNestedFolders = async (folder_id?: string, include_files = false) => {
+const findAllNestedFolders = async (folder_id?: string, include_files = false, modelMap = true) => {
+  const modelToMap = modelMap ? { mapToModel: true, model: MediaFolder } : {};
   const query = MediaUtils.allFolders(folder_id, include_files);
 
   const folders: MediaFolderInstance[] = await sequelize.query(query, {
     type: QueryTypes.SELECT,
     nest: true,
-    mapToModel: true,
-    model: MediaFolder,
+    ...modelToMap,
   });
   return folders;
 };
@@ -309,7 +323,7 @@ const findAllNestedFolders2 = async (folder_id?: string, include_files = false) 
   const where = folder_id ? { folder_id } : { parent_id: null };
   const incFile = include_files ? { model: MediaFiles, as: "files" } : {};
 
-  const folders = await MediaFolder.scope("basic").findAll({
+  const folders = await MediaFolder.findAll({
     where,
     include: {
       model: MediaFolder,
@@ -369,78 +383,6 @@ const findAllNestedFolders2 = async (folder_id?: string, include_files = false) 
   return folders;
 };
 
-/**
- * find all nested files(sequelize inc. subquery {cons: max of 8 dept excluding parent ie 9 in total})
- * @param folder_id is the folder entry point(null for all)
- * @returns Array<MediaFilesInstance>
- */
-const findAllNestedFiles = async (folder_id?: string) => {
-  const where = folder_id ? { folder_id } : {};
-  const files = await MediaFiles.findAll({
-    where,
-    include: {
-      model: MediaFiles,
-      as: "files",
-      include: [
-        {
-          model: MediaFiles,
-          as: "files",
-          where: { folder_id: "$folder.folder_id$" },
-          include: [
-            { model: MediaFolder, as: "folder" },
-            {
-              model: MediaFiles,
-              as: "files",
-              where: { folder_id: "$folder.folder_id$" },
-              include: [
-                { model: MediaFolder, as: "folder" },
-                {
-                  model: MediaFiles,
-                  as: "files",
-                  where: { folder_id: "$folder.folder_id$" },
-                  include: [
-                    { model: MediaFolder, as: "folder" },
-                    {
-                      model: MediaFiles,
-                      as: "files",
-                      where: { folder_id: "$folder.folder_id$" },
-                      include: [
-                        { model: MediaFolder, as: "folder" },
-                        {
-                          model: MediaFiles,
-                          as: "files",
-                          where: { folder_id: "$folder.folder_id$" },
-                          include: [
-                            { model: MediaFolder, as: "folder" },
-                            {
-                              model: MediaFiles,
-                              as: "files",
-                              where: { folder_id: "$folder.folder_id$" },
-                              include: [
-                                { model: MediaFolder, as: "folder" },
-                                {
-                                  model: MediaFiles,
-                                  as: "files",
-                                },
-                              ],
-                            },
-                          ],
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-    },
-  });
-
-  return files;
-};
-
 //find nested all folders up the tree
 const getParentFolders = async (req: Request) => {
   const { folder_id } = req.params;
@@ -483,7 +425,6 @@ export default {
   homeMedia,
   folderMedia,
   findAllNestedFolders,
-  findAllNestedFiles,
   getParentFolders,
   getChildrenFolders,
 };

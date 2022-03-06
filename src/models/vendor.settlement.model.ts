@@ -8,6 +8,8 @@ export interface VendorSettlementAttributes {
   sub_order_ids: string[];
   amount: number;
   store_id: string;
+  processed: boolean;
+  processed_at: Date;
 }
 
 export interface VendorSettlementInstance
@@ -32,6 +34,11 @@ export const VendorSettlementModelAttributes: SequelizeAttributes<VendorSettleme
     type: DataTypes.STRING,
     allowNull: false,
   },
+  processed: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  processed_at: DataTypes.DATE,
 };
 // --> Factory....
 export function VendorSettlementFactory(sequelize: Sequelize) {

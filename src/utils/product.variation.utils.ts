@@ -1,5 +1,12 @@
 import { FindOptions, Op } from "sequelize";
-import { Product, ProductAttribute, ProductAttributeSets, ProductDiscount } from "../models";
+import {
+  FlashSales,
+  FlashSalesProducts,
+  Product,
+  ProductAttribute,
+  ProductAttributeSets,
+  ProductDiscount,
+} from "../models";
 
 class ProductVariationUtils {
   static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {
@@ -26,6 +33,22 @@ class ProductVariationUtils {
             discount_from: { [Op.lt]: new Date() },
             discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
           },
+        },
+        {
+          model: FlashSalesProducts,
+          as: "flash_discount",
+          required: false,
+          include: [
+            {
+              model: FlashSales,
+              as: "flash_sale",
+              where: {
+                revoke: false,
+                start_date: { [Op.lt]: new Date() },
+                end_date: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+              },
+            },
+          ],
         },
       ],
       // attributes: {

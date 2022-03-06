@@ -19,6 +19,7 @@ import { generateSlug, mapAsync } from "../utils/function.utils";
 import { CollectStatus } from "../enum/collection.enum";
 import categoryProductService from "./category.product.service";
 import collectionProductService from "./collection.product.service";
+import tagProductService from "./tag.product.service";
 
 //--> Create
 const create = async (req: Request) => {
@@ -29,6 +30,7 @@ const create = async (req: Request) => {
     variation: ProductVariationAttributes;
     collection_ids: string[];
     category_ids: string[];
+    tag_ids: string[];
   } = req.body;
 
   body.created_by = user_id;
@@ -76,6 +78,9 @@ const create = async (req: Request) => {
       if (body.category_ids) {
         await categoryProductService.createProduct(product_id, body.category_ids, transaction);
       }
+      if (body.tag_ids) {
+        await tagProductService.createProduct(product_id, body.tag_ids, transaction);
+      }
     });
   } catch (error: any) {
     throw new ErrorResponse(error);
@@ -92,6 +97,7 @@ const update = async (req: Request) => {
     discount: ProductDiscountAttributes;
     collection_ids: string[];
     category_ids: string[];
+    tag_ids: string[];
   } = req.body;
 
   const product = await findById(product_id);
@@ -114,6 +120,9 @@ const update = async (req: Request) => {
   }
   if (body.category_ids) {
     await categoryProductService.createProduct(product_id, body.category_ids);
+  }
+  if (body.tag_ids) {
+    await tagProductService.createProduct(product_id, body.tag_ids);
   }
 
   return findById(product.product_id);
@@ -142,6 +151,18 @@ const deleteCategory = async (req: Request) => {
   }
 
   const del = await categoryProductService.deleteProduct(product_id, category_ids);
+  return !!del;
+};
+const deleteTag = async (req: Request) => {
+  const { product_id, tag_ids } = req.body;
+  const { stores, role } = req.user!;
+
+  const product = await findById(product_id);
+  if (!stores.includes(product.store_id) && !isAdmin(role)) {
+    throw new UnauthorizedError();
+  }
+
+  const del = await tagProductService.deleteProduct(product_id, tag_ids);
   return !!del;
 };
 
@@ -258,13 +279,26 @@ const findLatestByCollection = async () => {
   };
 };
 
+const findFlashProducts = async (req: Request) => {
+  const options = Helpers.getPaginate({});
+
+  const products = await Product.findAll({
+    // where: { product_id: { [Op.in]: product_ids } },
+    ...ProductUtils.sequelizeFindOptions(options),
+  });
+
+  return products;
+};
+
 export default {
   create,
   update,
   deleteCollection,
   deleteCategory,
+  deleteTag,
   findById,
   findAll,
   findByProductIds,
   findLatestByCollection,
+  findFlashProducts,
 };

@@ -121,6 +121,11 @@ export function ProductFactory(sequelize: Sequelize) {
       foreignKey: "product_id",
       sourceKey: "product_id",
     });
+    Product.hasMany(models.RelatedProduct, {
+      as: "related_products",
+      foreignKey: "related_product_id",
+      sourceKey: "product_id",
+    });
   };
   Product.prototype.toJSON = function () {
     const values = { ...this.get() };

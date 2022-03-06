@@ -13,7 +13,6 @@ import storeService from "./store.service";
 import { CouponProductAttributes } from "../models/coupon.product.model";
 import ordersService from "./orders.service";
 import cartService from "./cart.service";
-import { OrderStatus } from "../enum/orders.enum";
 import { CartInstance } from "../models/cart.model";
 import { isAdmin } from "../utils/admin.utils";
 import productService from "./product.service";
@@ -197,7 +196,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       const couponProductIds = coupon.products.map((x) => x.product_id);
       //check each cart product
       carts.forEach((cart) => {
-        const { product_id, discount, price } = cart.variation;
+        const { product_id, discount, flash_discount, price } = cart.variation;
         const { qty } = cart;
         if (couponProductIds.includes(product_id)) {
           // if (discount) {
@@ -206,7 +205,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
           //   couponAmount += qty * price * couponPercent;
           // }
 
-          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
         }
       });
       break;
@@ -215,11 +214,11 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       const couponStoreIds = coupon.stores.map((x) => x.store_id);
 
       carts.forEach((cart) => {
-        const { discount, price } = cart.variation;
+        const { discount, price, flash_discount } = cart.variation;
         const { store_id, qty } = cart;
 
         if (couponStoreIds.includes(store_id)) {
-          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
         }
       });
       break;
@@ -228,9 +227,9 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       const couponUserIds = coupon.users.map((x) => x.user_id);
       if (couponUserIds.includes(user_id)) {
         carts.forEach((cart) => {
-          const { discount, price } = cart.variation;
+          const { discount, price, flash_discount } = cart.variation;
           const { qty } = cart;
-          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+          couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
         });
       } else {
         throw new ErrorResponse("You are not eligible to use this coupon");
@@ -243,10 +242,10 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
 
       if (couponUserIds_.includes(user_id)) {
         carts.forEach((cart) => {
-          const { product_id, discount, price } = cart.variation;
+          const { product_id, discount, price, flash_discount } = cart.variation;
           const { qty } = cart;
           if (couponProductIds_.includes(product_id)) {
-            couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+            couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
           }
         });
       } else {
@@ -255,9 +254,9 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       break;
     case CouponType.ALL_ORDERS:
       carts.forEach((cart) => {
-        const { discount, price } = cart.variation;
+        const { discount, price, flash_discount } = cart.variation;
         const { qty } = cart;
-        couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+        couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
       });
       // --> OR simply...
       // couponAmount += userCarts.sub_total * couponPercent;
@@ -287,7 +286,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
     const couponStoreIds = coupon.stores.map((x) => x.store_id);
     //or simply  storeCarts.forEach
     carts.forEach((cart) => {
-      const { discount, price } = cart.variation;
+      const { discount, price, flash_discount } = cart.variation;
       const { qty, store_id: each_store_id } = cart;
 
       if (couponStoreIds.includes(store_id)) {
@@ -298,7 +297,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
           // } else {
           //   storeCouponAmount += qty * price * coupon.percentage_discount;
           // }
-          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
         }
       }
     });
@@ -306,13 +305,13 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
     const couponProductIds = coupon.products.map((x) => x.product_id);
     //check each cart product
     carts.forEach((cart) => {
-      const { product_id, discount, price } = cart.variation;
+      const { product_id, discount, price, flash_discount } = cart.variation;
       const { store_id: each_store_id, qty } = cart;
       //if product is among the coupon products
       if (couponProductIds.includes(product_id)) {
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
         }
       }
     });
@@ -321,11 +320,11 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
     //I have access to this coupon
     if (couponUserIds.includes(user_id)) {
       carts.forEach((cart) => {
-        const { discount, price } = cart.variation;
+        const { discount, price, flash_discount } = cart.variation;
         const { qty, store_id: each_store_id } = cart;
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+          storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
         }
       });
     }
@@ -336,24 +335,24 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
     //if I have access to this coupon
     if (couponUserIds_.includes(user_id)) {
       carts.forEach((cart) => {
-        const { product_id, discount, price } = cart.variation;
+        const { product_id, discount, price, flash_discount } = cart.variation;
         const { store_id: each_store_id, qty } = cart;
         //if this product belongs to this coupon
         if (couponProductIds_.includes(product_id)) {
           //if this product belongs to this store
           if (each_store_id === store_id) {
-            storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+            storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
           }
         }
       });
     }
   } else if (coupon.coupon_type === CouponType.ALL_ORDERS) {
     carts.forEach((cart) => {
-      const { discount, price } = cart.variation;
+      const { discount, price, flash_discount } = cart.variation;
       const { qty, store_id: each_store_id } = cart;
       //if this product belongs to this coupon
       if (each_store_id === store_id) {
-        storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount);
+        storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
       }
     });
   }

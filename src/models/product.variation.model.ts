@@ -3,6 +3,7 @@ import { Model, Optional, DataTypes, Sequelize, Op } from "sequelize";
 import { ModelRegistry } from ".";
 import { StockStatus } from "../enum/product.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
+import { FlashSalesProductsInstance } from "./flash.sales.products.model";
 import { ProductDiscountInstance } from "./product.discount.model";
 import { ProductInstance } from "./product.model";
 import { ProductVariationWithAttributeSetInstance } from "./product.variation.with.attribute.set.model";
@@ -33,6 +34,7 @@ export interface ProductVariationInstance
   attribute_sets: ProductVariationWithAttributeSetInstance[];
   product: ProductInstance;
   discount: ProductDiscountInstance;
+  flash_discount: FlashSalesProductsInstance;
 }
 //--> Model attributes
 export const ProductVariationModelAttributes: SequelizeAttributes<ProductVariationAttributes> = {
@@ -108,6 +110,11 @@ export function ProductVariationFactory(sequelize: Sequelize) {
     });
     ProductVariation.hasOne(models.ProductDiscount, {
       as: "discount",
+      foreignKey: "variation_id",
+      sourceKey: "variation_id",
+    });
+    ProductVariation.hasOne(models.FlashSalesProducts, {
+      as: "flash_discount",
       foreignKey: "variation_id",
       sourceKey: "variation_id",
     });

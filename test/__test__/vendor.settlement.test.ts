@@ -1,9 +1,12 @@
 import { Op } from "sequelize/dist";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
-import { Orders, SubOrders } from "../../src/models";
+import { Orders, SubOrders, VendorSettlement } from "../../src/models";
+import { VendorSettlementInstance } from "../../src/models/vendor.settlement.model";
 import CONSTANTS from "../../src/utils/constants";
+import { createModel } from "../../src/utils/random.string";
 import cartFake from "../factories/cart.fake";
 import productVariationFake from "../factories/product.variation.fake";
+import storeFake from "../factories/store.fake";
 import userAddressFake from "../factories/user.address.fake";
 import { expectSuccess } from "../testing.utils";
 
@@ -11,7 +14,7 @@ const request = global.buildRequest;
 beforeAll(async () => {});
 
 describe("Vendor Settlements...", () => {
-  it("Can settlements by store id or settlement id", async () => {
+  it("Can settlements by store id &/or settlement id", async () => {
     const { tokens, user } = await global.signin();
     const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
     const { token } = tokens.access;
@@ -64,7 +67,21 @@ describe("Vendor Settlements...", () => {
     expect(responseAll.body.data.settlements.length).toBeGreaterThan(0);
   });
 
-  it("Admin can update a user", async () => {});
+  it("Admin process settlement", async () => {
+    const { store_id } = await storeFake.rawCreate();
 
-  it("Can update password", async () => {});
+    const body = {
+      amount: 122,
+      store_id,
+      sub_order_ids: [],
+    };
+    const { settlement_id } = await createModel<VendorSettlementInstance>(VendorSettlement, body, "settlement_id");
+    const reponse = await request({
+      method: "post",
+      path: `/settlement/${settlement_id}`,
+    });
+
+    expectSuccess(reponse);
+    expect(reponse.body.data.settlement.processed).toBeTruthy();
+  });
 });

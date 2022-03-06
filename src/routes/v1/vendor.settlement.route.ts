@@ -8,6 +8,11 @@ const router = express.Router();
 
 router.use(requireAuth);
 
+router.post(
+  "/:settlement_id",
+  validateReq(vendorSettlementValidation.adminProcessSettlement),
+  vendorSettlementController.adminProcessSettlement
+);
 router.get("/:settlement_id", validateReq(vendorSettlementValidation.findById), vendorSettlementController.findById);
 router.get(
   "/store/:store_id",

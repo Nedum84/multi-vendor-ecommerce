@@ -11,6 +11,7 @@ import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { Helpers } from "../utils/helpers";
 import { Op } from "sequelize/dist";
 import { UserUtils } from "../utils/user.utils";
+import { UserWalletAttributes } from "../models/user.wallet.model";
 
 const create = async (body: UserAttributes) => {
   const { email } = body;
@@ -36,7 +37,14 @@ const create = async (body: UserAttributes) => {
       const payment_reference = await genUniqueColId(UserWallet, "payment_reference", 14);
       const amount = 50; //USD
 
-      await userWalletService.createCredit(user_id, amount, FundingTypes.REG_BONUS, payment_reference, undefined, t);
+      const creditPayload: UserWalletAttributes = {
+        user_id,
+        amount,
+        fund_type: FundingTypes.REG_BONUS,
+        payment_reference,
+        action_performed_by: user_id,
+      };
+      await userWalletService.createCredit(creditPayload, t);
     });
   } catch (error: any) {
     throw new ErrorResponse(error);

@@ -28,11 +28,11 @@ const move = async (req: Request, res: Response) => {
 };
 const deleteFolder = async (req: Request, res: Response) => {
   const result = await mediaService.deleteFolder(req);
-  ApiResponse.ok(res, result);
+  ApiResponse.ok(res, result, "Successfully deleted this folder");
 };
 const deleteFile = async (req: Request, res: Response) => {
   const result = await mediaService.deleteFile(req);
-  ApiResponse.ok(res, result);
+  ApiResponse.ok(res, result, "Successfully deleted this file ");
 };
 const findFolderById = async (req: Request, res: Response) => {
   const { folder_id } = req.params;
@@ -56,24 +56,19 @@ const folderMedia = async (req: Request, res: Response) => {
   ApiResponse.ok(res, result);
 };
 const findAllNestedFolders = async (req: Request, res: Response) => {
-  const { folder_id } = req.params;
-  const { include_files = false } = req.query as any;
+  const { folder_id, include_files = false } = req.query as any;
   const result = await mediaService.findAllNestedFolders(folder_id, include_files);
   ApiResponse.ok(res, { folders: result });
-};
-const findAllNestedFiles = async (req: Request, res: Response) => {
-  const { folder_id } = req.query as any; //optional
-  const result = await mediaService.findAllNestedFiles(folder_id);
-  ApiResponse.ok(res, { files: result });
 };
 const getParentFolders = async (req: Request, res: Response) => {
   const result = await mediaService.getParentFolders(req);
   ApiResponse.ok(res, { folders: result });
 };
 const getChildrenFolders = async (req: Request, res: Response) => {
-  const { folder_id, direction } = req.query as any; //direction=>optional
+  const { folder_id } = req.params;
+  const { direction } = req.query as any; //direction=>optional
   const result = await mediaService.getChildrenFolders(folder_id, direction);
-  ApiResponse.ok(res, { files: result });
+  ApiResponse.ok(res, { folders: result });
 };
 
 export default {
@@ -90,7 +85,6 @@ export default {
   homeMedia,
   folderMedia,
   findAllNestedFolders,
-  findAllNestedFiles,
   getParentFolders,
   getChildrenFolders,
 };

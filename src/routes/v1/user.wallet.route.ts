@@ -11,6 +11,11 @@ router.use(requireAuth);
 
 router.get("/", validateReq(userWalletValidation.getWalletBalance), userWalletController.getWalletBalance);
 router.get("/history", validateReq(userWalletValidation.balanceHistory), userWalletController.balanceHistory);
+router.post(
+  "/withdrawable",
+  validateReq(userWalletValidation.withrawableBalance),
+  userWalletController.withrawableBalance
+);
 
 router.post(
   "/admin-credit",
@@ -21,5 +26,10 @@ router.post(
   "/user-credit",
   validateReq(userWalletValidation.userCreateCreditReward),
   userWalletController.userCreateCreditReward
+);
+router.post(
+  "/redeem-credit",
+  validateReq(userWalletValidation.userRedeemCreditReward),
+  userWalletController.userRedeemCreditReward
 );
 export default router;

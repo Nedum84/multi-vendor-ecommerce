@@ -1,5 +1,6 @@
 import Joi from "joi";
 import { paginateDefault } from ".";
+import { PaymentChannel } from "../enum/payment.enum";
 
 const adminCreateCreditReward = {
   params: Joi.object().keys({}),
@@ -15,6 +16,15 @@ const userCreateCreditReward = {
   body: Joi.object().keys({
     amount: Joi.number().required(),
     payment_reference: Joi.string().required(),
+    channel: Joi.string()
+      .required()
+      .valid(...Object.values(PaymentChannel)),
+  }),
+};
+const userRedeemCreditReward = {
+  params: Joi.object().keys({}),
+  body: Joi.object().keys({
+    credit_code: Joi.string().required(),
   }),
 };
 
@@ -30,10 +40,17 @@ const balanceHistory = {
     ...paginateDefault,
   }),
 };
+const withrawableBalance = {
+  params: Joi.object().keys({}),
+  body: Joi.object().keys({}),
+  query: Joi.object().keys({}),
+};
 
 export default {
-  getWalletBalance,
-  balanceHistory,
   adminCreateCreditReward,
   userCreateCreditReward,
+  userRedeemCreditReward,
+  getWalletBalance,
+  balanceHistory,
+  withrawableBalance,
 };

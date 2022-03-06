@@ -3,9 +3,9 @@ import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
 import { CouponType } from "../enum/coupon.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
-import { ProductInstance } from "./product.model";
-import { StoreInstance } from "./store.model";
-import { UserInstance } from "./user.model";
+import { CouponProductInstance } from "./coupon.product.model";
+import { CouponStoreInstance } from "./coupon.store.model";
+import { CouponUserInstance } from "./coupon.user.model";
 
 export interface CouponAttributes {
   coupon_code: string;
@@ -24,9 +24,9 @@ export interface CouponAttributes {
 interface CouponCreationAttributes extends Optional<CouponAttributes, "revoke"> {}
 
 export interface CouponInstance extends Model<CouponAttributes, CouponCreationAttributes>, CouponAttributes {
-  products: ProductInstance[];
-  stores: StoreInstance[];
-  users: UserInstance[];
+  products: CouponProductInstance[];
+  stores: CouponStoreInstance[];
+  users: CouponUserInstance[];
 }
 
 //--> Model attributes

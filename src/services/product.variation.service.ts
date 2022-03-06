@@ -11,8 +11,6 @@ import { ProductDiscountAttributes } from "../models/product.discount.model";
 import { Op, Transaction } from "sequelize/dist";
 import { arraysEqual, asyncForEach } from "../utils/function.utils";
 import { isAdmin } from "../utils/admin.utils";
-import { CartInstance } from "../models/cart.model";
-import { StockStatus } from "../enum/product.enum";
 import ProductVariationUtils from "../utils/product.variation.utils";
 import variationAttributesService from "./variation.attributes.service";
 
@@ -191,70 +189,6 @@ const update = async (req: Request) => {
 
   return findById(variation_id);
 };
-const validateCartProductQty = (carts: CartInstance[]) => {
-  carts.forEach((cart) => {
-    const { variation, qty } = cart;
-
-    if (variation.with_storehouse_management) {
-      if (variation.stock_qty < qty) {
-        throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
-      }
-    } else {
-      if (variation.stock_status !== StockStatus.IN_STOCK) {
-        throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
-      }
-    }
-  });
-  return true;
-};
-
-const validateProductQty = (variation: ProductVariationInstance, qty: number) => {
-  if (variation.with_storehouse_management) {
-    if (variation.stock_qty < 1) {
-      throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
-    }
-
-    if (variation.stock_qty < qty) {
-      throw new ErrorResponse(`Item ${variation.product.name} is out of stock`);
-    }
-
-    /// Check Max product qty that can be bought once
-    if (variation.max_purchase_qty) {
-      if (variation.max_purchase_qty < qty) {
-        throw new ErrorResponse(
-          `You can only purchase ${variation.max_purchase_qty} quantity of ${variation.product.name} at a time`
-        );
-      }
-    }
-  } else {
-    if (variation.stock_status !== StockStatus.IN_STOCK) {
-      throw new ErrorResponse(`Item ${variation.product.name} is currently out of stock`);
-    }
-
-    /// Check Max product qty that can be bought once
-    if (variation.max_purchase_qty) {
-      if (variation.max_purchase_qty < qty) {
-        throw new ErrorResponse(
-          `You can only purchase ${variation.max_purchase_qty} quantity of ${variation.product.name} at a time`
-        );
-      }
-    }
-  }
-  return true;
-};
-
-/** Updates the qty to total left after purchase*/
-const updateQtyRemaining = async (carts: CartInstance[], transaction?: Transaction) => {
-  await asyncForEach(carts, async (cart) => {
-    const { variation, qty } = cart;
-
-    if (variation.with_storehouse_management) {
-      variation.stock_qty = variation.stock_qty - qty;
-      await variation.save({ transaction });
-    }
-  });
-  return true;
-};
 
 //--> createDiscount
 const createDiscount = async (variation_id: string, discount: ProductDiscountAttributes, t?: Transaction) => {
@@ -352,9 +286,6 @@ export default {
   create,
   update,
   deleteVariation,
-  validateCartProductQty,
-  validateProductQty,
-  updateQtyRemaining,
   findById,
   findAllByProductId,
 };

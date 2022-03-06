@@ -1,6 +1,12 @@
 import Joi from "joi";
 import { paginateDefault } from ".";
 
+const adminProcessSettlement = {
+  params: Joi.object().keys({
+    settlement_id: Joi.string().required(),
+  }),
+  query: Joi.object().keys(),
+};
 const findById = {
   params: Joi.object().keys({
     settlement_id: Joi.string().required(),
@@ -16,4 +22,4 @@ const findAllByStoreId = {
   query: Joi.object().keys(paginateDefault),
 };
 
-export default { findById, findAllByStoreId };
+export default { adminProcessSettlement, findById, findAllByStoreId };
