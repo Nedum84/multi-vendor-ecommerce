@@ -14,7 +14,6 @@ export default {
   },
   create: {
     name: faker.random.words(3),
-    is_active: true,
   },
   update: {
     name: faker.random.words(3),

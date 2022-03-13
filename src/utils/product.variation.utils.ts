@@ -12,6 +12,7 @@ class ProductVariationUtils {
   static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {
     const options: FindOptions = {
       ...(paginate ?? {}),
+      subQuery: false,
       include: [
         { model: Product, as: "product" },
         {
@@ -42,6 +43,7 @@ class ProductVariationUtils {
             {
               model: FlashSales,
               as: "flash_sale",
+              attributes: ["flash_sale_id"],
               where: {
                 revoke: false,
                 start_date: { [Op.lt]: new Date() },

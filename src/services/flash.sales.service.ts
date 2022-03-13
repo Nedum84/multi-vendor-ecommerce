@@ -134,7 +134,8 @@ const upsertFlashSaleProducts = async (req: Request) => {
 
 const removeFlashSaleProduct = async (req: Request) => {
   const { role } = req.user!;
-  const { flash_sale_id, variation_id }: { variation_id: string; flash_sale_id: string } = req.body;
+  const { flash_sale_id }: { flash_sale_id: string } = req.params as any;
+  const { variation_id }: { variation_id: string } = req.body;
 
   if (!isAdmin(role)) {
     throw new UnauthorizedError();
@@ -149,12 +150,7 @@ const removeFlashSaleProduct = async (req: Request) => {
   return !!destroy;
 };
 const findFlashProduct = async (flash_sale_id: string) => {
-  const flashSaleProduct = await FlashSalesProducts.findOne({
-    where: { flash_sale_id },
-  });
-  if (!flashSaleProduct) {
-    throw new NotFoundError("Flashsale product not found");
-  }
+  const flashSaleProduct = await FlashSalesProducts.findAll({ where: { flash_sale_id } });
 
   return flashSaleProduct;
 };

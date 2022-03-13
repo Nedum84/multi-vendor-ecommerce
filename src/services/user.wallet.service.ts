@@ -82,7 +82,7 @@ const userRedeemCreditReward = async (req: Request) => {
   const creditPayload: UserWalletAttributes = {
     user_id,
     amount,
-    fund_type: FundingTypes.PAYMENT,
+    fund_type: FundingTypes.REDEEM_CREDIT,
     payment_reference,
     action_performed_by: user_id,
     credit_code,
@@ -156,10 +156,11 @@ const withrawableBalance = async (user_id: string) => {
       "$order.payment_completed$": true,
     } as any,
     include: { model: Orders, as: "order" },
-    attributes: [[Sequelize.fn("sum", Sequelize.col("amount")), "orders_payment"]],
+    attributes: [[Sequelize.fn("sum", Sequelize.col("SubOrders.amount")), "orders_payment"]],
+    group: [Sequelize.col("order.order_id")],
     raw: true,
   });
-  //All credits I directly toppd up
+  //All credits I directly topped up
   const walletPayments = await UserWallet.sum("amount", {
     where: { user_id, fund_type: FundingTypes.PAYMENT },
   });
@@ -174,7 +175,8 @@ const withrawableBalance = async (user_id: string) => {
       "$order.payed_from_wallet$": true,
     } as any,
     include: { model: Orders, as: "order" },
-    attributes: [[Sequelize.fn("sum", Sequelize.col("amount")), "used_balance"]],
+    attributes: [[Sequelize.fn("sum", Sequelize.col("SubOrders.amount")), "used_balance"]],
+    group: [Sequelize.col("order.order_id")],
     raw: true,
   });
   const totalWithdrawn = await Withdrawal.sum("amount", {
@@ -204,7 +206,7 @@ const withrawableBalance = async (user_id: string) => {
   return {
     withrawable_amount,
     total_payment_from_orders: ordersPayment,
-    total_payment_from_wallet: walletPayments,
+    total_payment_by_topup: walletPayments,
     total_bonus: bonuses,
     total_used_for_purchase: usedOrderBalance,
     total_withdrawn: totalWithdrawn,

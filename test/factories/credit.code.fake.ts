@@ -19,11 +19,13 @@ export default {
 
     const creditCode = await CreditCode.create(data);
 
-    const payload = create.users.map(({ user_id }: { user_id: any }) => ({
-      user_id,
-      credit_code,
-    }));
-    await CreditCodeUser.bulkCreate(payload);
+    if (data.users.length) {
+      const payload = data.users.map(({ user_id }: { user_id: any }) => ({
+        user_id,
+        credit_code,
+      }));
+      creditCode.users = await CreditCodeUser.bulkCreate(payload);
+    }
     return creditCode;
   },
   create: function () {

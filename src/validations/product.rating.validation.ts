@@ -3,7 +3,7 @@ import Joi from "joi";
 const create = {
   body: Joi.object().keys({
     product_id: Joi.string().required(),
-    rating: Joi.number().required(),
+    rating: Joi.number().max(5).min(1).required(),
     message: Joi.string(),
   }),
 };

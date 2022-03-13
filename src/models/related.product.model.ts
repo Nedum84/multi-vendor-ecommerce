@@ -17,10 +17,12 @@ export const RelatedProductModelAttributes: SequelizeAttributes<RelatedProductAt
   product_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   related_product_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
 };
 // --> Factory....
@@ -34,6 +36,13 @@ export function RelatedProductFactory(sequelize: Sequelize) {
       freezeTableName: true,
       defaultScope: {},
       scopes: {},
+      validate: {
+        productAndRelatedShouldBeDiff: function () {
+          if (this.product_id === this.related_product_id) {
+            throw new Error("Product & related product should not be the same");
+          }
+        },
+      },
     }
   );
 

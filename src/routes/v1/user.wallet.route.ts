@@ -11,7 +11,7 @@ router.use(requireAuth);
 
 router.get("/", validateReq(userWalletValidation.getWalletBalance), userWalletController.getWalletBalance);
 router.get("/history", validateReq(userWalletValidation.balanceHistory), userWalletController.balanceHistory);
-router.post(
+router.get(
   "/withdrawable",
   validateReq(userWalletValidation.withrawableBalance),
   userWalletController.withrawableBalance

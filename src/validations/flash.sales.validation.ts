@@ -47,10 +47,11 @@ const upsertFlashSaleProducts = {
     .min(2),
 };
 const removeFlashSaleProduct = {
-  params: Joi.object().keys({}),
-  query: Joi.object().keys({
-    variation_id: Joi.string().required(),
+  params: Joi.object().keys({
     flash_sale_id: Joi.string().required(),
+  }),
+  body: Joi.object().keys({
+    variation_id: Joi.string().required(),
   }),
 };
 const findFlashProduct = {

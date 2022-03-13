@@ -16,6 +16,7 @@ export interface StoreAttributes {
   state: string;
   country: string;
   description: string;
+  rating: number;
   verified: boolean;
   verified_at: Date;
   disable_store: boolean; //admin can only change this...
@@ -23,12 +24,12 @@ export interface StoreAttributes {
   //Extract to a new table later if you care
   settings: {
     auto_complete_order: boolean; //auto complete order on checkout
-    bank_details: {
-      acc_name: string;
-      acc_number: string;
-      bank_code: string;
-      bank_name: string;
-    };
+  };
+  bank_details: {
+    acc_name: string;
+    acc_number: string;
+    bank_code: string;
+    bank_name: string;
   };
 }
 
@@ -79,6 +80,10 @@ export const StoreModelAttributes: SequelizeAttributes<StoreAttributes> = {
     defaultValue: "US",
   },
   description: DataTypes.TEXT,
+  rating: {
+    type: DataTypes.INTEGER,
+    defaultValue: 5,
+  },
   verified: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -99,12 +104,15 @@ export const StoreModelAttributes: SequelizeAttributes<StoreAttributes> = {
     type: DataTypes.JSONB,
     defaultValue: {
       auto_complete_order: true,
-      bank_details: {
-        acc_name: null,
-        acc_nnumber: null,
-        bank_code: null,
-        bank_name: null,
-      },
+    },
+  },
+  bank_details: {
+    type: DataTypes.JSONB,
+    defaultValue: {
+      acc_name: null,
+      acc_nnumber: null,
+      bank_code: null,
+      bank_name: null,
     },
   },
 };

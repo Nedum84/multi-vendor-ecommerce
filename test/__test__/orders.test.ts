@@ -128,6 +128,7 @@ describe("Order Tests...", () => {
       },
       token,
     });
+
     expectSuccess(response);
     expect(response.body.data.order.payment_completed).toBeTruthy();
     expect(response.body.data.order.payment).toBeDefined();
@@ -145,7 +146,11 @@ describe("Order Tests...", () => {
     await request({
       path: `/wallet/user-credit`,
       method: "post",
-      payload: { amount: 232310, payment_reference: generateChars(16) },
+      payload: {
+        amount: 232310,
+        channel: PaymentChannel.SQUAD,
+        payment_reference: generateChars(16),
+      },
       token,
     });
     // //create order
@@ -157,6 +162,7 @@ describe("Order Tests...", () => {
       payload: { order_id: order.order_id, payed_from_wallet: true },
       token,
     });
+
     expectSuccess(response);
     expect(response.body.data.order.payment_completed).toBeTruthy();
     expect(response.body.data.order.payed_from_wallet).toBeTruthy();

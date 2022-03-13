@@ -31,12 +31,12 @@ const update = {
       description: Joi.string(),
       settings: Joi.object().keys({
         auto_complete_order: Joi.boolean().required(),
-        bank_details: Joi.object({
-          acc_name: Joi.string().required(),
-          acc_number: Joi.string().required(),
-          bank_code: Joi.string().required(),
-          bank_name: Joi.string().required(),
-        }),
+      }),
+      bank_details: Joi.object({
+        acc_name: Joi.string().required(),
+        acc_number: Joi.string().required(),
+        bank_code: Joi.string().required(),
+        bank_name: Joi.string().required(),
       }),
     })
     .min(1),
@@ -66,12 +66,12 @@ const adminUpdateStore = {
     store_percentage: Joi.number().min(1).max(99),
     settings: Joi.object().keys({
       auto_complete_order: Joi.boolean().required(),
-      bank_details: Joi.object({
-        acc_name: Joi.string().required(),
-        acc_number: Joi.string().required(),
-        bank_code: Joi.string().required(),
-        bank_name: Joi.string().required(),
-      }),
+    }),
+    bank_details: Joi.object({
+      acc_name: Joi.string().required(),
+      acc_number: Joi.string().required(),
+      bank_code: Joi.string().required(),
+      bank_name: Joi.string().required(),
     }),
   }).min(1),
 };

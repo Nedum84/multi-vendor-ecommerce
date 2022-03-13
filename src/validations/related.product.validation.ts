@@ -9,7 +9,7 @@ const create = {
 const remove = {
   body: Joi.object().keys({
     product_id: Joi.string().required(),
-    related_product_ids: Joi.string().required(),
+    related_product_id: Joi.string().required(),
   }),
 };
 const findForProduct = {

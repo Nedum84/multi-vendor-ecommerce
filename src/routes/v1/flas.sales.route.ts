@@ -12,8 +12,8 @@ router.get("/:flash_sale_id", validateReq(flashSalesValidation.findById), flashS
 router.get("/", validateReq(flashSalesValidation.findAll), flashSaleController.findAll);
 router.get(
   "/product/:flash_sale_id", //
-  validateReq(flashSalesValidation.findAll),
-  flashSaleController.findAll
+  validateReq(flashSalesValidation.findFlashProduct),
+  flashSaleController.findFlashProduct
 );
 
 router.post("/", validateReq(flashSalesValidation.createFlashSale), flashSaleController.createFlashSale);
@@ -23,7 +23,7 @@ router.delete(
   validateReq(flashSalesValidation.revokeFlashSale),
   flashSaleController.revokeFlashSale
 );
-router.patch(
+router.post(
   "/product/:flash_sale_id",
   validateReq(flashSalesValidation.upsertFlashSaleProducts),
   flashSaleController.upsertFlashSaleProducts

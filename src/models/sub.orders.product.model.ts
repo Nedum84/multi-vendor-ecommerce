@@ -97,6 +97,11 @@ export function SubOrdersProductFactory(sequelize: Sequelize) {
       foreignKey: "sub_order_id",
       targetKey: "sub_order_id",
     });
+    // SubOrdersProduct.belongsTo(models.Product, {
+    //   as: "product",
+    //   foreignKey: "product_id",
+    //   targetKey: "product_id",
+    // });
   };
 
   SubOrdersProduct.prototype.toJSON = function () {

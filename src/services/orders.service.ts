@@ -122,7 +122,13 @@ const updatePayment = async (req: Request) => {
 
   const order = await Orders.findOne({
     where: { order_id: orderId },
-    include: [{ model: SubOrders, as: "sub_orders" }],
+    include: [
+      {
+        model: SubOrders,
+        as: "sub_orders",
+        include: [{ model: SubOrdersProduct, as: "products" }],
+      },
+    ],
   });
 
   if (!order) {
@@ -207,8 +213,11 @@ const adminUpdatePayment = async (req: Request) => {
   const order = await Orders.findOne({
     where: { order_id: orderId },
     include: [
-      { model: OrdersPayment, as: "payment", required: false },
-      { model: SubOrders, as: "sub_orders" },
+      {
+        model: SubOrders,
+        as: "sub_orders",
+        include: [{ model: SubOrdersProduct, as: "products" }],
+      },
     ],
   });
 
@@ -248,7 +257,7 @@ const adminUpdatePayment = async (req: Request) => {
       await validateOrder(order, transaction);
     }
 
-    const payment_channel = PaymentChannel.ADMIN;
+    const payment_channel = PaymentChannel.REFUND;
     const payment_reference = await genUniqueColId(OrdersPayment, "payment_reference", 15);
     //create payment
     await OrdersPayment.create({ order_id, payment_status, payment_reference, payment_channel }, { transaction });
@@ -269,21 +278,23 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
   let couponAmount = 0;
 
   await asyncForEach(order.sub_orders, async (sub_order) => {
-    const { variation_id, qty } = sub_order.products;
-    const { discount, flash_discount, price } = await productVariationService.findById(variation_id);
+    await asyncForEach(sub_order.products, async (product) => {
+      const { variation_id, qty } = product;
+      const { discount, flash_discount, price } = await productVariationService.findById(variation_id);
 
-    if (flash_discount) {
-      calcSubTotal += qty * flash_discount.price;
-    } else if (discount) {
-      calcSubTotal += qty * discount.price;
-    } else {
-      calcSubTotal += qty * price;
-    }
+      if (flash_discount) {
+        calcSubTotal += qty * flash_discount.price;
+      } else if (discount) {
+        calcSubTotal += qty * discount.price;
+      } else {
+        calcSubTotal += qty * price;
+      }
 
-    if (order.coupon_code) {
-      const coupon = await couponService.findByCouponCode(order.coupon_code);
-      couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
-    }
+      if (order.coupon_code) {
+        const coupon = await couponService.findByCouponCode(order.coupon_code);
+        couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
+      }
+    });
   });
 
   const amount = calcSubTotal - couponAmount;
@@ -295,31 +306,33 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
   //Update qty remaining...
   //Extra validation(s) could be removed shaaa...
   await asyncForEach(order.sub_orders, async (sub_order) => {
-    const { variation_id, qty } = sub_order.products;
-    const variation = await productVariationService.findById(variation_id, transaction);
-    const { flash_discount } = variation;
+    await asyncForEach(sub_order.products, async (product) => {
+      const { variation_id, qty } = product;
+      const variation = await productVariationService.findById(variation_id, transaction);
+      const { flash_discount } = variation;
 
-    if (variation.with_storehouse_management) {
-      if (variation.stock_qty < qty) {
-        throw new Error(`Item(${variation.product.name}) is currently out of stock`);
-      }
+      if (variation.with_storehouse_management) {
+        if (variation.stock_qty < qty) {
+          throw new Error(`Item(${variation.product.name}) is currently out of stock`);
+        }
 
-      variation.stock_qty = variation.stock_qty - qty;
-      await variation.save({ transaction });
-    } else {
-      if (variation.stock_status !== StockStatus.IN_STOCK) {
-        throw new Error(`Item ${variation.product.name} is currently out of stock`);
+        variation.stock_qty = variation.stock_qty - qty;
+        await variation.save({ transaction });
+      } else {
+        if (variation.stock_status !== StockStatus.IN_STOCK) {
+          throw new Error(`Item ${variation.product.name} is currently out of stock`);
+        }
       }
-    }
-    //If flashsale is included
-    if (flash_discount) {
-      if (flash_discount.qty < flash_discount.sold + qty) {
-        const qtyRem = flash_discount.qty - flash_discount.sold;
-        throw new Error(`Item(${variation.product.name}) quantity remaining on flash sale is ${qtyRem}`);
+      //If flashsale is included
+      if (flash_discount) {
+        if (flash_discount.qty < flash_discount.sold + qty) {
+          const qtyRem = flash_discount.qty - flash_discount.sold;
+          throw new Error(`Item(${variation.product.name}) quantity remaining on flash sale is ${qtyRem}`);
+        }
+        flash_discount.sold = flash_discount.sold + qty;
+        await flash_discount.save({ transaction });
       }
-      flash_discount.sold = flash_discount.sold + qty;
-      await flash_discount.save({ transaction });
-    }
+    });
   });
   return true;
 };

@@ -15,6 +15,12 @@ export interface UserAttributes {
   last_login: Date;
   suspended: boolean;
   password: string;
+  bank_details: {
+    acc_name: string;
+    acc_number: string;
+    bank_code: string;
+    bank_name: string;
+  };
 }
 
 interface UserCreationAttributes extends Optional<UserAttributes, "photo" | "suspended"> {}
@@ -56,6 +62,15 @@ export const UserModelAttributes: SequelizeAttributes<UserAttributes> = {
   password: {
     type: DataTypes.STRING,
     allowNull: false,
+  },
+  bank_details: {
+    type: DataTypes.JSONB,
+    defaultValue: {
+      acc_name: null,
+      acc_nnumber: null,
+      bank_code: null,
+      bank_name: null,
+    },
   },
 };
 // --> Factory....

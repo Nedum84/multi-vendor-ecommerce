@@ -7,7 +7,7 @@ export enum PaymentChannel {
   PAYSTACK = "paystack",
   SQUAD = "squad",
   FLW = "flutterwave",
-  ADMIN = "adminchannel",
+  REFUND = "refund",
 }
 export enum FundingTypes { //For wallet
   REFUND = "refund",

@@ -13,8 +13,9 @@ const create = async (req: Request) => {
     where: {
       purchased_by: user_id,
       delivered: true,
-      "$products.product_id$": product_id,
+      // "$products.product_id$": product_id,
     } as any,
+    // subQuery: false,
     include: { model: SubOrdersProduct, as: "products" },
   });
   if (!checkPurchased) {
@@ -26,7 +27,8 @@ const create = async (req: Request) => {
     throw new ErrorResponse("You have already rated this product");
   }
 
-  (body.store_id = checkPurchased.store_id), (body.user_id = user_id);
+  body.store_id = checkPurchased.store_id;
+  body.user_id = user_id;
   const rating = await ProductRating.create(body);
   return rating;
 };

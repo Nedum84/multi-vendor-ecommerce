@@ -7,11 +7,15 @@ import productRatingValidation from "../../validations/product.rating.validation
 const router = express.Router();
 
 router.get(
-  "/:product_id",
+  "/product/:product_id",
   validateReq(productRatingValidation.findByProductId),
   productRatingController.findByProductId
 );
-router.get("/:store_id", validateReq(productRatingValidation.findByStoreId), productRatingController.findByStoreId);
+router.get(
+  "/store/:store_id",
+  validateReq(productRatingValidation.findByStoreId),
+  productRatingController.findByStoreId
+);
 
 //-->Auth routes
 router.use(requireAuth);

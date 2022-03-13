@@ -36,7 +36,7 @@ export interface SubOrdersInstance
   extends Model<SubOrdersAttributes, SubOrdersCreationAttributes>,
     SubOrdersAttributes {
   order: OrdersInstance;
-  products: SubOrdersProductInstance;
+  products: SubOrdersProductInstance[];
 }
 
 //--> Model attributes

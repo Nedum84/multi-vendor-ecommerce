@@ -9,6 +9,12 @@ const update = {
       phone: Joi.string(),
       email: Joi.string().custom(email),
       photo: Joi.string(),
+      bank_details: Joi.object({
+        acc_name: Joi.string().required(),
+        acc_number: Joi.string().required(),
+        bank_code: Joi.string().required(),
+        bank_name: Joi.string().required(),
+      }),
     })
     .min(1),
 };
@@ -25,6 +31,12 @@ const adminUpdateUser = {
       photo: Joi.string(),
       role: Joi.string().valid(...Object.values(UserRoleStatus)),
       suspended: Joi.boolean(),
+      bank_details: Joi.object({
+        acc_name: Joi.string().required(),
+        acc_number: Joi.string().required(),
+        bank_code: Joi.string().required(),
+        bank_name: Joi.string().required(),
+      }),
     })
     .min(1),
 };

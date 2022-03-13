@@ -67,8 +67,8 @@ export function FlashSalesProductsFactory(sequelize: Sequelize) {
     });
     FlashSalesProducts.belongsTo(models.FlashSales, {
       as: "flash_sale",
-      foreignKey: "variation_id",
-      targetKey: "variation_id",
+      foreignKey: "flash_sale_id",
+      targetKey: "flash_sale_id",
     });
   };
 

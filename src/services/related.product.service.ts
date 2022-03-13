@@ -18,7 +18,7 @@ const create = async (req: Request) => {
     product_id,
   }));
 
-  const relatedProducts = await RelatedProduct.bulkCreate(payload, { ignoreDuplicates: true });
+  const relatedProducts = await RelatedProduct.bulkCreate(payload, { ignoreDuplicates: true, validate: true });
 
   return relatedProducts;
 };

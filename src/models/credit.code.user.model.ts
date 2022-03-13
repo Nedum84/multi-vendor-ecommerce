@@ -17,10 +17,12 @@ export const CreditCodeUserModelAttributes: SequelizeAttributes<CreditCodeUserAt
   credit_code: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   user_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
 };
 // --> Factory....
