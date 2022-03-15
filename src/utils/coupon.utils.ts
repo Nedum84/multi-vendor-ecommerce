@@ -56,41 +56,23 @@ class CouponUtils {
       actualPrice = price;
     }
     return couponableQty * actualPrice * couponPercent;
-
-    // OR
-    //if discount,
-    // if (discount) {
-    //   //check if product_qty_limit is set
-    //   if (product_qty_limit) {
-    //     //Check if the cart qty is gt than product_qty_limit
-    //     if (qty > product_qty_limit) {
-    //       //if gt, use product_qty_limit
-    //       return product_qty_limit * discount.price * couponPercent;
-    //     } else {
-    //       //else use cart qty
-    //       return qty * discount.price * couponPercent;
-    //     }
-    //   } else {
-    //     //check if product_qty_limit is not set, use cart qty
-    //     return qty * discount.price * couponPercent;
-    //   }
-    // } else {
-    //   //check if product_qty_limit is set
-    //   if (product_qty_limit) {
-    //     //Check if the cart qty is gt than product_qty_limit
-    //     if (qty > product_qty_limit) {
-    //       //if gt, use product_qty_limit
-    //       return product_qty_limit * price * couponPercent;
-    //     } else {
-    //       //else use cart qty
-    //       return qty * price * couponPercent;
-    //     }
-    //   } else {
-    //     //check if product_qty_limit is not set, use cart qty
-    //     return qty * price * couponPercent;
-    //   }
-    // }
   };
+
+  /**
+   * Compares Coupon amount to max amount applicable
+   * @param coupon Coupon
+   * @param amount amount discount
+   * @returns amount with cap applied if applicable
+   */
+  static applyCouponCap(coupon: CouponInstance, amount: number) {
+    if (coupon.max_coupon_amount) {
+      if (amount > coupon.max_coupon_amount) {
+        return coupon.max_coupon_amount;
+      }
+    }
+    return amount;
+  }
+
   static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {
     const options: FindOptions = {
       ...(paginate ?? {}),

@@ -1,5 +1,5 @@
-import { Optional, Sequelize } from "sequelize/dist";
-import { Model, DataTypes } from "sequelize/dist";
+import { Optional, Sequelize } from "sequelize";
+import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 

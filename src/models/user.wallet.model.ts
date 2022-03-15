@@ -1,5 +1,5 @@
-import { Sequelize } from "sequelize/dist";
-import { Model, Optional, DataTypes } from "sequelize/dist";
+import { Sequelize } from "sequelize";
+import { Model, Optional, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
 import { FundingTypes } from "../enum/payment.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
@@ -29,7 +29,7 @@ export const UserWalletModelAttributes: SequelizeAttributes<UserWalletAttributes
     allowNull: false,
   },
   amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   fund_type: {

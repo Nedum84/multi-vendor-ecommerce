@@ -51,7 +51,7 @@ export const ProductVariationModelAttributes: SequelizeAttributes<ProductVariati
     type: DataTypes.STRING,
   },
   price: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   with_storehouse_management: {

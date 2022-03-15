@@ -1,5 +1,5 @@
-import { Sequelize } from "sequelize/dist";
-import { Model, Optional, DataTypes } from "sequelize/dist";
+import { Sequelize } from "sequelize";
+import { Model, Optional, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
 import { FundingTypes } from "../enum/payment.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
@@ -38,16 +38,15 @@ export const WithdrawalModelAttributes: SequelizeAttributes<WithdrawalAttributes
     allowNull: false,
   },
   amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   amount_user_will_receive: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   charges: {
-    type: DataTypes.STRING,
-    unique: true,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   processed: {

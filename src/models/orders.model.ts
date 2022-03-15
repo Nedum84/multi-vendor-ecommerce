@@ -33,26 +33,26 @@ export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
     primaryKey: true,
   },
   amount: {
-    type: DataTypes.BIGINT,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   sub_total: {
-    type: DataTypes.BIGINT,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   coupon_code: {
     type: DataTypes.STRING,
   },
   coupon_amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   shipping_amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   tax_amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   purchased_by: {

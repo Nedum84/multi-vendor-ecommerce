@@ -18,6 +18,7 @@ export interface CouponAttributes {
   usage_limit_per_user: number;
   created_by: string;
   percentage_discount: number;
+  max_coupon_amount: number;
   revoke: boolean;
 }
 
@@ -71,6 +72,7 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     type: DataTypes.INTEGER,
     allowNull: false,
   },
+  max_coupon_amount: DataTypes.INTEGER,
   revoke: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

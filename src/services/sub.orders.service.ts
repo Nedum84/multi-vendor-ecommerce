@@ -20,7 +20,7 @@ const create = async (
   address_id: string,
   carts: CartInstance[],
   transaction: Transaction,
-  couponData?: { coupon_amount: number; sub_total: number; coupon: CouponInstance }
+  couponData?: { coupon_amount: number; coupon_amount_without_cap: number; sub_total: number; coupon: CouponInstance }
 ) => {
   // OR removing carts from params and passing user_id,
   // With that you can access the carts via
@@ -33,8 +33,15 @@ const create = async (
   let storeCouponAmount = 0;
 
   if (couponData) {
-    const { coupon } = couponData;
+    const { coupon, coupon_amount, coupon_amount_without_cap } = couponData;
     storeCouponAmount = couponService.findStoreCouponAmount(coupon, carts, store_id, user_id);
+
+    //...
+    if (storeCouponAmount != 0) {
+      if (coupon.max_coupon_amount) {
+        storeCouponAmount = (storeCouponAmount / coupon_amount_without_cap) * coupon_amount;
+      }
+    }
   }
 
   const store_shipping = await shippingService.getStoreShipping(store_id, variation_ids, address_id);

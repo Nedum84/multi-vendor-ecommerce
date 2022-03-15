@@ -15,7 +15,7 @@ import {
 } from "../models";
 
 class ProductUtils {
-  static storeSubQuery = () => {
+  static storeSubQuery() {
     return `(
         select (row_to_json(s))
         from (
@@ -27,7 +27,7 @@ class ProductUtils {
           where "Product".store_id = s.store_id        
         ) s
       ) AS store`;
-  };
+  }
 
   static imgSubQuery() {
     return `(
@@ -39,14 +39,14 @@ class ProductUtils {
     )`;
   }
 
-  static noOfViewsSubQuery = () => {
+  static noOfViewsSubQuery() {
     return `
     (
       SELECT COUNT(id) 
       FROM "ProductViews" WHERE 
       "ProductViews".product_id = "Product".product_id
     )`;
-  };
+  }
 
   static selectQuery = (data: any) => {
     const { user_id, product_status = ProductStatus.PUBLISHED, limit, offset, extra = "", order } = data;

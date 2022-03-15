@@ -1,10 +1,8 @@
-import faker from "faker";
 import { CREATED } from "http-status";
 import { Op } from "sequelize/dist";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
 import { PaymentChannel, PaymentStatus } from "../../src/enum/payment.enum";
 import { Orders, SubOrders } from "../../src/models";
-import { OrdersAttributes } from "../../src/models/orders.model";
 import CONSTANTS from "../../src/utils/constants";
 import CouponUtils from "../../src/utils/coupon.utils";
 import { generateChars } from "../../src/utils/random.string";

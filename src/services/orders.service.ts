@@ -46,7 +46,15 @@ const create = async (req: Request) => {
     throw new ErrorResponse("One or more Item is currently out of stock");
   }
 
-  let couponData: { coupon_amount: number; sub_total: number; coupon: CouponInstance } | undefined;
+  type CouponDataType = {
+    coupon_amount: number;
+    coupon_amount_without_cap: number;
+    sub_total: number;
+    coupon: CouponInstance;
+  };
+
+  let couponData: CouponDataType | undefined;
+
   if (coupon_code) {
     //validate coupon
     couponData = await couponService.applyCoupon(user_id, coupon_code);

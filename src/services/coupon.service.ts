@@ -236,15 +236,15 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       }
       break;
 
-    case CouponType.USER_AND_PRODUCT:
-      const couponProductIds_ = coupon.products.map((x) => x.product_id); //products
-      const couponUserIds_ = coupon.users.map((x) => x.user_id); //users
+    case CouponType.USER_AND_PRODUCT: {
+      const couponProductIds = coupon.products.map((x) => x.product_id); //products
+      const couponUserIds = coupon.users.map((x) => x.user_id); //users
 
-      if (couponUserIds_.includes(user_id)) {
+      if (couponUserIds.includes(user_id)) {
         carts.forEach((cart) => {
           const { product_id, discount, price, flash_discount } = cart.variation;
           const { qty } = cart;
-          if (couponProductIds_.includes(product_id)) {
+          if (couponProductIds.includes(product_id)) {
             couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
           }
         });
@@ -252,6 +252,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
         throw new ErrorResponse("You are not eligible to use this coupon");
       }
       break;
+    }
     case CouponType.ALL_ORDERS:
       carts.forEach((cart) => {
         const { discount, price, flash_discount } = cart.variation;
@@ -267,11 +268,14 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
   }
   //If 0, i.e coupon was avaialble for this user or his products
   if (couponAmount == 0) {
-    throw new ErrorResponse("Coupon not available for this user/orders");
+    throw new ErrorResponse("Coupon not available for this user/product/orders");
   }
 
+  // For coupon with cap(max),,,Maintain the coupon amount cap
+  // ie, don't allow the coupon discount to be {{ coupon_amount_without_cap }}
   return {
-    coupon_amount: couponAmount,
+    coupon_amount: CouponUtils.applyCouponCap(coupon, couponAmount),
+    coupon_amount_without_cap: couponAmount,
     sub_total: sub_total,
     coupon,
   };
@@ -329,16 +333,16 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
       });
     }
   } else if (coupon.coupon_type === CouponType.USER_AND_PRODUCT) {
-    const couponProductIds_ = coupon.products.map((x) => x.product_id); //products
-    const couponUserIds_ = coupon.users.map((x) => x.user_id); //users
+    const couponProductIds = coupon.products.map((x) => x.product_id); //products
+    const couponUserIds = coupon.users.map((x) => x.user_id); //users
 
     //if I have access to this coupon
-    if (couponUserIds_.includes(user_id)) {
+    if (couponUserIds.includes(user_id)) {
       carts.forEach((cart) => {
         const { product_id, discount, price, flash_discount } = cart.variation;
         const { store_id: each_store_id, qty } = cart;
         //if this product belongs to this coupon
-        if (couponProductIds_.includes(product_id)) {
+        if (couponProductIds.includes(product_id)) {
           //if this product belongs to this store
           if (each_store_id === store_id) {
             storeCouponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);

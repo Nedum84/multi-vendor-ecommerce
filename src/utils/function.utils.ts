@@ -48,8 +48,9 @@ export function arraysEqual<T>(a: T[], b: T[]) {
  * @returns Object Array
  * */
 export function chunkArrayInGroups<T>(arr: Array<T>, size: number) {
-  var myArray = [];
+  var myArray: T[] = [];
   for (var i = 0; i < arr.length; i += size) {
+    //@ts-ignore
     myArray.push(arr.slice(i, i + size));
   }
   return myArray;

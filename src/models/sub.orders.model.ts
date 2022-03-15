@@ -1,5 +1,5 @@
-import { Optional, Sequelize } from "sequelize/dist";
-import { Model, DataTypes } from "sequelize/dist";
+import { Optional, Sequelize } from "sequelize";
+import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
@@ -55,27 +55,27 @@ export const SubOrdersModelAttributes: SequelizeAttributes<SubOrdersAttributes> 
     allowNull: false,
   },
   amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   sub_total: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   coupon_amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   shipping_amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   tax_amount: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     defaultValue: 0,
   },
   store_price: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   order_status: {

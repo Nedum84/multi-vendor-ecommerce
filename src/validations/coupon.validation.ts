@@ -15,6 +15,7 @@ const create = {
     usage_limit: Joi.number().min(1),
     usage_limit_per_user: Joi.number().min(1),
     percentage_discount: Joi.number().min(5).max(100).required(),
+    max_coupon_amount: Joi.number().min(1),
     products: Joi.array()
       .items(
         Joi.object().keys({

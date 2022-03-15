@@ -21,7 +21,8 @@
     "build-deploy": "npm run build && npm run deploy2",
     "deploy-offline2": "npm run postbuild && cd build && sls offline",
     "deploy-offline": "sls offline --config serverless-offline.yml",
-    "git-push": "git add . && git commit -m 'more additions' && git push"
+    "git-push": "git add . && git commit -m 'more additions' && git push",
+    "create-migration-files": "npm run build && npx makemigration"
   },
   "jest": {
     "preset": "ts-jest",
@@ -66,6 +67,8 @@
     "faker": "^5.5.3",
     "jest": "^27.5.0",
     "jest-cli": "^27.5.0",
+    "sequelize-auto-migrations-v2": "^1.2.1",
+    "sequelize-cli": "^6.4.1",
     "supertest": "^6.2.2",
     "ts-jest": "^27.1.3"
   }

@@ -16,34 +16,35 @@ export interface ProductDiscountInstance
     ProductDiscountAttributes {}
 
 //--> Model attributes
-export const ProductDiscountModelAttributes: SequelizeAttributes<ProductDiscountAttributes> =
-  {
-    variation_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    price: {
-      type: DataTypes.INTEGER,
-      allowNull: false,
-    },
-    discount_from: {
-      type: DataTypes.DATE,
-      allowNull: false,
-    },
-    discount_to: DataTypes.DATE,
-    revoke: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: false,
-    },
-  };
+export const ProductDiscountModelAttributes: SequelizeAttributes<ProductDiscountAttributes> = {
+  variation_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  price: {
+    type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  discount_from: {
+    type: DataTypes.DATE,
+    allowNull: false,
+  },
+  discount_to: DataTypes.DATE,
+  revoke: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+};
 // --> Factory....
 export function ProductDiscountFactory(sequelize: Sequelize) {
-  const ProductDiscount = <ModelStatic<ProductDiscountInstance>>(
-    sequelize.define("ProductDiscount", ProductDiscountModelAttributes as any, {
+  const ProductDiscount = <ModelStatic<ProductDiscountInstance>>sequelize.define(
+    "ProductDiscount",
+    ProductDiscountModelAttributes as any,
+    {
       timestamps: true,
       tableName: "ProductDiscount",
       freezeTableName: true,
-    })
+    }
   );
 
   ProductDiscount.associate = function (models: ModelRegistry) {

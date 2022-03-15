@@ -35,6 +35,7 @@ export default {
       end_date: new Date(Date.now() + 48 * 3600), //next 2 days
       product_qty_limit: 20, //no. of product(s) in the cart to apply this coupon to
       usage_limit: 20,
+      max_coupon_amount: 500,
       usage_limit_per_user: 2,
       percentage_discount: 40,
     };

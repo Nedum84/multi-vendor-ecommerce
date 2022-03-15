@@ -29,7 +29,7 @@ export const FlashSalesProductsModelAttributes: SequelizeAttributes<FlashSalesPr
     primaryKey: true,
   },
   price: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.FLOAT,
     allowNull: false,
   },
   qty: {
