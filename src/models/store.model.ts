@@ -122,6 +122,7 @@ export function StoreFactory(sequelize: Sequelize) {
     timestamps: true,
     tableName: "Store",
     freezeTableName: true,
+    indexes: [{ fields: ["user_id"] }],
   });
 
   Store.associate = function (models: ModelRegistry) {

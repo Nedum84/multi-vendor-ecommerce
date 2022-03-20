@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { NOT_FOUND } from "http-status";
-import { Op, QueryTypes, Transaction } from "sequelize/dist";
+import { Op, QueryTypes, Transaction } from "sequelize";
 import { ErrorResponse } from "../apiresponse/error.response";
 import { MediaType } from "../enum/media.enum";
 import sequelize, { MediaFiles, MediaFolder } from "../models";

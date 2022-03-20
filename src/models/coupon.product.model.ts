@@ -33,6 +33,7 @@ export function CouponProductFactory(sequelize: Sequelize) {
       tableName: "CouponProduct",
       freezeTableName: true,
       defaultScope: {},
+      indexes: [{ fields: ["coupon_code"] }],
     }
   );
 

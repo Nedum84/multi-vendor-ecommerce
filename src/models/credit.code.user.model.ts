@@ -36,6 +36,7 @@ export function CreditCodeUserFactory(sequelize: Sequelize) {
       freezeTableName: true,
       defaultScope: {},
       scopes: {},
+      indexes: [{ fields: ["credit_code"] }],
     }
   );
 

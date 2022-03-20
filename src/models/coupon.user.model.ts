@@ -29,6 +29,7 @@ export function CouponUserFactory(sequelize: Sequelize) {
     freezeTableName: true,
     defaultScope: {},
     scopes: {},
+    indexes: [{ fields: ["coupon_code"] }],
   });
 
   CouponUser.associate = function (models: ModelRegistry) {

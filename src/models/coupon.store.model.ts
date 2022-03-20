@@ -13,17 +13,16 @@ export interface CouponStoreInstance
     CouponStoreAttributes {}
 
 //--> Model attributes
-export const CouponStoreModelAttributes: SequelizeAttributes<CouponStoreAttributes> =
-  {
-    coupon_code: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    store_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  };
+export const CouponStoreModelAttributes: SequelizeAttributes<CouponStoreAttributes> = {
+  coupon_code: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  store_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+};
 // --> Factory....
 export function CouponStoreFactory(sequelize: Sequelize) {
   const CouponStore = <ModelStatic<CouponStoreInstance>>sequelize.define(
@@ -35,6 +34,7 @@ export function CouponStoreFactory(sequelize: Sequelize) {
       freezeTableName: true,
       defaultScope: {},
       scopes: {},
+      indexes: [{ fields: ["coupon_code"] }],
     }
   );
 

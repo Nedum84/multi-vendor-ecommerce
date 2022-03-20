@@ -72,6 +72,7 @@ export function MediaFilesFactory(sequelize: Sequelize) {
     tableName: "MediaFiles",
     freezeTableName: true,
     paranoid: true,
+    indexes: [{ fields: ["folder_id"] }],
   });
 
   MediaFiles.associate = function (models: ModelRegistry) {

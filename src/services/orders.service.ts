@@ -1,6 +1,6 @@
 import { Request } from "express";
 import sequelize, { SubOrders, Orders, OrdersPayment, OrdersAddress, SubOrdersProduct, UserWallet } from "../models";
-import { Op, Transaction } from "sequelize/dist";
+import { Op, Transaction } from "sequelize";
 import { FundingTypes, PaymentChannel, PaymentStatus } from "../enum/payment.enum";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import moment from "moment";

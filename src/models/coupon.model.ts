@@ -1,7 +1,7 @@
 import { Optional, Sequelize } from "sequelize";
 import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
-import { CouponType } from "../enum/coupon.enum";
+import { CouponApplyFor, CouponType } from "../enum/coupon.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { CouponProductInstance } from "./coupon.product.model";
 import { CouponStoreInstance } from "./coupon.store.model";
@@ -9,6 +9,7 @@ import { CouponUserInstance } from "./coupon.user.model";
 
 export interface CouponAttributes {
   coupon_code: string;
+  coupon_apply_for: CouponApplyFor;
   coupon_type: CouponType;
   title: string;
   start_date: Date;
@@ -39,10 +40,15 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     primaryKey: true,
     unique: true,
   },
+  coupon_apply_for: {
+    type: DataTypes.ENUM,
+    values: Object.values(CouponApplyFor),
+    allowNull: false,
+  },
   coupon_type: {
     type: DataTypes.ENUM,
     values: Object.values(CouponType),
-    allowNull: false,
+    defaultValue: CouponType.PERCENTAGE,
   },
   title: {
     type: DataTypes.STRING,

@@ -4,7 +4,7 @@ import { createModel } from "../utils/random.string";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { ErrorResponse } from "../apiresponse/error.response";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { isAdmin } from "../utils/admin.utils";
 import { FlashSalesAttributes, FlashSalesInstance } from "../models/flash.sales.model";
 import { FlashSalesProductsAttributes } from "../models/flash.sales.products.model";

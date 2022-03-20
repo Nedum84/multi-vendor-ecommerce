@@ -1,5 +1,5 @@
 import sequelize, { CreditCode, CreditCodeUser } from "../models";
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { Request } from "express";
 import { Helpers } from "../utils/helpers";
 import { ErrorResponse } from "../apiresponse/error.response";

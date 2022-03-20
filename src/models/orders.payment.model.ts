@@ -47,6 +47,7 @@ export function OrdersPaymentFactory(sequelize: Sequelize) {
       tableName: "OrdersPayment",
       freezeTableName: true,
       defaultScope: {},
+      indexes: [{ fields: ["order_id"] }],
     }
   );
 

@@ -1,4 +1,4 @@
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 import { CategoryProduct } from "../models";
 import { distinctArray, mapAsync } from "../utils/function.utils";
 

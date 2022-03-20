@@ -9,7 +9,7 @@ import { ProductVariation } from "../models";
 import { createModel } from "../utils/random.string";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { ErrorResponse } from "../apiresponse/error.response";
-import { Op, Transaction } from "sequelize/dist";
+import { Op, Transaction } from "sequelize";
 import { ProductAttributeAttributes, ProductAttributeInstance } from "../models/product.attribute.model";
 import { ProductAttributeSetsAttributes, ProductAttributeSetsInstance } from "../models/product.attribute.sets.model";
 import { arraysEqual } from "../utils/function.utils";

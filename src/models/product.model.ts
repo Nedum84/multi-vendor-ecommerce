@@ -2,8 +2,10 @@ import { Model, Optional, DataTypes, Sequelize } from "sequelize";
 import { ModelRegistry } from ".";
 import { ProductStatus } from "../enum/product.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
+import { CategoryInstance } from "./category.model";
 import { CollectionInstance } from "./collection.model";
 import { ProductVariationInstance } from "./product.variation.model";
+import { TagInstance } from "./tag.model";
 
 export interface ProductAttributes {
   product_id: string;
@@ -24,6 +26,8 @@ interface ProductCreationAttributes extends Optional<ProductAttributes, "product
 export interface ProductInstance extends Model<ProductAttributes, ProductCreationAttributes>, ProductAttributes {
   variations: ProductVariationInstance[];
   collections: CollectionInstance[];
+  categories: CategoryInstance[];
+  tags: TagInstance[];
 }
 
 //--> Model attributes
@@ -83,6 +87,13 @@ export function ProductFactory(sequelize: Sequelize) {
         attributes: ["title", "guarantee_period", "course_id"],
       },
     },
+    indexes: [
+      { fields: ["name"] },
+      { fields: ["store_id"] },
+      {
+        fields: ["status", "slug"],
+      },
+    ],
   });
 
   Product.associate = function (models: ModelRegistry) {

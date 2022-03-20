@@ -4,5 +4,5 @@ module.exports = {
   config: path.resolve("./build/src/database/config", "db.config.js"),
   "models-path": path.resolve("./build/src/models"),
   "seeders-path": path.resolve("./build/src/database/seeders"),
-  "migrations-path": path.resolve("./build/src/database/migrations"),
+  "migrations-path": path.resolve("./src/database/migrations-js"),
 };

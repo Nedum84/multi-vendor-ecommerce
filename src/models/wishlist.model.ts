@@ -8,33 +8,27 @@ export interface WishlistAttributes {
   user_id: string;
 }
 
-interface WishlistInstance
-  extends Model<WishlistAttributes, WishlistAttributes>,
-    WishlistAttributes {}
+interface WishlistInstance extends Model<WishlistAttributes, WishlistAttributes>, WishlistAttributes {}
 
 //--> Model attributes
-export const WishlistModelAttributes: SequelizeAttributes<WishlistAttributes> =
-  {
-    product_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    user_id: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-  };
+export const WishlistModelAttributes: SequelizeAttributes<WishlistAttributes> = {
+  product_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  user_id: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+};
 // --> Factory....
 export function WishlistFactory(sequelize: Sequelize) {
-  const Wishlist = <ModelStatic<WishlistInstance>>sequelize.define(
-    "Wishlist",
-    WishlistModelAttributes as any,
-    {
-      timestamps: true,
-      tableName: "Wishlist",
-      freezeTableName: true,
-    }
-  );
+  const Wishlist = <ModelStatic<WishlistInstance>>sequelize.define("Wishlist", WishlistModelAttributes as any, {
+    timestamps: true,
+    tableName: "Wishlist",
+    freezeTableName: true,
+    indexes: [{ fields: ["user_id"] }],
+  });
 
   Wishlist.associate = function (models: ModelRegistry) {
     const { Wishlist } = models;
@@ -43,6 +37,11 @@ export function WishlistFactory(sequelize: Sequelize) {
       as: "product",
       foreignKey: "product_id",
       targetKey: "product_id",
+    });
+    Wishlist.belongsTo(models.User, {
+      as: "user",
+      foreignKey: "user_id",
+      targetKey: "user_id",
     });
   };
 

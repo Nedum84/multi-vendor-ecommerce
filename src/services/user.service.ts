@@ -9,7 +9,7 @@ import { NotFoundError } from "../apiresponse/not.found.error";
 import { isAdmin } from "../utils/admin.utils";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { Helpers } from "../utils/helpers";
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { UserUtils } from "../utils/user.utils";
 import { UserWalletAttributes } from "../models/user.wallet.model";
 

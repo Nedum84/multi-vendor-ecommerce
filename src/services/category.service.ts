@@ -1,6 +1,6 @@
 import { Request } from "express";
 import CategoryUtils from "../utils/category.utils";
-import { QueryTypes } from "sequelize/dist";
+import { QueryTypes } from "sequelize";
 import { CategoryAttributes, CategoryInstance } from "../models/category.model";
 import { createModel } from "../utils/random.string";
 import sequelize, { Category } from "../models";

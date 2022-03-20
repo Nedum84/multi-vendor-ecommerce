@@ -24,6 +24,7 @@ import tagProductService from "./tag.product.service";
 //--> Create
 const create = async (req: Request) => {
   const { user_id, role } = req.user!;
+  console.log(new Date(), Date.now());
 
   const body: ProductAttributes & {
     discount: ProductDiscountAttributes;
@@ -36,7 +37,7 @@ const create = async (req: Request) => {
   body.created_by = user_id;
 
   if (!isAdmin(role) && role != UserRoleStatus.VENDOR) {
-    throw new UnauthorizedError("Only vendore/Admin can publish a product");
+    throw new UnauthorizedError("Only vendore/Admin can create a product");
   }
 
   //not necessary validation though🤪
@@ -59,6 +60,7 @@ const create = async (req: Request) => {
   try {
     await sequelize.transaction(async (transaction) => {
       body.is_approved = true; //temporarily
+      body.approved_by = user_id; //temporarily
       const slug = generateSlug(body.name);
       body.slug = await genSlugColId(Product, "slug", slug);
 
@@ -83,7 +85,7 @@ const create = async (req: Request) => {
       }
     });
   } catch (error: any) {
-    throw new ErrorResponse(error);
+    throw new Error(error);
   }
 
   return findById(body.product_id);
@@ -212,12 +214,15 @@ const findAll = async (req: Request) => {
     ];
   }
 
-  const products = await Product.findAll({
+  const products = await Product.findAndCountAll({
     where,
     ...ProductUtils.sequelizeFindOptions(options),
   });
 
-  return products;
+  return {
+    products: products.rows,
+    total: products.count,
+  };
 };
 //--> find By product ids
 const findByProductIds = async (product_ids: string[]) => {

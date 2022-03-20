@@ -95,10 +95,10 @@ const generateAuthTokens = async (user: UserAttributes, store_ids: string[], t?:
   const { role, user_id } = user;
 
   const payload = { user_id, role, stores: store_ids };
-  const accessTokenExpires = moment().add(config.jwt.accessExpirationMinutes, "minutes");
+  const accessTokenExpires = moment().add(config.jwt.accessExpires, "minutes");
   const accessToken = generateToken(payload, accessTokenExpires, TokenTypes.ACCESS);
 
-  const refreshTokenExpires = moment().add(config.jwt.refreshExpirationDays, "days");
+  const refreshTokenExpires = moment().add(config.jwt.refreshExpires, "days");
   const refreshToken = generateToken(payload, refreshTokenExpires, TokenTypes.REFRESH);
 
   await saveToken(refreshToken, user.user_id, refreshTokenExpires, TokenTypes.REFRESH, t);

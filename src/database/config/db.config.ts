@@ -1,9 +1,14 @@
-import { Dialect } from "sequelize/types";
+import { Dialect, Options } from "sequelize/types";
 import config from "../../config/config";
 
-export default {
+interface DBStages {
+  test: Options;
+  development: Options;
+  production: Options;
+}
+const dbConfig = {
   development: {
-    dbname: config.DB_NAME!,
+    database: config.DB_NAME!,
     username: config.DB_USERNAME!,
     password: config.DB_PASSWORD!,
     host: config.DB_HOST,
@@ -17,7 +22,7 @@ export default {
     },
   },
   test: {
-    dbname: config.DB_TEST_NAME,
+    database: config.DB_TEST_NAME,
     username: config.DB_USERNAME,
     password: config.DB_PASSWORD,
     host: config.DB_HOST,
@@ -32,11 +37,11 @@ export default {
     },
   },
   production: {
-    dbname: config.DB_NAME,
+    database: config.DB_NAME,
     username: config.DB_USERNAME,
     password: config.DB_PASSWORD,
     host: config.DB_HOST,
-    dialect: "postgres" as Dialect,
+    dialect: "postgres",
     logging: false,
     pool: {
       max: 5,
@@ -46,3 +51,5 @@ export default {
     },
   },
 };
+
+export = dbConfig;

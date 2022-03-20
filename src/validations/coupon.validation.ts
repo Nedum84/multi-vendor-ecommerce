@@ -1,12 +1,15 @@
 import Joi from "joi";
 import { paginateDefault } from ".";
-import { CouponType } from "../enum/coupon.enum";
+import { CouponApplyFor, CouponType } from "../enum/coupon.enum";
 
 const create = {
   body: Joi.object().keys({
     coupon_code: Joi.string().required(),
-    coupon_type: Joi.string()
+    coupon_apply_for: Joi.string()
       .required()
+      .valid(...Object.values(CouponApplyFor)),
+    coupon_type: Joi.string()
+      .default(CouponType.PERCENTAGE)
       .valid(...Object.values(CouponType)),
     title: Joi.string().required(),
     start_date: Joi.date().required(),
@@ -69,7 +72,7 @@ const findAllByStoreId = {
   params: Joi.object().keys({}),
   query: Joi.object().keys({
     store_id: Joi.string().required(),
-    coupon_type: Joi.string().valid(...Object.values(CouponType)),
+    coupon_apply_for: Joi.string().valid(...Object.values(CouponApplyFor)),
     ...paginateDefault,
   }),
   body: Joi.object().keys({}),
@@ -77,7 +80,7 @@ const findAllByStoreId = {
 const findAll = {
   params: Joi.object().keys({}),
   query: Joi.object().keys({
-    coupon_type: Joi.string().valid(...Object.values(CouponType)),
+    coupon_apply_for: Joi.string().valid(...Object.values(CouponApplyFor)),
     store_id: Joi.string(),
     search_query: Joi.string(),
     ...paginateDefault,

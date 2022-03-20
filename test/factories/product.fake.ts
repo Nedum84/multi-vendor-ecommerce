@@ -80,7 +80,7 @@ export default {
         discount_to: new Date(Date.now() + 6 * 3600), //next 6 hours
       },
       //Categoryzz
-      category_ids: [category_id, category_id],
+      category_ids: [category_id],
       //Collectionszz
       collection_ids: [collection_id],
       //Tagszzz

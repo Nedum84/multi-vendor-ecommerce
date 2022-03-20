@@ -36,6 +36,7 @@ export function RelatedProductFactory(sequelize: Sequelize) {
       freezeTableName: true,
       defaultScope: {},
       scopes: {},
+      indexes: [{ fields: ["product_id"] }],
       validate: {
         productAndRelatedShouldBeDiff: function () {
           if (this.product_id === this.related_product_id) {

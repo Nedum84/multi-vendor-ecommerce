@@ -15,12 +15,12 @@ router.post("/revoke", validateReq(couponValidation.revokeCoupon), couponControl
 router.post("/apply", validateReq(couponValidation.applyCoupon), couponController.applyCoupon);
 router.post("/check-exist", validateReq(couponValidation.validateCouponExist), couponController.validateCouponExist);
 router.get(
-  "/stores-coupon", //?=limit,offset,coupon_type
+  "/stores-coupon", //?=limit,offset,coupon_apply_for
   validateReq(couponValidation.findAllByStoreId),
   couponController.findAllByStoreId
 );
 router.get(
-  "/", //?=limit,offset,coupon_type,search_query
+  "/", //?=limit,offset,coupon_apply_for,search_query
   validateReq(couponValidation.findAll),
   couponController.findAll
 );

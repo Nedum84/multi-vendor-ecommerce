@@ -22,7 +22,10 @@
     "deploy-offline2": "npm run postbuild && cd build && sls offline",
     "deploy-offline": "sls offline --config serverless-offline.yml",
     "git-push": "git add . && git commit -m 'more additions' && git push",
-    "create-migration-files": "npm run build && npx makemigration"
+    "create-migration-files-reset-all": "npm run clean && tsc --build tsconfig.json && npx makemigration",
+    "db:drop2": "sequelize-cli db:drop",
+    "db:create2": "sequelize-cli db:create",
+    "create-migration-files": "tsc --build tsconfig.json && npx makemigration"
   },
   "jest": {
     "preset": "ts-jest",

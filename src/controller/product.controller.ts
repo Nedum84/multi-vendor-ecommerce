@@ -33,7 +33,7 @@ const findById = async (req: Request, res: Response) => {
 
 const findAll = async (req: Request, res: Response) => {
   const result = await productService.findAll(req);
-  ApiResponse.ok(res, { products: result });
+  ApiResponse.ok(res, result);
 };
 
 const findLatestByCollection = async (req: Request, res: Response) => {

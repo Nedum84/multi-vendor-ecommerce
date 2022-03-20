@@ -90,6 +90,7 @@ export function ProductVariationFactory(sequelize: Sequelize) {
       scopes: {
         basic: {},
       },
+      indexes: [{ fields: ["product_id"] }],
     }
   );
 

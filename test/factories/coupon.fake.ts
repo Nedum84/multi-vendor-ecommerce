@@ -1,5 +1,5 @@
 import faker from "faker";
-import { CouponType } from "../../src/enum/coupon.enum";
+import { CouponApplyFor } from "../../src/enum/coupon.enum";
 import { generateChars } from "../../src/utils/random.string";
 import { Coupon, CouponProduct } from "../../src/models";
 import productFake from "./product.fake";
@@ -46,7 +46,7 @@ export default {
 
     return {
       ...this.create(),
-      coupon_type: CouponType.PRODUCT,
+      coupon_apply_for: CouponApplyFor.PRODUCT,
       products: [{ product_id: pId1 }, { product_id: pId2 }],
       ...props,
     };
@@ -57,7 +57,7 @@ export default {
 
     return {
       ...this.create(),
-      coupon_type: CouponType.STORE,
+      coupon_apply_for: CouponApplyFor.STORE,
       stores: [{ store_id: store1 }, { store_id: store2 }],
       ...props,
     };
@@ -68,7 +68,7 @@ export default {
 
     return {
       ...this.create(),
-      coupon_type: CouponType.USER,
+      coupon_apply_for: CouponApplyFor.USER,
       users: [{ user_id: u1 }, { user_id: u2 }],
       ...props,
     };
@@ -82,7 +82,7 @@ export default {
 
     return {
       ...this.create(),
-      coupon_type: CouponType.USER_AND_PRODUCT,
+      coupon_apply_for: CouponApplyFor.USER_AND_PRODUCT,
       users: [{ user_id: u1 }, { user_id: u2 }],
       products: [{ product_id: pId1 }, { product_id: pId2 }],
       ...props,
@@ -91,7 +91,7 @@ export default {
   allOrdersCreate: async function (props?: any) {
     return {
       ...this.create(),
-      coupon_type: CouponType.ALL_ORDERS,
+      coupon_apply_for: CouponApplyFor.ALL_ORDERS,
       ...props,
     };
   },

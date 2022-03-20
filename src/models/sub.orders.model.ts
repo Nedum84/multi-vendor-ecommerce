@@ -119,6 +119,7 @@ export function SubOrdersFactory(sequelize: Sequelize) {
     freezeTableName: true,
     defaultScope: {},
     scopes: {},
+    indexes: [{ fields: ["order_id"] }, { fields: ["store_id"] }],
   });
 
   SubOrders.associate = function (models: ModelRegistry) {

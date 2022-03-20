@@ -30,7 +30,6 @@ export const CartModelAttributes: SequelizeAttributes<CartAttributes> = {
   store_id: {
     type: DataTypes.STRING,
     allowNull: false,
-    primaryKey: true,
   },
   qty: {
     type: DataTypes.INTEGER,
@@ -52,6 +51,11 @@ export function CartFactory(sequelize: Sequelize) {
       as: "variation",
       foreignKey: "variation_id",
       targetKey: "variation_id",
+    });
+    Cart.belongsTo(models.User, {
+      as: "user",
+      foreignKey: "user_id",
+      targetKey: "user_id",
     });
   };
 

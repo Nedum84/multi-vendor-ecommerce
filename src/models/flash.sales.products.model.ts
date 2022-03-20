@@ -54,6 +54,7 @@ export function FlashSalesProductsFactory(sequelize: Sequelize) {
       timestamps: true,
       tableName: "FlashSalesProducts",
       freezeTableName: true,
+      indexes: [{ fields: ["flash_sale_id"] }],
     }
   );
 

@@ -67,13 +67,7 @@ export function WithdrawalFactory(sequelize: Sequelize) {
     timestamps: true,
     tableName: "Withdrawal",
     freezeTableName: true,
-    validate: {
-      paymentReferenceErr() {
-        if (!this.payment_reference && this.fund_type !== FundingTypes.REFUND) {
-          throw new Error("Payment Reference can't be null unless except for refund");
-        }
-      },
-    },
+    indexes: [{ fields: ["user_id"] }],
   });
 
   Withdrawal.associate = function (models: ModelRegistry) {

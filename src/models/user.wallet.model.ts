@@ -56,6 +56,7 @@ export function UserWalletFactory(sequelize: Sequelize) {
     timestamps: true,
     tableName: "UserWallet",
     freezeTableName: true,
+    indexes: [{ fields: ["user_id"] }],
     validate: {
       paymentReferenceErr() {
         if (!this.payment_reference && this.fund_type !== FundingTypes.REFUND) {

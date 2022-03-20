@@ -37,7 +37,7 @@ export const CategoryModelAttributes: SequelizeAttributes<CategoryAttributes> = 
   icon: DataTypes.STRING,
   active: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    defaultValue: true,
   },
   is_featured: {
     type: DataTypes.BOOLEAN,
@@ -51,6 +51,11 @@ export function CategoryFactory(sequelize: Sequelize) {
     timestamps: true,
     tableName: "Category",
     freezeTableName: true,
+    indexes: [
+      {
+        fields: ["parent_id"],
+      },
+    ],
   });
 
   Category.associate = function (models: ModelRegistry) {

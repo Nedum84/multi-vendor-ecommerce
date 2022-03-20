@@ -1,8 +1,6 @@
-import { CREATED } from "http-status";
 import { CartAttributes } from "../../src/models/cart.model";
 import cartFake from "../factories/cart.fake";
 import productVariationFake from "../factories/product.variation.fake";
-import storeFake from "../factories/store.fake";
 import { expectSuccess } from "../testing.utils";
 
 const request = global.buildRequest;

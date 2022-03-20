@@ -46,6 +46,12 @@ export function ProductRatingFactory(sequelize: Sequelize) {
       freezeTableName: true,
       defaultScope: {},
       scopes: {},
+      indexes: [
+        {
+          fields: ["product_id"],
+        },
+        { fields: ["store_id"] },
+      ],
     }
   );
 

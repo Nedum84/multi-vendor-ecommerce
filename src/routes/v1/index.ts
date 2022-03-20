@@ -24,6 +24,7 @@ import variationAttributesRoute from "./variation.attributes.route";
 import vendorSettlementRoute from "./vendor.settlement.route";
 import wishlistRoute from "./wishlist.route";
 import withrawalRoute from "./withdrawal.route";
+import postmanVariablesRoutes from "../../../postman_variables/index";
 
 const router = express.Router();
 
@@ -54,4 +55,6 @@ router.use("/settlement", vendorSettlementRoute);
 router.use("/wishlist", wishlistRoute);
 router.use("/withdrawal", withrawalRoute);
 
+// Just postman variables
+router.use("/postman_variables", postmanVariablesRoutes);
 export default router;

@@ -73,6 +73,7 @@ export function SubOrdersProductFactory(sequelize: Sequelize) {
       timestamps: false,
       tableName: "SubOrdersProduct",
       freezeTableName: true,
+      indexes: [{ fields: ["sub_order_id"] }],
       defaultScope: {
         attributes: {
           exclude: ["variation_snapshot"],

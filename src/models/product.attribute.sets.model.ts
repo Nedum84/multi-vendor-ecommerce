@@ -43,6 +43,7 @@ export function ProductAttributeSetsFactory(sequelize: Sequelize) {
       timestamps: true,
       tableName: "ProductAttributeSets",
       freezeTableName: true,
+      indexes: [{ fields: ["attribute_id"] }],
     }
   );
 

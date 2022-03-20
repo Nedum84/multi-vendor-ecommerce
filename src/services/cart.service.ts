@@ -1,6 +1,5 @@
 import { Request } from "express";
-import { Op, Transaction } from "sequelize/dist";
-import { performance } from "perf_hooks";
+import { Op, Transaction } from "sequelize";
 import { Cart, FlashSales, FlashSalesProducts, Product, ProductDiscount, ProductVariation } from "../models";
 import { CartInstance } from "../models/cart.model";
 import productVariationService from "./product.variation.service";

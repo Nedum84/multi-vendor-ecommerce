@@ -1,5 +1,5 @@
 import { Orders, SubOrders, UserWallet, Withdrawal } from "../models";
-import { Op, Sequelize, Transaction } from "sequelize/dist";
+import { Op, Sequelize, Transaction } from "sequelize";
 import { FundingTypes, PaymentChannel } from "../enum/payment.enum";
 import { Request } from "express";
 import { Helpers } from "../utils/helpers";

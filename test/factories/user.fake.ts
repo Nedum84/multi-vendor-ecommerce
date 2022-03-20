@@ -9,7 +9,7 @@ export default {
     const body = this.create();
     const data = {
       ...body,
-      user_id: generateChars(),
+      user_id: generateChars(42),
       password: await UserUtils.hashPassword(body.password),
       ...props,
     };

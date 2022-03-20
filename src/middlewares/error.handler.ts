@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import httpStatus from "http-status";
-import { AggregateError, ValidationError } from "sequelize/dist";
+import { AggregateError, ValidationError } from "sequelize";
 import { CustomError } from "../apiresponse/custom.error";
 
 export const errorHandler = (err: Error, req: Request, res: Response, next: NextFunction) => {

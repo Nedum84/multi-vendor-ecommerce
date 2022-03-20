@@ -1,8 +1,8 @@
 import { Request } from "express";
 import sequelize, { Coupon, CouponProduct, CouponStore, CouponUser } from "../models";
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { CouponAttributes, CouponInstance } from "../models/coupon.model";
-import { CouponType } from "../enum/coupon.enum";
+import { CouponApplyFor, CouponType } from "../enum/coupon.enum";
 import { CouponUserAttributes } from "../models/coupon.user.model";
 import moment from "moment";
 import { ErrorResponse } from "../apiresponse/error.response";
@@ -25,37 +25,40 @@ const create = async (req: Request) => {
   const body: CouponAttributes & { products: CouponProductAttributes[] } & {
     stores: CouponStoreAttributes[];
   } & { users: CouponUserAttributes[] } = req.body;
-  const { coupon_type, coupon_code } = body;
+  const { coupon_apply_for, coupon_code, coupon_type } = body;
   body.created_by = user_id;
 
-  if (coupon_type == CouponType.PRODUCT && body.products.length == 0) {
+  if (coupon_apply_for == CouponApplyFor.PRODUCT && body.products.length == 0) {
     throw new ErrorResponse("category(category_id) is required for CATEGORY COUPON TYPE");
   }
 
-  if (coupon_type == CouponType.STORE && body.stores.length == 0) {
+  if (coupon_apply_for == CouponApplyFor.STORE && body.stores.length == 0) {
     throw new ErrorResponse("store(store_id) is required for STORE COUPON TYPE");
   }
 
-  if (coupon_type == CouponType.USER && body.users.length == 0) {
+  if (coupon_apply_for == CouponApplyFor.USER && body.users.length == 0) {
     throw new ErrorResponse("user(user_id) is required for USER COUPON TYPE");
   }
 
-  if (coupon_type == CouponType.USER_AND_PRODUCT && (body.users.length == 0 || body.products.length == 0)) {
+  if (coupon_apply_for == CouponApplyFor.USER_AND_PRODUCT && (body.users.length == 0 || body.products.length == 0)) {
     throw new ErrorResponse("users & product are required for USER_AND_PRODUCT COUPON TYPE");
+  }
+  if (coupon_type !== CouponType.PERCENTAGE) {
+    throw new ErrorResponse("Only percentage discount is available at the moment");
   }
 
   //--> only admin can create all coupons
   // But stores can only create STORE, PRODUCT & USER_AND_PRODUCT coupon
-  const storeList = [CouponType.STORE, CouponType.PRODUCT, CouponType.USER_AND_PRODUCT];
-  if (!storeList.includes(coupon_type) && !isAdmin(role)) {
+  const storeList = [CouponApplyFor.STORE, CouponApplyFor.PRODUCT, CouponApplyFor.USER_AND_PRODUCT];
+  if (!storeList.includes(coupon_apply_for) && !isAdmin(role)) {
     throw new UnauthorizedError(
       "Not authorized to create a coupon except STORE, PRODUCT & USER_AND_PRODUCT COUPON TYPE"
     );
   }
 
   //--> for non-admin(only store)
-  if (storeList.includes(coupon_type) && !isAdmin(role)) {
-    if (coupon_type === CouponType.STORE) {
+  if (storeList.includes(coupon_apply_for) && !isAdmin(role)) {
+    if (coupon_apply_for === CouponApplyFor.STORE) {
       //--> store should create only one STORE COUPON TYPE(One item(store) in the array)
       if (body.stores.length > 1) {
         throw new ErrorResponse("Store can only create one STORE COUPON TYPE");
@@ -68,7 +71,7 @@ const create = async (req: Request) => {
         //OR !stores.includes(store_id)
         throw new ErrorResponse(`Not authorized to create coupon on this store(${store.name})`);
       }
-    } else if (coupon_code === CouponType.PRODUCT || coupon_code === CouponType.USER_AND_PRODUCT) {
+    } else if (coupon_code === CouponApplyFor.PRODUCT || coupon_code === CouponApplyFor.USER_AND_PRODUCT) {
       const products = await Promise.all(
         body.products.map(({ product_id }) => {
           return productService.findById(product_id);
@@ -92,25 +95,25 @@ const create = async (req: Request) => {
       const coupon = await Coupon.create(body, { transaction });
 
       //--> Create respective coupon types(except for general)
-      if (coupon_type === CouponType.PRODUCT) {
+      if (coupon_apply_for === CouponApplyFor.PRODUCT) {
         const payload = body.products.map(({ product_id }) => ({
           product_id,
           coupon_code,
         }));
         await CouponProduct.bulkCreate(payload, { transaction });
-      } else if (coupon_type === CouponType.STORE) {
+      } else if (coupon_apply_for === CouponApplyFor.STORE) {
         const payload = body.stores.map(({ store_id }) => ({
           store_id,
           coupon_code,
         }));
         await CouponStore.bulkCreate(payload, { transaction });
-      } else if (coupon_type === CouponType.USER) {
+      } else if (coupon_apply_for === CouponApplyFor.USER) {
         const payload = body.users.map(({ user_id }) => ({
           user_id,
           coupon_code,
         }));
         await CouponUser.bulkCreate(payload, { transaction });
-      } else if (coupon_type === CouponType.USER_AND_PRODUCT) {
+      } else if (coupon_apply_for === CouponApplyFor.USER_AND_PRODUCT) {
         //--> User payload
         const userPayload = body.users.map(({ user_id }) => ({
           user_id,
@@ -187,12 +190,15 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       throw new ErrorResponse("You have exceeded your limit of this coupon");
     }
   }
+  if (coupon.coupon_type !== CouponType.PERCENTAGE) {
+    throw new ErrorResponse("Only percentage discount is available at the moment");
+  }
 
   const { carts, sub_total } = await cartService.findAllByUserId(user_id);
   let couponAmount = 0;
 
-  switch (coupon.coupon_type) {
-    case CouponType.PRODUCT:
+  switch (coupon.coupon_apply_for) {
+    case CouponApplyFor.PRODUCT:
       const couponProductIds = coupon.products.map((x) => x.product_id);
       //check each cart product
       carts.forEach((cart) => {
@@ -210,7 +216,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       });
       break;
 
-    case CouponType.STORE:
+    case CouponApplyFor.STORE:
       const couponStoreIds = coupon.stores.map((x) => x.store_id);
 
       carts.forEach((cart) => {
@@ -223,7 +229,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       });
       break;
 
-    case CouponType.USER:
+    case CouponApplyFor.USER:
       const couponUserIds = coupon.users.map((x) => x.user_id);
       if (couponUserIds.includes(user_id)) {
         carts.forEach((cart) => {
@@ -236,7 +242,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       }
       break;
 
-    case CouponType.USER_AND_PRODUCT: {
+    case CouponApplyFor.USER_AND_PRODUCT: {
       const couponProductIds = coupon.products.map((x) => x.product_id); //products
       const couponUserIds = coupon.users.map((x) => x.user_id); //users
 
@@ -253,7 +259,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
       }
       break;
     }
-    case CouponType.ALL_ORDERS:
+    case CouponApplyFor.ALL_ORDERS:
       carts.forEach((cart) => {
         const { discount, price, flash_discount } = cart.variation;
         const { qty } = cart;
@@ -266,6 +272,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
     default:
       break;
   }
+
   //If 0, i.e coupon was avaialble for this user or his products
   if (couponAmount == 0) {
     throw new ErrorResponse("Coupon not available for this user/product/orders");
@@ -284,7 +291,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
 //-->  Get Store Coupon Amount
 const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], store_id: string, user_id: string) => {
   let storeCouponAmount = 0;
-  if (coupon.coupon_type == CouponType.STORE) {
+  if (coupon.coupon_apply_for == CouponApplyFor.STORE) {
     //Check if this current store is present on the coupons stores
 
     const couponStoreIds = coupon.stores.map((x) => x.store_id);
@@ -305,7 +312,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
         }
       }
     });
-  } else if (coupon.coupon_type === CouponType.PRODUCT) {
+  } else if (coupon.coupon_apply_for === CouponApplyFor.PRODUCT) {
     const couponProductIds = coupon.products.map((x) => x.product_id);
     //check each cart product
     carts.forEach((cart) => {
@@ -319,7 +326,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
         }
       }
     });
-  } else if (coupon.coupon_type === CouponType.USER) {
+  } else if (coupon.coupon_apply_for === CouponApplyFor.USER) {
     const couponUserIds = coupon.users.map((x) => x.user_id);
     //I have access to this coupon
     if (couponUserIds.includes(user_id)) {
@@ -332,7 +339,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
         }
       });
     }
-  } else if (coupon.coupon_type === CouponType.USER_AND_PRODUCT) {
+  } else if (coupon.coupon_apply_for === CouponApplyFor.USER_AND_PRODUCT) {
     const couponProductIds = coupon.products.map((x) => x.product_id); //products
     const couponUserIds = coupon.users.map((x) => x.user_id); //users
 
@@ -350,7 +357,7 @@ const findStoreCouponAmount = (coupon: CouponInstance, carts: CartInstance[], st
         }
       });
     }
-  } else if (coupon.coupon_type === CouponType.ALL_ORDERS) {
+  } else if (coupon.coupon_apply_for === CouponApplyFor.ALL_ORDERS) {
     carts.forEach((cart) => {
       const { discount, price, flash_discount } = cart.variation;
       const { qty, store_id: each_store_id } = cart;
@@ -390,14 +397,14 @@ const findByCouponCode = async (coupon_code: string) => {
 const findAllByStoreId = async (req: Request) => {
   const { limit, offset } = Helpers.getPaginate(req.query);
   const { role, stores } = req.user!;
-  const { coupon_type, store_id }: { coupon_type: CouponType; store_id: string } = req.query as any;
+  const { coupon_apply_for, store_id }: { coupon_apply_for: CouponApplyFor; store_id: string } = req.query as any;
 
   if (!isAdmin(role) && !stores.includes(store_id)) {
     throw new UnauthorizedError();
   }
   const where: { [k: string]: string } = {};
-  if (coupon_type) {
-    where.coupon_type = coupon_type;
+  if (coupon_apply_for) {
+    where.coupon_apply_for = coupon_apply_for;
   }
   if (store_id) {
     where["$stores.store_id$"] = store_id;
@@ -415,14 +422,14 @@ const findAllByStoreId = async (req: Request) => {
 const findAll = async (req: Request) => {
   const { limit, offset } = Helpers.getPaginate(req.query);
   const { role } = req.user!;
-  const { coupon_type, search_query, store_id, user_id } = req.query as any;
+  const { coupon_apply_for, search_query, store_id, user_id } = req.query as any;
 
   if (!isAdmin(role)) {
     throw new UnauthorizedError("Not authorized to access this resources");
   }
   const where: { [k: string]: any } = {};
-  if (coupon_type) {
-    where.coupon_type = coupon_type;
+  if (coupon_apply_for) {
+    where.coupon_apply_for = coupon_apply_for;
   }
   if (store_id) {
     where["$stores.store_id$"] = store_id;

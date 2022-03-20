@@ -47,9 +47,10 @@ pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
 
 // @ts-ignore
 const database = dbConfig[config.env] || dbConfig.development;
-const sequelize = new Sequelize(database.dbname, database.username, database.password, {
+const sequelize = new Sequelize(database.database, database.username, database.password, {
   ...database,
   dialect: database.dialect,
+  // timezone: "Europe/London", //Seems not to be working
 });
 
 export const Cart = CartFactory(sequelize);
@@ -143,6 +144,10 @@ Object.values(models).forEach((model: any) => {
 });
 
 (async () => {
+  // await sequelize.query(`ALTER USER ${database.username} SET timezone='Europe/London';`, {
+  //   raw: true,
+  //   type: QueryTypes.RAW,
+  // });
   // await sequelize.sync({ force: true });
 })();
 export default sequelize;

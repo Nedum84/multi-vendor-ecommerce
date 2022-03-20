@@ -8,7 +8,7 @@ import { NotFoundError } from "../apiresponse/not.found.error";
 import { ErrorResponse } from "../apiresponse/error.response";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { ProductDiscountAttributes } from "../models/product.discount.model";
-import { Op, Transaction } from "sequelize/dist";
+import { Op, Transaction } from "sequelize";
 import { arraysEqual, asyncForEach } from "../utils/function.utils";
 import { isAdmin } from "../utils/admin.utils";
 import ProductVariationUtils from "../utils/product.variation.utils";

@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Op, Transaction } from "sequelize/dist";
+import { Op, Transaction } from "sequelize";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { SubOrders, VendorSettlement } from "../models";
