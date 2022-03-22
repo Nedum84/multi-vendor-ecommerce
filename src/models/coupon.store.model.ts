@@ -17,10 +17,12 @@ export const CouponStoreModelAttributes: SequelizeAttributes<CouponStoreAttribut
   coupon_code: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
   store_id: {
     type: DataTypes.STRING,
     allowNull: false,
+    primaryKey: true,
   },
 };
 // --> Factory....

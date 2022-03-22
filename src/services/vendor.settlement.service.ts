@@ -64,16 +64,15 @@ const processSettlement = async (settlement: VendorSettlementInstance, transacti
 const findById = async (req: Request) => {
   const { settlement_id } = req.params;
   const { stores, role } = req.user!;
-  const { store_id } = req.params;
-  if (!stores.includes(store_id) && !isAdmin(role)) {
-    throw new UnauthorizedError("Access denied");
-  }
   const settlement = await VendorSettlement.findOne({
     where: { settlement_id },
   });
 
   if (!settlement) {
     throw new NotFoundError("Settlement not found");
+  }
+  if (!stores.includes(settlement.store_id) && !isAdmin(role)) {
+    throw new UnauthorizedError("Access denied");
   }
 
   const sub_orders = SubOrders.findAll({ where: { sub_order_id: { [Op.in]: settlement.sub_order_ids } } });

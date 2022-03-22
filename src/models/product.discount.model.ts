@@ -44,7 +44,12 @@ export function ProductDiscountFactory(sequelize: Sequelize) {
       timestamps: true,
       tableName: "ProductDiscount",
       freezeTableName: true,
-      indexes: [{ fields: ["variation_id"] }],
+      indexes: [
+        { fields: ["variation_id"] },
+        {
+          fields: ["discount_from", "discount_to", "revoke"],
+        },
+      ],
     }
   );
 

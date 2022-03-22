@@ -27,6 +27,7 @@ export interface UserAddressInstance
 export const UserAddressModelAttributes: SequelizeAttributes<UserAddressAttributes> = {
   address_id: {
     type: DataTypes.STRING,
+    primaryKey: true,
     unique: true,
     allowNull: false,
   },

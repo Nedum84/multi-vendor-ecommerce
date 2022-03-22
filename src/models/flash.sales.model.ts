@@ -42,16 +42,15 @@ export function FlashSalesFactory(sequelize: Sequelize) {
     timestamps: true,
     tableName: "FlashSales",
     freezeTableName: true,
+    indexes: [
+      {
+        fields: ["start_date", "end_date", "revoke"],
+      },
+    ],
   });
 
   FlashSales.associate = function (models: ModelRegistry) {
     const { FlashSales } = models;
-
-    FlashSales.belongsTo(models.ProductVariation, {
-      as: "product",
-      foreignKey: "variation_id",
-      targetKey: "variation_id",
-    });
   };
 
   FlashSales.prototype.toJSON = function () {
