@@ -126,10 +126,7 @@ const findAllByUserId = async (user_id: string) => {
       model: ProductVariation,
       as: "variation",
       include: [
-        {
-          model: Product,
-          as: "product",
-        },
+        { model: Product, as: "product" },
         {
           model: ProductDiscount,
           as: "discount",
@@ -189,9 +186,11 @@ const getSubTotal = (carts: CartInstance[]) => {
 
   // OR
   // const sub_total2 = carts.reduce((total, cart) => {
-  //   const { discount, price } = cart.variation;
+  //   const { discount, flash_discount, price } = cart.variation;
   //   const { qty } = cart;
-  //   if (discount) {
+  //   if (flash_discount) {
+  //     return total + qty * flash_discount.price;
+  //   } else if (discount) {
   //     return total + qty * discount.price;
   //   } else {
   //     return total + qty * price;

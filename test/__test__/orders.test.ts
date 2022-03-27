@@ -93,6 +93,7 @@ describe("Order Tests...", () => {
     });
     const store3SubOrder = sub_orders.find((sub_order: any) => sub_order.store_id === store_id3);
     expectSuccess(response, CREATED);
+
     expect(amount).toBe(totalSubOrderAmount);
     expect(sub_total).toBe(totalSubOrderSubTotal);
     expect(coupon_amount).toBe(totalSubOrderCouponAmount);

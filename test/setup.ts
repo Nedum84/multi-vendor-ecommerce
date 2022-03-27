@@ -38,7 +38,7 @@ beforeAll(async () => {
   await sequelize
     .sync({ force: true })
     .catch((e) => console.log(e))
-    .then((r) => console.log("connected"));
+    .then((r) => console.log("db connected"));
   // await sequelize.sync({ force: true });
 });
 

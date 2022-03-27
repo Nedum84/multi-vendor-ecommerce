@@ -49,6 +49,8 @@ describe("User Address Test...", () => {
 
     const response = await request({ path: `/user-address`, token: tokens.access.token });
 
+    console.log(response.body);
+
     expectSuccess(response);
     expect(response.body.data.addresses.length).not.toBe(0);
   });

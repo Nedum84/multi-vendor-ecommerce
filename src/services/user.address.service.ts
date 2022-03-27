@@ -1,7 +1,8 @@
 import { Request } from "express";
+import { ErrorResponse } from "../apiresponse/error.response";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
-import { UserAddress } from "../models";
+import sequelize, { UserAddress } from "../models";
 import { UserAddressAttributes, UserAddressInstance } from "../models/user.address.model";
 import { createModel } from "../utils/random.string";
 
@@ -9,8 +10,29 @@ const create = async (req: Request) => {
   const body: UserAddressAttributes = req.body;
   const { user_id } = req.user!;
 
-  body.user_id = user_id;
-  const address = await createModel<UserAddressInstance>(UserAddress, body, "address_id");
+  let address: UserAddressInstance | null;
+
+  try {
+    address = await sequelize.transaction(async function (transaction) {
+      // If default
+      if (body.is_default) {
+        await UserAddress.update({ is_default: false }, { where: { user_id }, transaction });
+      }
+      // If not default but it's the first address
+      if (!body.is_default) {
+        const count = await UserAddress.count({ where: { user_id }, transaction });
+        if (count == 0) {
+          body.is_default = true;
+        }
+      }
+
+      body.user_id = user_id;
+      const address = await createModel<UserAddressInstance>(UserAddress, body, "address_id", transaction);
+      return address;
+    });
+  } catch (error) {
+    throw new ErrorResponse(error);
+  }
   return address;
 };
 const update = async (req: Request) => {
@@ -46,7 +68,6 @@ const findAllByUserId = async (req: Request) => {
 
   const addresses = await UserAddress.findAll({
     where: { user_id },
-    order: [["id", "DESC"]],
   });
   return addresses;
 };

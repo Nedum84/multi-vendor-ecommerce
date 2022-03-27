@@ -7,6 +7,8 @@ import helmet from "helmet";
 import morgan from "./config/morgan";
 import { NotFoundError } from "./apiresponse/not.found.error";
 import { errorHandler } from "./middlewares/error.handler";
+// const xss = require("xss-clean");
+import xss from "xss-clean";
 
 const app = express();
 
@@ -21,6 +23,9 @@ if (config.env !== "test") {
 
 // set security HTTP headers
 app.use(helmet());
+
+// sanitize request data
+app.use(xss());
 
 app.get("/", (req, res) => {
   res.send("Hi There!");

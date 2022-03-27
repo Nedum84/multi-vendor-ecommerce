@@ -12,9 +12,7 @@ export interface TokenAttributes {
 
 interface TokenCreationAttributes extends Optional<TokenAttributes, "id"> {}
 
-interface TokenInstance
-  extends Model<TokenAttributes, TokenCreationAttributes>,
-    TokenAttributes {}
+interface TokenInstance extends Model<TokenAttributes, TokenCreationAttributes>, TokenAttributes {}
 
 export function TokenFactory(sequelize: Sequelize) {
   const Token = <ModelStatic<TokenInstance>>sequelize.define(
@@ -36,7 +34,7 @@ export function TokenFactory(sequelize: Sequelize) {
         defaultValue: TokenTypes.REFRESH,
       },
       token: {
-        type: DataTypes.STRING,
+        type: DataTypes.TEXT,
         allowNull: false,
       },
       expires: {
