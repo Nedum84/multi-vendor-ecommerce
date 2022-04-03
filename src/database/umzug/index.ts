@@ -1,11 +1,9 @@
-import { SequelizeStorage, Umzug, memoryStorage } from "umzug";
+import { SequelizeStorage, Umzug } from "umzug";
 import sequelize from "../../models";
 import path from "path";
 
 class UmzugInit {
-  private readonly dirname;
-
-  constructor(dirname: string) {
+  constructor(private readonly dirname: string) {
     this.dirname = dirname;
 
     this.init();

@@ -48,6 +48,12 @@ export function CreditCodeUserFactory(sequelize: Sequelize) {
       foreignKey: "credit_code",
       targetKey: "credit_code",
     });
+
+    CreditCodeUser.belongsTo(models.User, {
+      as: "user",
+      foreignKey: "user_id",
+      targetKey: "user_id",
+    });
   };
 
   CreditCodeUser.prototype.toJSON = function () {

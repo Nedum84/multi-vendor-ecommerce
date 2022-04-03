@@ -10,45 +10,41 @@ export interface ProductAttributeAttributes {
   active: boolean;
 }
 
-interface ProductCreationAttributeAttributes
-  extends Optional<ProductAttributeAttributes, "desc" | "active"> {}
+interface ProductCreationAttributeAttributes extends Optional<ProductAttributeAttributes, "desc" | "active"> {}
 
 export interface ProductAttributeInstance
   extends Model<ProductAttributeAttributes, ProductCreationAttributeAttributes>,
     ProductAttributeAttributes {}
 
 //--> Model attributes
-export const ProductAttributeModelAttributes: SequelizeAttributes<ProductAttributeAttributes> =
-  {
-    attribute_id: {
-      type: DataTypes.STRING,
-      primaryKey: true,
-    },
-    name: {
-      type: DataTypes.STRING,
-      allowNull: false,
-    },
-    desc: {
-      type: DataTypes.STRING,
-    },
-    active: {
-      type: DataTypes.BOOLEAN,
-      defaultValue: true,
-    },
-  };
+export const ProductAttributeModelAttributes: SequelizeAttributes<ProductAttributeAttributes> = {
+  attribute_id: {
+    type: DataTypes.STRING,
+    primaryKey: true,
+  },
+  name: {
+    type: DataTypes.STRING,
+    allowNull: false,
+  },
+  desc: {
+    type: DataTypes.STRING,
+  },
+  active: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: true,
+  },
+};
 // --> Factory....
 export function ProductAttributeFactory(sequelize: Sequelize) {
-  const ProductAttribute = <ModelStatic<ProductAttributeInstance>>(
-    sequelize.define(
-      "ProductAttribute",
-      ProductAttributeModelAttributes as any,
-      {
-        timestamps: true,
-        tableName: "ProductAttribute",
-        freezeTableName: true,
-        paranoid: true,
-      }
-    )
+  const ProductAttribute = <ModelStatic<ProductAttributeInstance>>sequelize.define(
+    "ProductAttribute",
+    ProductAttributeModelAttributes as any,
+    {
+      timestamps: true,
+      tableName: "ProductAttribute",
+      freezeTableName: true,
+      paranoid: true,
+    }
   );
 
   ProductAttribute.associate = function (models: ModelRegistry) {
@@ -56,6 +52,12 @@ export function ProductAttributeFactory(sequelize: Sequelize) {
 
     ProductAttribute.hasMany(models.ProductAttributeSets, {
       as: "sets",
+      foreignKey: "attribute_id",
+      sourceKey: "attribute_id",
+    });
+
+    ProductAttribute.hasMany(models.ProductWithAttribute, {
+      as: "products",
       foreignKey: "attribute_id",
       sourceKey: "attribute_id",
     });

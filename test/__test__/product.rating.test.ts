@@ -1,6 +1,6 @@
 import { CREATED } from "http-status";
 import { DeliveryStatus } from "../../src/enum/orders.enum";
-import { Orders, SubOrders } from "../../src/models";
+import { Orders, StoreOrders } from "../../src/models";
 import cartFake from "../factories/cart.fake";
 import productVariationFake from "../factories/product.variation.fake";
 import userAddressFake from "../factories/user.address.fake";
@@ -33,7 +33,7 @@ describe("Product Rating Tests...", () => {
     const { order_id } = body.data.order;
     //update payment
     await Orders.update({ payment_completed: true }, { where: { order_id } });
-    await SubOrders.update(
+    await StoreOrders.update(
       {
         delivered: true,
         delivered_at: new Date(Date.now() - 2 * 24 * 3600), //2 days ago

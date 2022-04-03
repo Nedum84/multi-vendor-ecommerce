@@ -2,7 +2,7 @@ import { Request } from "express";
 import { Op, Transaction } from "sequelize";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
-import { SubOrders, VendorSettlement } from "../models";
+import { StoreOrders, VendorSettlement } from "../models";
 import { VendorSettlementInstance } from "../models/vendor.settlement.model";
 import { isAdmin } from "../utils/admin.utils";
 import { Helpers } from "../utils/helpers";
@@ -75,9 +75,9 @@ const findById = async (req: Request) => {
     throw new UnauthorizedError("Access denied");
   }
 
-  const sub_orders = SubOrders.findAll({ where: { sub_order_id: { [Op.in]: settlement.sub_order_ids } } });
+  const store_orders = StoreOrders.findAll({ where: { sub_order_id: { [Op.in]: settlement.sub_order_ids } } });
 
-  return { settlement, sub_orders };
+  return { settlement, store_orders };
 };
 
 const findAllByStoreId = async (req: Request) => {

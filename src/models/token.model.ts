@@ -1,4 +1,5 @@
 import { Model, Optional, DataTypes, Sequelize, BuildOptions } from "sequelize";
+import { ModelRegistry } from ".";
 import { TokenTypes } from "../enum/token.enum";
 import { ModelStatic } from "../typing/sequelize.typing";
 
@@ -48,5 +49,16 @@ export function TokenFactory(sequelize: Sequelize) {
       // freezeTableName:true,
     }
   );
+
+  Token.associate = function (models: ModelRegistry) {
+    const { Token } = models;
+
+    Token.belongsTo(models.User, {
+      as: "user",
+      foreignKey: "user_id",
+      targetKey: "user_id",
+    });
+  };
+
   return Token;
 }

@@ -2,7 +2,7 @@ import { CREATED } from "http-status";
 import { Op } from "sequelize/dist";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
 import { PaymentChannel, PaymentStatus } from "../../src/enum/payment.enum";
-import { Orders, SubOrders } from "../../src/models";
+import { Orders, StoreOrders } from "../../src/models";
 import CONSTANTS from "../../src/utils/constants";
 import CouponUtils from "../../src/utils/coupon.utils";
 import { generateChars } from "../../src/utils/random.string";
@@ -72,18 +72,18 @@ describe("Order Tests...", () => {
       token,
     });
     const { order } = response.body.data;
-    const { amount, sub_total, coupon_amount, shipping_amount, tax_amount, sub_orders } = order;
+    const { amount, sub_total, coupon_amount, shipping_amount, tax_amount, store_orders } = order;
     let totalSubOrderAmount = 0;
-    let totalSubOrderSubTotal = 0;
+    let totalStoreOrdersubTotal = 0;
     let totalSubOrderCouponAmount = 0;
-    let totalSubOrderShippingAmount = 0;
+    let totalStoreOrdershippingAmount = 0;
     let totalSubOrderTaxAmount = 0;
-    sub_orders.forEach((sub_order: any) => {
+    store_orders.forEach((sub_order: any) => {
       const { amount, sub_total, coupon_amount, shipping_amount, tax_amount, products } = sub_order;
       totalSubOrderAmount += amount;
-      totalSubOrderSubTotal += sub_total;
+      totalStoreOrdersubTotal += sub_total;
       totalSubOrderCouponAmount += coupon_amount;
-      totalSubOrderShippingAmount += shipping_amount;
+      totalStoreOrdershippingAmount += shipping_amount;
       totalSubOrderTaxAmount += tax_amount;
       const totalProductPurchasedPrice = products.reduce(
         (total: any, cur: any) => total + cur.purchased_price * cur.qty,
@@ -91,13 +91,13 @@ describe("Order Tests...", () => {
       );
       expect(sub_total).toBe(totalProductPurchasedPrice);
     });
-    const store3SubOrder = sub_orders.find((sub_order: any) => sub_order.store_id === store_id3);
+    const store3SubOrder = store_orders.find((sub_order: any) => sub_order.store_id === store_id3);
     expectSuccess(response, CREATED);
 
     expect(amount).toBe(totalSubOrderAmount);
-    expect(sub_total).toBe(totalSubOrderSubTotal);
+    expect(sub_total).toBe(totalStoreOrdersubTotal);
     expect(coupon_amount).toBe(totalSubOrderCouponAmount);
-    expect(shipping_amount).toBe(totalSubOrderShippingAmount);
+    expect(shipping_amount).toBe(totalStoreOrdershippingAmount);
     expect(tax_amount).toBe(totalSubOrderTaxAmount);
     expect(amount).toBe(sub_total - coupon_amount + shipping_amount + tax_amount);
     expect(store3SubOrder.coupon_amount).toBe(0);
@@ -202,7 +202,7 @@ describe("Order Tests...", () => {
     // //create order
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
     const { order } = body.data;
-    const { sub_order_id } = order.sub_orders[0];
+    const { sub_order_id } = order.store_orders[0];
     const response = await request({
       path: `/orders/update-order/${sub_order_id}`,
       method: "patch",
@@ -224,7 +224,7 @@ describe("Order Tests...", () => {
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
     const { order } = body.data;
     const { order_id } = order;
-    const { sub_order_id } = order.sub_orders[0];
+    const { sub_order_id } = order.store_orders[0];
     //Update Payment
     await request({
       path: `/orders/payment/admin`,
@@ -252,7 +252,7 @@ describe("Order Tests...", () => {
     // //create order
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
     const { order } = body.data;
-    const { sub_order_id } = order.sub_orders[0];
+    const { sub_order_id } = order.store_orders[0];
     const response = await request({
       path: `/orders/user/cancel/${sub_order_id}`,
       method: "patch",
@@ -274,7 +274,7 @@ describe("Order Tests...", () => {
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
     const { order } = body.data;
     const { order_id } = order;
-    const { sub_order_id } = order.sub_orders[0];
+    const { sub_order_id } = order.store_orders[0];
     //Update Payment
     await request({
       path: `/orders/payment/admin`,
@@ -307,20 +307,20 @@ describe("Order Tests...", () => {
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
     const { body: body1 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
-    const { order_id: order_id1, sub_orders: sub_orders1 } = body1.data.order;
-    const { sub_order_id: sub_order_id1 } = sub_orders1[0];
+    const { order_id: order_id1, store_orders: store_orders1 } = body1.data.order;
+    const { sub_order_id: sub_order_id1 } = store_orders1[0];
     // --> ORDER #2
     // Populate carts #2
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order
     const { body: body2 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
-    const { order_id: order_id2, sub_orders: sub_orders2 } = body2.data.order;
-    const { sub_order_id: sub_order_id2 } = sub_orders2[0];
+    const { order_id: order_id2, store_orders: store_orders2 } = body2.data.order;
+    const { sub_order_id: sub_order_id2 } = store_orders2[0];
 
     //2days behind returnable days in milliseconds
     const datePast = Date.now() - (CONSTANTS.RETURNABLE_DAYS + 2) * 24 * 3600 * 1000;
     await Orders.update({ payment_completed: true }, { where: { order_id: { [Op.or]: [order_id1, order_id2] } } });
-    await SubOrders.update(
+    await StoreOrders.update(
       {
         delivered: true,
         delivered_at: new Date(datePast),
@@ -367,7 +367,7 @@ describe("Order Tests...", () => {
     //2days behind returnable days in milliseconds
     const datePast = Date.now() - (CONSTANTS.RETURNABLE_DAYS + 2) * 24 * 3600 * 1000;
     await Orders.update({ payment_completed: true }, { where: { order_id: { [Op.or]: [order_id1, order_id2] } } });
-    await SubOrders.update(
+    await StoreOrders.update(
       {
         delivered: true,
         delivered_at: new Date(datePast),
@@ -378,7 +378,7 @@ describe("Order Tests...", () => {
     );
     const response = await request(`/orders/unsettled/${store_id}`);
     expectSuccess(response);
-    expect(response.body.data.sub_orders.length).toBe(2);
+    expect(response.body.data.store_orders.length).toBe(2);
   });
   it("Can find order by order id", async () => {
     const { tokens, user } = await global.signin();
@@ -428,8 +428,8 @@ describe("Order Tests...", () => {
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
-    const { order_id, sub_orders, amount } = body.data.order;
-    const { sub_order_id } = sub_orders[0];
+    const { order_id, store_orders, amount } = body.data.order;
+    const { sub_order_id } = store_orders[0];
     //CREATE ORDER #2
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order

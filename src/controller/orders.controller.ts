@@ -36,7 +36,7 @@ const settleStore = async (req: Request, res: Response) => {
 };
 const storeUnsettledOrders = async (req: Request, res: Response) => {
   const result = await ordersService.storeUnsettledOrders(req);
-  ApiResponse.ok(res, { sub_orders: result });
+  ApiResponse.ok(res, { store_orders: result });
 };
 const findById = async (req: Request, res: Response) => {
   const { order_id } = req.params;

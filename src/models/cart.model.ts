@@ -57,6 +57,11 @@ export function CartFactory(sequelize: Sequelize) {
       foreignKey: "user_id",
       targetKey: "user_id",
     });
+    Cart.belongsTo(models.Store, {
+      as: "store",
+      foreignKey: "store_id",
+      targetKey: "store_id",
+    });
   };
 
   Cart.prototype.toJSON = function () {

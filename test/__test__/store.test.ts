@@ -1,7 +1,7 @@
 import { CREATED } from "http-status";
 import { Op } from "sequelize/dist";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
-import { Orders, SubOrders } from "../../src/models";
+import { Orders, StoreOrders } from "../../src/models";
 import tokenService from "../../src/services/token.service";
 import CONSTANTS from "../../src/utils/constants";
 import cartFake from "../factories/cart.fake";
@@ -120,15 +120,15 @@ describe("User Tests...", () => {
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order
     const { body: body1 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
-    const { order_id: order_id1, sub_orders: sub_orders1 } = body1.data.order;
-    const { sub_order_id: sub_order_id1 } = sub_orders1[0];
+    const { order_id: order_id1, store_orders: store_orders1 } = body1.data.order;
+    const { sub_order_id: sub_order_id1 } = store_orders1[0];
     // --> ORDER #2
     // Populate carts #2
     await cartFake.rawCreate({ qty: 1, store_id, user_id, variation_id });
     // create order
     const { body: body2 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
-    const { order_id: order_id2, sub_orders: sub_orders2 } = body2.data.order;
-    const { sub_order_id: sub_order_id2 } = sub_orders2[0];
+    const { order_id: order_id2, store_orders: store_orders2 } = body2.data.order;
+    const { sub_order_id: sub_order_id2 } = store_orders2[0];
     // --> ORDER #3
     // Populate carts #3
     await cartFake.rawCreate({ qty: 2, store_id, user_id, variation_id });
@@ -149,7 +149,7 @@ describe("User Tests...", () => {
       { payment_completed: true },
       { where: { order_id: { [Op.or]: [order_id1, order_id2, order_id3] } } }
     );
-    await SubOrders.update(
+    await StoreOrders.update(
       {
         delivered: true,
         delivered_at: new Date(datePast),
@@ -168,7 +168,7 @@ describe("User Tests...", () => {
     //2days ahead returnable days in milliseconds
     const datePresent = Date.now() - (CONSTANTS.RETURNABLE_DAYS - 2) * 24 * 3600 * 1000;
     await Orders.update({ payment_completed: true }, { where: { order_id: order_id4 } });
-    await SubOrders.update(
+    await StoreOrders.update(
       {
         delivered: true,
         delivered_at: new Date(datePresent),

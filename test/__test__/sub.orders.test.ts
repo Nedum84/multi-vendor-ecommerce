@@ -19,7 +19,7 @@ describe("Sub Orders Tests...", () => {
 
     //create order
     const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
-    const { sub_order_id } = body.data.order.sub_orders[0];
+    const { sub_order_id } = body.data.order.store_orders[0];
 
     const response = await request(`/sub-orders/${sub_order_id}`);
 
@@ -27,7 +27,7 @@ describe("Sub Orders Tests...", () => {
     expect(response.body.data.sub_order.sub_order_id).toBe(sub_order_id);
   });
 
-  it("Can find all suborders by order id", async () => {
+  it("Can find all StoreOrders by order id", async () => {
     const { tokens, user } = await global.signin();
     const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
     const { token } = tokens.access;
@@ -44,6 +44,6 @@ describe("Sub Orders Tests...", () => {
     const response = await request(`/sub-orders/order/${order_id}`);
 
     expectSuccess(response);
-    expect(response.body.data.sub_orders.length).toBeGreaterThan(0);
+    expect(response.body.data.store_orders.length).toBeGreaterThan(0);
   });
 });

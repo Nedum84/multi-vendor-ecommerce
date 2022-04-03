@@ -49,6 +49,7 @@ export const ProductVariationModelAttributes: SequelizeAttributes<ProductVariati
   },
   sku: {
     type: DataTypes.STRING,
+    // unique: true,
   },
   price: {
     type: DataTypes.FLOAT,

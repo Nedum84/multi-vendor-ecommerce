@@ -1,4 +1,4 @@
-import { Orders, SubOrders, UserWallet, Withdrawal } from "../models";
+import { Orders, StoreOrders, UserWallet, Withdrawal } from "../models";
 import { Op, Sequelize, Transaction } from "sequelize";
 import { FundingTypes, PaymentChannel } from "../enum/payment.enum";
 import { Request } from "express";
@@ -148,7 +148,7 @@ const balanceHistory = async (req: Request) => {
  */
 const withrawableBalance = async (user_id: string) => {
   //All the orders I purchased from credit card and was later refunded
-  const ordersPayment_: any[] = await SubOrders.findAll({
+  const ordersPayment_: any[] = await StoreOrders.findAll({
     where: {
       purchased_by: user_id,
       refunded: true,
@@ -156,7 +156,7 @@ const withrawableBalance = async (user_id: string) => {
       "$order.payment_completed$": true,
     } as any,
     include: { model: Orders, as: "order" },
-    attributes: [[Sequelize.fn("sum", Sequelize.col("SubOrders.amount")), "orders_payment"]],
+    attributes: [[Sequelize.fn("sum", Sequelize.col("StoreOrders.amount")), "orders_payment"]],
     group: [Sequelize.col("order.order_id")],
     raw: true,
   });
@@ -168,14 +168,14 @@ const withrawableBalance = async (user_id: string) => {
   const payments = ordersPayment + walletPayments;
 
   //All the orders that have been used
-  const usedOrderBalance_: any[] = await SubOrders.findAll({
+  const usedOrderBalance_: any[] = await StoreOrders.findAll({
     where: {
       purchased_by: user_id,
       refunded: false,
       "$order.payed_from_wallet$": true,
     } as any,
     include: { model: Orders, as: "order" },
-    attributes: [[Sequelize.fn("sum", Sequelize.col("SubOrders.amount")), "used_balance"]],
+    attributes: [[Sequelize.fn("sum", Sequelize.col("StoreOrders.amount")), "used_balance"]],
     group: [Sequelize.col("order.order_id")],
     raw: true,
   });

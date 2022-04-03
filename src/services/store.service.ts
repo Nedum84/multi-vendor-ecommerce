@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { Op, Transaction } from "sequelize";
 import { StoreAttributes, StoreInstance } from "../models/store.model";
-import sequelize, { Product, Store, SubOrders } from "../models";
+import sequelize, { Product, Store, StoreOrders } from "../models";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { Helpers } from "../utils/helpers";
 import { createModel, genSlugColId } from "../utils/random.string";
@@ -146,7 +146,7 @@ const storeBalance = async (req: Request) => {
 
   //Completed orders{{ OrderStatus.COMPLETED }}, not setled, not refunded, may/maynot be delivered
   //if delivered, the returnable days have not passed
-  const totalPending = await SubOrders.sum("store_price", {
+  const totalPending = await StoreOrders.sum("store_price", {
     where: {
       store_id,
       order_status: OrderStatus.COMPLETED,
@@ -158,7 +158,7 @@ const storeBalance = async (req: Request) => {
 
   //Order delivered & returnable days passed
   //awaiting admins settlement
-  const totalUnsettled = await SubOrders.sum("store_price", {
+  const totalUnsettled = await StoreOrders.sum("store_price", {
     where: {
       store_id,
       delivered: true,
@@ -167,7 +167,7 @@ const storeBalance = async (req: Request) => {
     },
   });
   //Total orders settled
-  const totalEarned = await SubOrders.sum("store_price", {
+  const totalEarned = await StoreOrders.sum("store_price", {
     where: {
       store_id,
       order_status: OrderStatus.COMPLETED,

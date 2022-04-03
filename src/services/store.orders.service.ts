@@ -1,17 +1,17 @@
 import { Transaction } from "sequelize/dist";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
-import { Orders, SubOrders, SubOrdersProduct } from "../models";
+import { Orders, StoreOrders, StoreOrdersProduct } from "../models";
 import { CartInstance } from "../models/cart.model";
 import { CouponInstance } from "../models/coupon.model";
-import { SubOrdersAttributes } from "../models/sub.orders.model";
+import { StoreOrdersAttributes } from "../models/store.orders.model";
 import { asyncForEach } from "../utils/function.utils";
 import { genUniqueColId } from "../utils/random.string";
 import cartService from "./cart.service";
 import couponService from "./coupon.service";
 import shippingService from "./shipping.service";
 import storeService from "./store.service";
-import subOrdersProductService from "./sub.orders.product.service";
+import storeOrdersProductService from "./store.orders.product.service";
 
 const create = async (
   order_id: string,
@@ -49,9 +49,9 @@ const create = async (
   const amount = sub_total - storeCouponAmount + store_shipping + store_tax_amount;
   const store_price = (sub_total - storeCouponAmount) * (store.store_percentage / 100);
 
-  const sub_order_id = await genUniqueColId(SubOrders, "sub_order_id", 10, "alphanumeric", "uppercase");
+  const sub_order_id = await genUniqueColId(StoreOrders, "sub_order_id", 10, "alphanumeric", "uppercase");
 
-  const subOrderAttrs: SubOrdersAttributes = {
+  const subOrderAttrs: StoreOrdersAttributes = {
     sub_order_id,
     store_id,
     amount,
@@ -66,12 +66,12 @@ const create = async (
     purchased_by: user_id,
     ...({} as any),
   };
-  const subOrder = await SubOrders.create(subOrderAttrs, { transaction });
+  const subOrder = await StoreOrders.create(subOrderAttrs, { transaction });
 
   //create sub order products
   await asyncForEach(storeCarts, async (cart) => {
     //Create Order products
-    await subOrdersProductService.create(sub_order_id, cart, transaction);
+    await storeOrdersProductService.create(sub_order_id, cart, transaction);
   });
 
   return subOrder;
@@ -79,12 +79,12 @@ const create = async (
 
 //find one
 const findById = async (sub_order_id: string) => {
-  const order = await SubOrders.findOne({
+  const order = await StoreOrders.findOne({
     where: { sub_order_id },
     paranoid: false,
     include: [
       { model: Orders, as: "order" },
-      { model: SubOrdersProduct, as: "products" },
+      { model: StoreOrdersProduct, as: "products" },
     ],
   });
   if (!order) {
@@ -95,12 +95,12 @@ const findById = async (sub_order_id: string) => {
 };
 
 const findAllByOrderId = async (order_id: string, transaction?: Transaction) => {
-  const orders = await SubOrders.findAll({
+  const orders = await StoreOrders.findAll({
     where: { order_id },
     transaction,
     include: [
       { model: Orders, as: "order" },
-      { model: SubOrdersProduct, as: "products" },
+      { model: StoreOrdersProduct, as: "products" },
     ],
   });
   return orders;

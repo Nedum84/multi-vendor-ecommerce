@@ -54,6 +54,12 @@ export function VendorSettlementFactory(sequelize: Sequelize) {
 
   VendorSettlement.associate = function (models: ModelRegistry) {
     const { VendorSettlement } = models;
+
+    VendorSettlement.belongsTo(models.Store, {
+      as: "store",
+      foreignKey: "store_id",
+      targetKey: "store_id",
+    });
   };
 
   VendorSettlement.prototype.toJSON = function () {

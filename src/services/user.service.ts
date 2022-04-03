@@ -47,7 +47,7 @@ const create = async (body: UserAttributes) => {
       await userWalletService.createCredit(creditPayload, t);
     });
   } catch (error: any) {
-    throw new ErrorResponse(error);
+    throw new Error(error);
   }
   return user!;
 };

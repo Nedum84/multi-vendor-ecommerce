@@ -23,7 +23,7 @@ import userAddressService from "../src/services/user.address.service";
 import wishlistService from "../src/services/wishlist.service";
 import vendorSettlementService from "../src/services/vendor.settlement.service";
 import withdrawalService from "../src/services/withdrawal.service";
-import sequelize, { FlashSales, Orders, SubOrders } from "../src/models";
+import sequelize, { FlashSales, Orders, StoreOrders } from "../src/models";
 import { DeliveryStatus } from "../src/enum/orders.enum";
 import userService from "../src/services/user.service";
 import mediaService from "../src/services/media.service";
@@ -89,10 +89,10 @@ const processVariables = async (req: Request) => {
   await cartFake.rawCreate({ qty: 8, store_id: store_id2, user_id, variation_id: variations2[0].variation_id });
   // Create order
   req.body = { address_id };
-  const { order_id, sub_orders } = await ordersService.create(req);
+  const { order_id, store_orders } = await ordersService.create(req);
   //update payment
   await Orders.update({ payment_completed: true }, { where: { order_id } });
-  await SubOrders.update(
+  await StoreOrders.update(
     {
       delivered: true,
       delivered_at: new Date(Date.now() - 2 * 24 * 3600), //2 days ago
@@ -125,7 +125,7 @@ const processVariables = async (req: Request) => {
 
   // req.body = { product_id: product_id2 };
   const settlement = await vendorSettlementService.create(
-    [sub_orders[0].sub_order_id],
+    [store_orders[0].sub_order_id],
     1200,
     store_id,
     undefined as any
@@ -160,7 +160,7 @@ const processVariables = async (req: Request) => {
 
     address_id,
     order_id,
-    sub_order_id: sub_orders[0].sub_order_id,
+    sub_order_id: store_orders[0].sub_order_id,
 
     store_id,
     store_id2,

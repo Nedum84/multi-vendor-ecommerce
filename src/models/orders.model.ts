@@ -3,7 +3,7 @@ import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from ".";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { OrdersPaymentInstance } from "./orders.payment.model";
-import { SubOrdersInstance } from "./sub.orders.model";
+import { StoreOrdersInstance } from "./store.orders.model";
 
 export interface OrdersAttributes {
   order_id: string;
@@ -23,7 +23,7 @@ interface OrdersCreationAttributes
 
 export interface OrdersInstance extends Model<OrdersAttributes, OrdersCreationAttributes>, OrdersAttributes {
   payment: OrdersPaymentInstance;
-  sub_orders: SubOrdersInstance[];
+  store_orders: StoreOrdersInstance[];
 }
 
 //--> Model attributes
@@ -80,8 +80,8 @@ export function OrdersFactory(sequelize: Sequelize) {
   Orders.associate = function (models: ModelRegistry) {
     const { Orders } = models;
 
-    Orders.hasMany(models.SubOrders, {
-      as: "sub_orders",
+    Orders.hasMany(models.StoreOrders, {
+      as: "store_orders",
       foreignKey: "order_id",
       sourceKey: "order_id",
     });

@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { ErrorResponse } from "../apiresponse/error.response";
-import { SubOrders, SubOrdersProduct, ProductRating, User } from "../models";
+import { StoreOrders, StoreOrdersProduct, ProductRating, User } from "../models";
 import { ProductRatingAttributes } from "../models/product.rating.model";
 
 const create = async (req: Request) => {
@@ -9,14 +9,14 @@ const create = async (req: Request) => {
   const { product_id } = body;
 
   //check if user has purchased this product
-  const checkPurchased = await SubOrders.findOne({
+  const checkPurchased = await StoreOrders.findOne({
     where: {
       purchased_by: user_id,
       delivered: true,
       // "$products.product_id$": product_id,
     } as any,
     // subQuery: false,
-    include: { model: SubOrdersProduct, as: "products" },
+    include: { model: StoreOrdersProduct, as: "products" },
   });
   if (!checkPurchased) {
     throw new ErrorResponse("You can't rate product you haven't purchased");

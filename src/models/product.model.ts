@@ -84,7 +84,7 @@ export function ProductFactory(sequelize: Sequelize) {
     defaultScope: {},
     scopes: {
       basic: {
-        attributes: ["title", "guarantee_period", "course_id"],
+        attributes: ["name"],
       },
     },
     indexes: [
@@ -113,6 +113,16 @@ export function ProductFactory(sequelize: Sequelize) {
       as: "store",
       foreignKey: "store_id",
       targetKey: "store_id",
+    });
+    Product.belongsTo(models.User, {
+      as: "author",
+      foreignKey: "created_by",
+      targetKey: "user_id",
+    });
+    Product.belongsTo(models.User, {
+      as: "approved_user",
+      foreignKey: "approved_by",
+      targetKey: "user_id",
     });
     Product.belongsToMany(models.Category, {
       as: "categories",

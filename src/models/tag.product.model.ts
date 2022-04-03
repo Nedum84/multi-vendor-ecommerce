@@ -1,6 +1,6 @@
 import { Sequelize } from "sequelize";
 import { Model, DataTypes } from "sequelize";
-import { ModelRegistry } from ".";
+import { ModelRegistry, User, UserAddress } from ".";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 
 export interface TagProductAttributes {

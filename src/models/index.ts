@@ -14,9 +14,9 @@ import { CouponStoreFactory } from "./coupon.store.model";
 import { CouponUserFactory } from "./coupon.user.model";
 import { MediaFilesFactory } from "./media.files.model";
 import { MediaFolderFactory } from "./media.folder.model";
-import { SubOrdersFactory } from "./sub.orders.model";
+import { StoreOrdersFactory } from "./store.orders.model";
 import { OrdersPaymentFactory } from "./orders.payment.model";
-import { SubOrdersProductFactory } from "./sub.orders.product.model";
+import { StoreOrdersProductFactory } from "./store.orders.product.model";
 import { ProductAttributeFactory } from "./product.attribute.model";
 import { ProductAttributeSetsFactory } from "./product.attribute.sets.model";
 import { ProductDiscountFactory } from "./product.discount.model";
@@ -70,9 +70,9 @@ export const MediaFiles = MediaFilesFactory(sequelize);
 export const MediaFolder = MediaFolderFactory(sequelize);
 export const OrdersAddress = OrdersAddressFactory(sequelize);
 export const Orders = OrdersFactory(sequelize);
-export const SubOrders = SubOrdersFactory(sequelize);
+export const StoreOrders = StoreOrdersFactory(sequelize);
 export const OrdersPayment = OrdersPaymentFactory(sequelize);
-export const SubOrdersProduct = SubOrdersProductFactory(sequelize);
+export const StoreOrdersProduct = StoreOrdersProductFactory(sequelize);
 export const ProductAttribute = ProductAttributeFactory(sequelize);
 export const ProductAttributeSets = ProductAttributeSetsFactory(sequelize);
 export const ProductDiscount = ProductDiscountFactory(sequelize);
@@ -111,9 +111,9 @@ const models = {
   MediaFolder,
   OrdersAddress,
   Orders,
-  SubOrders,
+  StoreOrders,
   OrdersPayment,
-  SubOrdersProduct,
+  StoreOrdersProduct,
   ProductAttribute,
   ProductAttributeSets,
   ProductDiscount,

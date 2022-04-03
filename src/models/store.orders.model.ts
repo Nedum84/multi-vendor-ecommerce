@@ -4,9 +4,9 @@ import { ModelRegistry } from ".";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { ModelStatic, SequelizeAttributes } from "../typing/sequelize.typing";
 import { OrdersInstance } from "./orders.model";
-import { SubOrdersProductInstance } from "./sub.orders.product.model";
+import { StoreOrdersProductInstance } from "./store.orders.product.model";
 
-export interface SubOrdersAttributes {
+export interface StoreOrdersAttributes {
   sub_order_id: string;
   order_id: string;
   store_id: string;
@@ -30,17 +30,17 @@ export interface SubOrdersAttributes {
   updatedAt?: Date;
 }
 
-interface SubOrdersCreationAttributes extends Optional<SubOrdersAttributes, "sub_order_id"> {}
+interface StoreOrdersCreationAttributes extends Optional<StoreOrdersAttributes, "sub_order_id"> {}
 
-export interface SubOrdersInstance
-  extends Model<SubOrdersAttributes, SubOrdersCreationAttributes>,
-    SubOrdersAttributes {
+export interface StoreOrdersInstance
+  extends Model<StoreOrdersAttributes, StoreOrdersCreationAttributes>,
+    StoreOrdersAttributes {
   order: OrdersInstance;
-  products: SubOrdersProductInstance[];
+  products: StoreOrdersProductInstance[];
 }
 
 //--> Model attributes
-export const SubOrdersModelAttributes: SequelizeAttributes<SubOrdersAttributes> = {
+export const StoreOrdersModelAttributes: SequelizeAttributes<StoreOrdersAttributes> = {
   sub_order_id: {
     type: DataTypes.STRING,
     primaryKey: true,
@@ -111,41 +111,57 @@ export const SubOrdersModelAttributes: SequelizeAttributes<SubOrdersAttributes> 
 };
 
 // --> Factory....
-export function SubOrdersFactory(sequelize: Sequelize) {
-  const SubOrders = <ModelStatic<SubOrdersInstance>>sequelize.define("SubOrders", SubOrdersModelAttributes as any, {
-    timestamps: true,
-    paranoid: true,
-    tableName: "SubOrders",
-    freezeTableName: true,
-    defaultScope: {},
-    scopes: {},
-    indexes: [{ fields: ["order_id"] }, { fields: ["store_id"] }],
-  });
+export function StoreOrdersFactory(sequelize: Sequelize) {
+  const StoreOrders = <ModelStatic<StoreOrdersInstance>>sequelize.define(
+    "StoreOrders",
+    StoreOrdersModelAttributes as any,
+    {
+      timestamps: true,
+      paranoid: true,
+      tableName: "StoreOrders",
+      freezeTableName: true,
+      defaultScope: {},
+      scopes: {},
+      indexes: [{ fields: ["order_id"] }, { fields: ["store_id"] }],
+    }
+  );
 
-  SubOrders.associate = function (models: ModelRegistry) {
-    const { SubOrders } = models;
+  StoreOrders.associate = function (models: ModelRegistry) {
+    const { StoreOrders } = models;
 
-    SubOrders.belongsTo(models.Orders, {
+    StoreOrders.belongsTo(models.Orders, {
       as: "order",
       foreignKey: "order_id",
       targetKey: "order_id",
     });
 
-    SubOrders.belongsTo(models.Store, {
+    StoreOrders.belongsTo(models.Store, {
       as: "store",
       foreignKey: "store_id",
       targetKey: "store_id",
     });
-    SubOrders.hasMany(models.SubOrdersProduct, {
+    StoreOrders.hasMany(models.StoreOrdersProduct, {
       as: "products",
       foreignKey: "sub_order_id",
       sourceKey: "sub_order_id",
     });
+
+    StoreOrders.belongsTo(models.User, {
+      as: "cancelled_user",
+      foreignKey: "cancelled_by",
+      targetKey: "user_id",
+    });
+
+    StoreOrders.belongsTo(models.User, {
+      as: "purchased_user",
+      foreignKey: "purchased_by",
+      targetKey: "user_id",
+    });
   };
 
-  SubOrders.prototype.toJSON = function () {
+  StoreOrders.prototype.toJSON = function () {
     const values = { ...this.get() };
     return values;
   };
-  return SubOrders;
+  return StoreOrders;
 }

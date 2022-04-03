@@ -83,6 +83,12 @@ export function MediaFilesFactory(sequelize: Sequelize) {
       foreignKey: "folder_id",
       targetKey: "folder_id",
     });
+
+    MediaFiles.belongsTo(models.User, {
+      as: "user",
+      foreignKey: "uploaded_by",
+      targetKey: "user_id",
+    });
   };
 
   MediaFiles.prototype.toJSON = function () {

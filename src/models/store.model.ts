@@ -133,7 +133,7 @@ export function StoreFactory(sequelize: Sequelize) {
       foreignKey: "user_id",
       targetKey: "user_id",
     });
-    Store.hasMany(models.SubOrders, {
+    Store.hasMany(models.StoreOrders, {
       as: "orders",
       foreignKey: "store_id",
       sourceKey: "store_id",

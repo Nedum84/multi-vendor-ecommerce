@@ -1,5 +1,5 @@
 import { Transaction } from "sequelize/dist";
-import { SubOrdersProduct } from "../models";
+import { StoreOrdersProduct } from "../models";
 import { CartInstance } from "../models/cart.model";
 
 const create = async (sub_order_id: string, cart: CartInstance, transaction: Transaction) => {
@@ -8,7 +8,7 @@ const create = async (sub_order_id: string, cart: CartInstance, transaction: Tra
 
   const variation_price = discount ? discount.price : price;
 
-  const product = await SubOrdersProduct.create(
+  const product = await StoreOrdersProduct.create(
     {
       sub_order_id,
       variation_id: variation.variation_id,
@@ -28,7 +28,7 @@ const create = async (sub_order_id: string, cart: CartInstance, transaction: Tra
 };
 
 const findAllBySubOrderId = async (sub_order_id: string) => {
-  const prods = await SubOrdersProduct.findAll({ where: { sub_order_id } });
+  const prods = await StoreOrdersProduct.findAll({ where: { sub_order_id } });
   return prods;
 };
 

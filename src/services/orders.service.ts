@@ -1,5 +1,12 @@
 import { Request } from "express";
-import sequelize, { SubOrders, Orders, OrdersPayment, OrdersAddress, SubOrdersProduct, UserWallet } from "../models";
+import sequelize, {
+  StoreOrders,
+  Orders,
+  OrdersPayment,
+  OrdersAddress,
+  StoreOrdersProduct,
+  UserWallet,
+} from "../models";
 import { Op, Transaction } from "sequelize";
 import { FundingTypes, PaymentChannel, PaymentStatus } from "../enum/payment.enum";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
@@ -21,7 +28,7 @@ import storeService from "./store.service";
 import vendorSettlementService from "./vendor.settlement.service";
 import userAddressService from "./user.address.service";
 import orderAddressService from "./order.address.service";
-import subOrdersService from "./sub.orders.service";
+import storeOrdersService from "./store.orders.service";
 import productVariationService from "./product.variation.service";
 import { VendorSettlementInstance } from "../models/vendor.settlement.model";
 import { UserWalletAttributes } from "../models/user.wallet.model";
@@ -90,7 +97,7 @@ const create = async (req: Request) => {
     //Iterate each store
     await asyncForEach(uniqueStoreIds, async (store_id) => {
       //Create Sub Order...
-      await subOrdersService.create(order_id, store_id, user_id, address_id, carts, transaction, couponData);
+      await storeOrdersService.create(order_id, store_id, user_id, address_id, carts, transaction, couponData);
     });
 
     //Create order address
@@ -99,9 +106,9 @@ const create = async (req: Request) => {
     //clear the cart
     await cartService.clearCart(user_id, undefined, transaction);
     //get all orders
-    const sub_orders = await subOrdersService.findAllByOrderId(order_id, transaction);
+    const store_orders = await storeOrdersService.findAllByOrderId(order_id, transaction);
 
-    return { order, sub_orders };
+    return { order, store_orders };
   }); //Transaction ends...
 
   return findById(result.order.order_id);
@@ -125,16 +132,16 @@ const updatePayment = async (req: Request) => {
     payed_from_wallet: boolean;
   } = req.body;
 
-  const subOrder = await SubOrders.findOne({ where: { sub_order_id: order_id } });
+  const subOrder = await StoreOrders.findOne({ where: { sub_order_id: order_id } });
   const orderId = subOrder ? subOrder.order_id : order_id;
 
   const order = await Orders.findOne({
     where: { order_id: orderId },
     include: [
       {
-        model: SubOrders,
-        as: "sub_orders",
-        include: [{ model: SubOrdersProduct, as: "products" }],
+        model: StoreOrders,
+        as: "store_orders",
+        include: [{ model: StoreOrdersProduct, as: "products" }],
       },
     ],
   });
@@ -147,8 +154,8 @@ const updatePayment = async (req: Request) => {
     throw new UnauthorizedError();
   }
 
-  if (order.sub_orders.find((o) => o.order_status == OrderStatus.CANCELLED)) {
-    throw new ErrorResponse("one or more suborders already cancelled");
+  if (order.store_orders.find((o) => o.order_status == OrderStatus.CANCELLED)) {
+    throw new ErrorResponse("one or more StoreOrders already cancelled");
   }
 
   if (order.payment_completed) {
@@ -169,11 +176,11 @@ const updatePayment = async (req: Request) => {
     //Completed payment
     if (payment_status == PaymentStatus.COMPLETED || payed_from_wallet) {
       // update all the sub orders for stores with auto_complete_order == true
-      await asyncForEach(order.sub_orders, async (sub_order) => {
+      await asyncForEach(order.store_orders, async (sub_order) => {
         const { store_id } = sub_order;
         const { settings } = await storeService.findById(store_id, transaction);
         if (settings.auto_complete_order) {
-          await SubOrders.update(
+          await StoreOrders.update(
             { order_status: OrderStatus.COMPLETED },
             { where: { order_id: order.order_id, store_id }, transaction }
           );
@@ -215,16 +222,16 @@ const adminUpdatePayment = async (req: Request) => {
     throw new UnauthorizedError();
   }
 
-  const subOrder = await SubOrders.findOne({ where: { sub_order_id: order_id } });
+  const subOrder = await StoreOrders.findOne({ where: { sub_order_id: order_id } });
   const orderId = subOrder ? subOrder.order_id : order_id;
 
   const order = await Orders.findOne({
     where: { order_id: orderId },
     include: [
       {
-        model: SubOrders,
-        as: "sub_orders",
-        include: [{ model: SubOrdersProduct, as: "products" }],
+        model: StoreOrders,
+        as: "store_orders",
+        include: [{ model: StoreOrdersProduct, as: "products" }],
       },
     ],
   });
@@ -233,8 +240,8 @@ const adminUpdatePayment = async (req: Request) => {
     throw new ErrorResponse("Order not found");
   }
 
-  if (order.sub_orders.find((o) => o.order_status == OrderStatus.CANCELLED)) {
-    throw new ErrorResponse("one or more suborders already cancelled");
+  if (order.store_orders.find((o) => o.order_status == OrderStatus.CANCELLED)) {
+    throw new ErrorResponse("one or more StoreOrders already cancelled");
   }
 
   if (order.payment_completed) {
@@ -247,11 +254,11 @@ const adminUpdatePayment = async (req: Request) => {
 
     if (payment_status == PaymentStatus.COMPLETED) {
       // update all the sub orders for stores with auto_complete_order == true
-      await asyncForEach(order.sub_orders, async (sub_order) => {
+      await asyncForEach(order.store_orders, async (sub_order) => {
         const { store_id } = sub_order;
         const { settings } = await storeService.findById(store_id, transaction);
         if (settings.auto_complete_order) {
-          await SubOrders.update(
+          await StoreOrders.update(
             { order_status: OrderStatus.COMPLETED },
             { where: { order_id: order.order_id, store_id }, transaction }
           );
@@ -285,7 +292,7 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
   let calcSubTotal = 0;
   let couponAmount = 0;
 
-  await asyncForEach(order.sub_orders, async (sub_order) => {
+  await asyncForEach(order.store_orders, async (sub_order) => {
     await asyncForEach(sub_order.products, async (product) => {
       const { variation_id, qty } = product;
       const { discount, flash_discount, price } = await productVariationService.findById(variation_id);
@@ -313,7 +320,7 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
 
   //Update qty remaining...
   //Extra validation(s) could be removed shaaa...
-  await asyncForEach(order.sub_orders, async (sub_order) => {
+  await asyncForEach(order.store_orders, async (sub_order) => {
     await asyncForEach(sub_order.products, async (product) => {
       const { variation_id, qty } = product;
       const variation = await productVariationService.findById(variation_id, transaction);
@@ -351,7 +358,7 @@ const updateOrderStatus = async (req: Request) => {
   const { sub_order_id } = req.params;
   const { order_status }: { order_status: OrderStatus } = req.body;
 
-  const sub_order = await subOrdersService.findById(sub_order_id);
+  const sub_order = await storeOrdersService.findById(sub_order_id);
 
   if (!isAdmin(role) && !stores.includes(sub_order_id)) {
     throw new UnauthorizedError();
@@ -376,7 +383,7 @@ const updateOrderStatus = async (req: Request) => {
   }
   sub_order.order_status = order_status;
   await sub_order.save();
-  return subOrdersService.findById(sub_order_id);
+  return storeOrdersService.findById(sub_order_id);
 };
 
 // update delivery status
@@ -385,7 +392,7 @@ const updateDeliveryStatus = async (req: Request) => {
   const { sub_order_id } = req.params;
   const { delivery_status }: { delivery_status: DeliveryStatus } = req.body;
 
-  const sub_order = await subOrdersService.findById(sub_order_id);
+  const sub_order = await storeOrdersService.findById(sub_order_id);
 
   if (!isAdmin(role) && !stores.includes(sub_order_id)) {
     throw new UnauthorizedError();
@@ -429,7 +436,7 @@ const updateDeliveryStatus = async (req: Request) => {
 
   sub_order.delivery_status = delivery_status;
   await sub_order.save();
-  return subOrdersService.findById(sub_order_id);
+  return storeOrdersService.findById(sub_order_id);
 };
 
 // user cancel order
@@ -437,7 +444,7 @@ const userCancelOrder = async (req: Request) => {
   const { user_id } = req.user!;
   const { sub_order_id } = req.params;
 
-  const sub_order = await subOrdersService.findById(sub_order_id);
+  const sub_order = await storeOrdersService.findById(sub_order_id);
 
   if (sub_order.purchased_by !== user_id) {
     throw new UnauthorizedError();
@@ -463,7 +470,7 @@ const userCancelOrder = async (req: Request) => {
   sub_order.cancelled_by = user_id;
   await sub_order.save();
 
-  return subOrdersService.findById(sub_order_id);
+  return storeOrdersService.findById(sub_order_id);
 };
 
 // admin process refund
@@ -472,7 +479,7 @@ const processRefund = async (req: Request) => {
   const { sub_order_id } = req.params;
   const { amount }: { amount: number } = req.body;
 
-  const sub_order = await subOrdersService.findById(sub_order_id);
+  const sub_order = await storeOrdersService.findById(sub_order_id);
   const order = await findById(sub_order.order_id);
 
   if (!isAdmin(role)) {
@@ -527,7 +534,7 @@ const processRefund = async (req: Request) => {
     throw new ErrorResponse(error);
   }
 
-  return subOrdersService.findById(sub_order_id);
+  return storeOrdersService.findById(sub_order_id);
 };
 
 // --> Process Teachers settlement(With order IDs)
@@ -544,7 +551,7 @@ const settleStore = async (req: Request) => {
   let settlement: VendorSettlementInstance | undefined;
   try {
     await sequelize.transaction(async (t) => {
-      const [_, rows] = await SubOrders.update(
+      const [_, rows] = await StoreOrders.update(
         { settled: true, settled_at: new Date() },
         {
           where: {
@@ -581,7 +588,7 @@ const storeUnsettledOrders = async (req: Request) => {
     throw new UnauthorizedError();
   }
 
-  const totalUnsettled = await SubOrders.findAll({
+  const totalUnsettled = await StoreOrders.findAll({
     where: {
       store_id,
       delivered: true,
@@ -608,9 +615,9 @@ const findById = async (order_id: string, transaction?: Transaction) => {
         required: false,
       },
       {
-        model: SubOrders,
-        as: "sub_orders",
-        include: [{ model: SubOrdersProduct, as: "products" }],
+        model: StoreOrders,
+        as: "store_orders",
+        include: [{ model: StoreOrdersProduct, as: "products" }],
       },
       {
         model: OrdersAddress,
@@ -635,10 +642,10 @@ const findAll = async (req: Request) => {
   const where: { [key: string]: any } = {};
 
   if (order_status) {
-    where["$sub_orders.order_status$"] = order_status;
+    where["$store_orders.order_status$"] = order_status;
   }
   if (store_id) {
-    where["$sub_orders.store_id$"] = store_id;
+    where["$store_orders.store_id$"] = store_id;
   }
   if (coupon_code) {
     where.coupon_code = coupon_code;
@@ -659,7 +666,7 @@ const findAll = async (req: Request) => {
   if (search_query) {
     where[Op.or as any] = [
       { order_id: { [Op.iLike]: `%${search_query}%` } },
-      { ["$sub_orders.sub_order_id$"]: { [Op.iLike]: `%${search_query}%` } },
+      { ["$store_orders.sub_order_id$"]: { [Op.iLike]: `%${search_query}%` } },
     ];
   }
 
@@ -674,9 +681,9 @@ const findAll = async (req: Request) => {
         where: { payment_status: PaymentStatus.COMPLETED },
       },
       {
-        model: SubOrders,
-        as: "sub_orders",
-        include: [{ model: SubOrdersProduct, as: "products" }],
+        model: StoreOrders,
+        as: "store_orders",
+        include: [{ model: StoreOrdersProduct, as: "products" }],
       },
       {
         model: OrdersAddress,
@@ -705,7 +712,7 @@ const findAllByCouponOrUser = async (coupon_code?: string, user_id?: string) => 
 
   const orders = await Orders.findAll({
     where,
-    include: [{ model: SubOrders, as: "sub_orders" }],
+    include: [{ model: StoreOrders, as: "store_orders" }],
   });
 
   return orders;

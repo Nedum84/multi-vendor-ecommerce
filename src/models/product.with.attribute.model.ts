@@ -38,10 +38,15 @@ export function ProductWithAttributeFactory(sequelize: Sequelize) {
   ProductWithAttribute.associate = function (models: ModelRegistry) {
     const { ProductWithAttribute } = models;
 
-    ProductWithAttribute.hasMany(models.Product, {
+    ProductWithAttribute.belongsTo(models.Product, {
       as: "products",
+      foreignKey: "product_id",
+      targetKey: "product_id",
+    });
+    ProductWithAttribute.belongsTo(models.ProductAttribute, {
+      as: "attrs",
       foreignKey: "attribute_id",
-      sourceKey: "attribute_id",
+      targetKey: "attribute_id",
     });
   };
 
