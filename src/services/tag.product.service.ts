@@ -1,4 +1,4 @@
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 import { TagProduct } from "../models";
 import { mapAsync } from "../utils/function.utils";
 

@@ -1,5 +1,4 @@
 import { Request } from "express";
-import { Transaction } from "sequelize/dist";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { CollectStatus } from "../enum/collection.enum";

@@ -13,9 +13,9 @@ const create = async (req: Request) => {
     where: {
       purchased_by: user_id,
       delivered: true,
-      // "$products.product_id$": product_id,
+      "$products.product_id$": product_id,
     } as any,
-    // subQuery: false,
+    subQuery: false,
     include: { model: StoreOrdersProduct, as: "products" },
   });
   if (!checkPurchased) {

@@ -1,5 +1,5 @@
 import { CREATED } from "http-status";
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
 import { PaymentChannel, PaymentStatus } from "../../src/enum/payment.enum";
 import { Orders, StoreOrders } from "../../src/models";
@@ -25,13 +25,48 @@ describe("Order Tests...", () => {
     const { variation_id: variation_id2 } = await productVariationFake.rawCreate();
     const { variation_id: variation_id3 } = await productVariationFake.rawCreate();
     //Populate carts
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id1, action: "add" }, token });
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id2, action: "add" }, token });
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id3, action: "add" }, token });
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id1, action: "add" }, token });
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id2, action: "add" }, token });
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id3, action: "add" }, token });
-    await request({ path: `/cart`, method: "patch", payload: { variation_id: variation_id1, action: "add" }, token });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id1, action: "add" },
+      token,
+    });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id2, action: "add" },
+      token,
+    });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id3, action: "add" },
+      token,
+    });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id1, action: "add" },
+      token,
+    });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id2, action: "add" },
+      token,
+    });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id3, action: "add" },
+      token,
+    });
+    await request({
+      path: `/cart`,
+      method: "patch",
+      payload: { variation_id: variation_id1, action: "add" },
+      token,
+    });
     const response = await request({
       path: `/orders`,
       method: "post",
@@ -46,9 +81,12 @@ describe("Order Tests...", () => {
     const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
     const { token } = tokens.access;
     const { user_id } = user;
-    const { variation_id: variation_id1, product: product1 } = await productVariationFake.rawCreate();
-    const { variation_id: variation_id2, product: product2 } = await productVariationFake.rawCreate();
-    const { variation_id: variation_id3, product: product3 } = await productVariationFake.rawCreate();
+    const { variation_id: variation_id1, product: product1 } =
+      await productVariationFake.rawCreate();
+    const { variation_id: variation_id2, product: product2 } =
+      await productVariationFake.rawCreate();
+    const { variation_id: variation_id3, product: product3 } =
+      await productVariationFake.rawCreate();
     const { store_id: store_id1 } = product1;
     const { store_id: store_id2 } = product2;
     const { store_id: store_id3 } = product3;
@@ -112,7 +150,12 @@ describe("Order Tests...", () => {
     //Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const { order_id } = order;
     const response = await request({
@@ -153,7 +196,12 @@ describe("Order Tests...", () => {
       token,
     });
     // //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const response = await request({
       path: `/orders/payment`,
@@ -176,7 +224,12 @@ describe("Order Tests...", () => {
     //Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const response = await request({
       path: `/orders/payment/admin`,
@@ -200,7 +253,12 @@ describe("Order Tests...", () => {
     //Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const { sub_order_id } = order.store_orders[0];
     const response = await request({
@@ -221,7 +279,12 @@ describe("Order Tests...", () => {
     //Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const { order_id } = order;
     const { sub_order_id } = order.store_orders[0];
@@ -250,7 +313,12 @@ describe("Order Tests...", () => {
     //Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const { sub_order_id } = order.store_orders[0];
     const response = await request({
@@ -271,7 +339,12 @@ describe("Order Tests...", () => {
     //Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // //create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order } = body.data;
     const { order_id } = order;
     const { sub_order_id } = order.store_orders[0];
@@ -288,7 +361,11 @@ describe("Order Tests...", () => {
       token,
     });
     const amount = 200;
-    const response = await request({ path: `/orders/refund/${sub_order_id}`, method: "patch", payload: { amount } });
+    const response = await request({
+      path: `/orders/refund/${sub_order_id}`,
+      method: "patch",
+      payload: { amount },
+    });
     const { body: balanceBody } = await request({ path: `/wallet`, token });
     expectSuccess(response);
     expect(response.body.data.sub_order.order_status).toBe(OrderStatus.CANCELLED);
@@ -306,20 +383,33 @@ describe("Order Tests...", () => {
     // Populate carts #1
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body: body1 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body1 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id1, store_orders: store_orders1 } = body1.data.order;
     const { sub_order_id: sub_order_id1 } = store_orders1[0];
     // --> ORDER #2
     // Populate carts #2
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order
-    const { body: body2 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body2 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id2, store_orders: store_orders2 } = body2.data.order;
     const { sub_order_id: sub_order_id2 } = store_orders2[0];
 
     //2days behind returnable days in milliseconds
     const datePast = Date.now() - (CONSTANTS.RETURNABLE_DAYS + 2) * 24 * 3600 * 1000;
-    await Orders.update({ payment_completed: true }, { where: { order_id: { [Op.or]: [order_id1, order_id2] } } });
+    await Orders.update(
+      { payment_completed: true },
+      { where: { order_id: { [Op.or]: [order_id1, order_id2] } } }
+    );
     await StoreOrders.update(
       {
         delivered: true,
@@ -355,18 +445,31 @@ describe("Order Tests...", () => {
     // Populate carts #1
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body: body1 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body1 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id1 } = body1.data.order;
     // --> ORDER #2
     // Populate carts #2
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body: body2 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body2 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id2 } = body2.data.order;
 
     //2days behind returnable days in milliseconds
     const datePast = Date.now() - (CONSTANTS.RETURNABLE_DAYS + 2) * 24 * 3600 * 1000;
-    await Orders.update({ payment_completed: true }, { where: { order_id: { [Op.or]: [order_id1, order_id2] } } });
+    await Orders.update(
+      { payment_completed: true },
+      { where: { order_id: { [Op.or]: [order_id1, order_id2] } } }
+    );
     await StoreOrders.update(
       {
         delivered: true,
@@ -390,7 +493,12 @@ describe("Order Tests...", () => {
     // Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id } = body.data.order;
     const response = await request(`/orders/${order_id}`);
     expectSuccess(response);
@@ -406,7 +514,12 @@ describe("Order Tests...", () => {
     // Populate carts
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id } = body.data.order;
     const response = await request(`/orders/${order_id}`);
     expectSuccess(response);
@@ -427,7 +540,12 @@ describe("Order Tests...", () => {
     //CREATE ORDER #1
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id, store_orders, amount } = body.data.order;
     const { sub_order_id } = store_orders[0];
     //CREATE ORDER #2

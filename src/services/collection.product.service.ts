@@ -1,10 +1,17 @@
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 import { CollectionProduct } from "../models";
 import { distinctArray, mapAsync } from "../utils/function.utils";
 
-const createProduct = async (product_id: string, collection_ids: string[], transaction?: Transaction) => {
+const createProduct = async (
+  product_id: string,
+  collection_ids: string[],
+  transaction?: Transaction
+) => {
   const colProds = await mapAsync(distinctArray(collection_ids), async (collection_id) => {
-    const check = await CollectionProduct.findOne({ where: { product_id, collection_id }, transaction });
+    const check = await CollectionProduct.findOne({
+      where: { product_id, collection_id },
+      transaction,
+    });
 
     if (check) return check;
 

@@ -1,4 +1,4 @@
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 import { StoreOrdersProduct } from "../models";
 import { CartInstance } from "../models/cart.model";
 

@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 import { UnauthorizedError } from "../apiresponse/unauthorized.error";
 import { OrdersAddress } from "../models";
 import { UserAddressInstance } from "../models/user.address.model";
@@ -7,8 +7,15 @@ import { isAdmin } from "../utils/admin.utils";
 import { Helpers } from "../utils/helpers";
 import ordersService from "./orders.service";
 
-const create = async (userAddress: UserAddressInstance, order_id: string, transaction: Transaction) => {
-  const address = await OrdersAddress.create({ order_id, ...userAddress?.toJSON() }, { transaction });
+const create = async (
+  userAddress: UserAddressInstance,
+  order_id: string,
+  transaction: Transaction
+) => {
+  const address = await OrdersAddress.create(
+    { order_id, ...userAddress?.toJSON() },
+    { transaction }
+  );
   return address;
 };
 

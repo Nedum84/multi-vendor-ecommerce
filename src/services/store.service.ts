@@ -152,7 +152,7 @@ const storeBalance = async (req: Request) => {
       order_status: OrderStatus.COMPLETED,
       settled: false,
       refunded: false,
-      delivered_at: { [Op.or]: [{ [Op.gt]: RETURNABLE_PERIOD }, { [Op.eq]: null }] },
+      delivered_at: { [Op.or]: [{ [Op.gt]: RETURNABLE_PERIOD }, { [Op.eq]: null }] } as any,
     },
   });
 

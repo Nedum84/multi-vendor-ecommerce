@@ -9,7 +9,7 @@ import { TokenTypes } from "../enum/token.enum";
 import sequelize, { Token } from "../models";
 import storeService from "./store.service";
 import { NotFoundError } from "../apiresponse/not.found.error";
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 
 /**
  * Generate token

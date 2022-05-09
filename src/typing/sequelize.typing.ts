@@ -1,6 +1,6 @@
 import { BuildOptions } from "sequelize";
 import { Model } from "sequelize";
-import { DataTypeAbstract, ModelAttributeColumnOptions } from "sequelize/types";
+import { DataTypeAbstract, ModelAttributeColumnOptions } from "sequelize";
 
 type SequelizeAttribute = string | DataTypeAbstract | ModelAttributeColumnOptions;
 

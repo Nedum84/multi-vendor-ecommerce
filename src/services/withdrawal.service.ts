@@ -8,10 +8,18 @@ import { WithdrawalInstance } from "../models/withdrawal.model";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import userWalletService from "./user.wallet.service";
 import { ErrorResponse } from "../apiresponse/error.response";
+import { Op } from "sequelize";
 
 const withdraw = async (req: Request) => {
   const { user_id } = req.user!;
   const { amount }: { amount: number } = req.body;
+
+  const isWithdrawalOpen = await Withdrawal.findAll({
+    where: { user_id, [Op.or]: [{ processed: false }, { is_declined: false }] },
+  });
+  if (isWithdrawalOpen) {
+    throw new NotFoundError("You already have a pending withdral awaiting processing");
+  }
 
   const { withrawable_amount } = await userWalletService.withrawableBalance(user_id);
 

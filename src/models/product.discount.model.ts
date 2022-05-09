@@ -7,7 +7,7 @@ export interface ProductDiscountAttributes {
   variation_id: string;
   price: number;
   discount_from: Date;
-  discount_to: Date;
+  discount_to?: Date;
   revoke: boolean;
 }
 

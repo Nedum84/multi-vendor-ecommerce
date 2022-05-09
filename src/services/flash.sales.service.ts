@@ -22,11 +22,13 @@ const createFlashSale = async (req: Request) => {
     where: {
       revoke: false,
       start_date: { [Op.lt]: new Date() },
-      end_date: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+      end_date: { [Op.or]: [{ [Op.gt]: new Date() }, null as any] },
     },
   });
   if (checkExist) {
-    throw new ErrorResponse("Previous flash sale is already active. Closed previous flash sales to create new one");
+    throw new ErrorResponse(
+      "Previous flash sale is already active. Closed previous flash sales to create new one"
+    );
   }
 
   const flash = await createModel<FlashSalesInstance>(FlashSales, body, "flash_sale_id");

@@ -1,4 +1,4 @@
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
 import { Orders, StoreOrders, VendorSettlement } from "../../src/models";
 import { VendorSettlementInstance } from "../../src/models/vendor.settlement.model";
@@ -25,19 +25,32 @@ describe("Vendor Settlements...", () => {
     // Populate carts #1
     await cartFake.rawCreate({ qty: 5, store_id, user_id, variation_id });
     // create order
-    const { body: body1 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body1 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id1, store_orders: store_orders1 } = body1.data.order;
     const { sub_order_id: sub_order_id1 } = store_orders1[0];
     // --> ORDER #2
     // Populate carts #2
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order
-    const { body: body2 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body2 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id2, store_orders: store_orders2 } = body2.data.order;
     const { sub_order_id: sub_order_id2 } = store_orders2[0];
     //2days behind returnable days in milliseconds
     const datePast = Date.now() - (CONSTANTS.RETURNABLE_DAYS + 2) * 24 * 3600 * 1000;
-    await Orders.update({ payment_completed: true }, { where: { order_id: { [Op.or]: [order_id1, order_id2] } } });
+    await Orders.update(
+      { payment_completed: true },
+      { where: { order_id: { [Op.or]: [order_id1, order_id2] } } }
+    );
     await StoreOrders.update(
       {
         delivered: true,
@@ -75,7 +88,11 @@ describe("Vendor Settlements...", () => {
       store_id,
       sub_order_ids: [],
     };
-    const { settlement_id } = await createModel<VendorSettlementInstance>(VendorSettlement, body, "settlement_id");
+    const { settlement_id } = await createModel<VendorSettlementInstance>(
+      VendorSettlement,
+      body,
+      "settlement_id"
+    );
     const reponse = await request({
       method: "post",
       path: `/settlement/${settlement_id}`,

@@ -2,7 +2,10 @@ import { Request } from "express";
 import sequelize, { ProductDiscount } from "../models";
 import { ProductVariation } from "../models";
 import { createModel } from "../utils/random.string";
-import { ProductVariationAttributes, ProductVariationInstance } from "../models/product.variation.model";
+import {
+  ProductVariationAttributes,
+  ProductVariationInstance,
+} from "../models/product.variation.model";
 import productService from "./product.service";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { ErrorResponse } from "../apiresponse/error.response";
@@ -22,7 +25,9 @@ const create = async (
   transaction?: Transaction
 ) => {
   //--> Get all the available product attributes
-  const productAttributes = await variationAttributesService.findProductAttributes(variationBody.product_id);
+  const productAttributes = await variationAttributesService.findProductAttributes(
+    variationBody.product_id
+  );
   //--> Get all current variations
   const existingVariations = await findAllByProductId(variationBody.product_id, transaction);
 
@@ -79,7 +84,11 @@ const create = async (
       variation_id = variation.variation_id;
       //Create the attributes set ids
       if (productAttributes.length > 0) {
-        await variationAttributesService.createVariationAttributes(attribute_set_ids, variation_id, transaction ?? t);
+        await variationAttributesService.createVariationAttributes(
+          attribute_set_ids,
+          variation_id,
+          transaction ?? t
+        );
       }
       //Create Discount
       if (discount) {
@@ -112,7 +121,9 @@ const update = async (req: Request) => {
   }
 
   //--> Get all the available product attributes
-  const productAttributes = await variationAttributesService.findProductAttributes(variation.product_id);
+  const productAttributes = await variationAttributesService.findProductAttributes(
+    variation.product_id
+  );
   //--> Get all current variations
   const existingVariations = await findAllByProductId(variation.product_id);
 
@@ -175,9 +186,16 @@ const update = async (req: Request) => {
         const isEqual = arraysEqual(attribute_set_ids, currentSetIds);
         if (!isEqual) {
           //Delete already existing one for only this variation
-          await variationAttributesService.deleteVariationAttributesByVariationIds([variation_id], transaction);
+          await variationAttributesService.deleteVariationAttributesByVariationIds(
+            [variation_id],
+            transaction
+          );
           //Create new ones
-          await variationAttributesService.createVariationAttributes(attribute_set_ids, variation_id, transaction);
+          await variationAttributesService.createVariationAttributes(
+            attribute_set_ids,
+            variation_id,
+            transaction
+          );
         }
       }
     });
@@ -191,14 +209,18 @@ const update = async (req: Request) => {
 };
 
 //--> createDiscount
-const createDiscount = async (variation_id: string, discount: ProductDiscountAttributes, t?: Transaction) => {
+const createDiscount = async (
+  variation_id: string,
+  discount: ProductDiscountAttributes,
+  t?: Transaction
+) => {
   //check if there's existing
   const checkExist = await ProductDiscount.findOne({
     where: {
       variation_id,
       revoke: false,
       discount_from: { [Op.lt]: new Date() },
-      [Op.or]: [{ discount_to: { [Op.gt]: new Date() } }, { discount_to: null }],
+      [Op.or]: [{ discount_to: { [Op.gt]: new Date() } }, { discount_to: null as any }],
     },
   });
 
@@ -226,7 +248,7 @@ const revokeDiscount = async (variation_id: string) => {
     where: {
       variation_id,
       revoke: false,
-      discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] },
+      discount_to: { [Op.or]: [{ [Op.gt]: new Date() }, null] } as any,
     },
   });
 
@@ -252,7 +274,10 @@ const deleteVariation = async (req: Request) => {
   const del = await sequelize.transaction(async (transaction) => {
     await variation.destroy({ transaction });
     //Delete already existing one for only this variation
-    await variationAttributesService.deleteVariationAttributesByVariationIds([variation_id], transaction);
+    await variationAttributesService.deleteVariationAttributesByVariationIds(
+      [variation_id],
+      transaction
+    );
   });
 
   return true;

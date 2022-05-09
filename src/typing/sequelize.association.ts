@@ -1,4 +1,4 @@
-import { Model } from "sequelize/types";
+import { Model } from "sequelize";
 
 interface ISequelizeAssociatable<T> extends Model<any, any> {
   associate(reg: T): void;

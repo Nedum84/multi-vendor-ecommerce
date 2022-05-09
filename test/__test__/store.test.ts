@@ -1,5 +1,5 @@
 import { CREATED } from "http-status";
-import { Op } from "sequelize/dist";
+import { Op } from "sequelize";
 import { DeliveryStatus, OrderStatus } from "../../src/enum/orders.enum";
 import { Orders, StoreOrders } from "../../src/models";
 import tokenService from "../../src/services/token.service";
@@ -27,7 +27,11 @@ describe("User Tests...", () => {
   it("Can update store", async () => {
     const { tokens, user } = await global.signin();
 
-    const { store_id } = await storeFake.rawCreate({ user_id: user.user_id, verified: true, verified_at: new Date() });
+    const { store_id } = await storeFake.rawCreate({
+      user_id: user.user_id,
+      verified: true,
+      verified_at: new Date(),
+    });
     const { access } = await tokenService.refreshToken(tokens.refresh.token);
 
     const payload = storeFake.update;
@@ -119,27 +123,47 @@ describe("User Tests...", () => {
     // Populate carts #1
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order
-    const { body: body1 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body1 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id1, store_orders: store_orders1 } = body1.data.order;
     const { sub_order_id: sub_order_id1 } = store_orders1[0];
     // --> ORDER #2
     // Populate carts #2
     await cartFake.rawCreate({ qty: 1, store_id, user_id, variation_id });
     // create order
-    const { body: body2 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body2 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id2, store_orders: store_orders2 } = body2.data.order;
     const { sub_order_id: sub_order_id2 } = store_orders2[0];
     // --> ORDER #3
     // Populate carts #3
     await cartFake.rawCreate({ qty: 2, store_id, user_id, variation_id });
     // create order
-    const { body: body3 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body3 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id3 } = body3.data.order;
     // --> ORDER #4
     // Populate carts #4
     await cartFake.rawCreate({ qty: 3, store_id, user_id, variation_id });
     // create order
-    const { body: body4 } = await request({ path: `/orders`, method: "post", payload: { address_id }, token });
+    const { body: body4 } = await request({
+      path: `/orders`,
+      method: "post",
+      payload: { address_id },
+      token,
+    });
     const { order_id: order_id4 } = body4.data.order;
 
     // ORDER #1 & ORDER #2 are settled, ORDER #3 is unsettled

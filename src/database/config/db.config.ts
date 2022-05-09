@@ -1,4 +1,4 @@
-import { Dialect, Options } from "sequelize/types";
+import { Dialect, Options } from "sequelize";
 import config from "../../config/config";
 
 interface DBStages {

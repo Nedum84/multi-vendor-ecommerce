@@ -1,4 +1,4 @@
-import { Transaction } from "sequelize/dist";
+import { Transaction } from "sequelize";
 import { NotFoundError } from "../apiresponse/not.found.error";
 import { DeliveryStatus, OrderStatus } from "../enum/orders.enum";
 import { Orders, StoreOrders, StoreOrdersProduct } from "../models";
@@ -20,7 +20,12 @@ const create = async (
   address_id: string,
   carts: CartInstance[],
   transaction: Transaction,
-  couponData?: { coupon_amount: number; coupon_amount_without_cap: number; sub_total: number; coupon: CouponInstance }
+  couponData?: {
+    coupon_amount: number;
+    coupon_amount_without_cap: number;
+    sub_total: number;
+    coupon: CouponInstance;
+  }
 ) => {
   // OR removing carts from params and passing user_id,
   // With that you can access the carts via
@@ -44,12 +49,22 @@ const create = async (
     }
   }
 
-  const store_shipping = await shippingService.getStoreShipping(store_id, variation_ids, address_id);
+  const store_shipping = await shippingService.getStoreShipping(
+    store_id,
+    variation_ids,
+    address_id
+  );
   const store_tax_amount = 0;
   const amount = sub_total - storeCouponAmount + store_shipping + store_tax_amount;
   const store_price = (sub_total - storeCouponAmount) * (store.store_percentage / 100);
 
-  const sub_order_id = await genUniqueColId(StoreOrders, "sub_order_id", 10, "alphanumeric", "uppercase");
+  const sub_order_id = await genUniqueColId(
+    StoreOrders,
+    "sub_order_id",
+    10,
+    "alphanumeric",
+    "uppercase"
+  );
 
   const subOrderAttrs: StoreOrdersAttributes = {
     sub_order_id,
