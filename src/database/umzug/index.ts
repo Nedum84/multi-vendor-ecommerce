@@ -1,5 +1,5 @@
 import { SequelizeStorage, Umzug } from "umzug";
-import sequelize from "../../models";
+import sequelize from "../../ec-models";
 import path from "path";
 
 class UmzugInit {

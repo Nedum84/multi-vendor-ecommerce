@@ -1,12 +1,12 @@
 import express from "express";
 import { json } from "body-parser";
 import "express-async-errors"; //To enable async on route function
-import v1Routes from "./routes/v1";
-import config from "./config/config";
+import v1Routes from "./ec-routes/v1.routes";
+import config from "./ec-config/config";
 import helmet from "helmet";
-import morgan from "./config/morgan";
-import { NotFoundError } from "./apiresponse/not.found.error";
-import { errorHandler } from "./middlewares/error.handler";
+import morgan from "./ec-config/morgan";
+import { NotFoundError } from "./ec-api-response/not.found.error";
+import { errorHandler } from "./ec-middlewares/error.handler";
 // const xss = require("xss-clean");
 import xss from "xss-clean";
 

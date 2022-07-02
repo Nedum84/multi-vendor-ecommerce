@@ -1,46 +1,30 @@
 {
-  /* compilerOptions defines the rules for TypeScript transpilation */
   "compilerOptions": {
-    /* Negates default behavior which states that null and undefined are assignable to all types in TypeScript */
-    /* eg. let: number = 1; number = null; OKAY by default */
     "strictNullChecks": true,
 
-    /* Maps transpiled NodeJS lines of code back to TypeScript line for easier debugging. */
-    /* eg. file.js:115 -> file.ts: 20 */
     "sourceMap": true,
-
-    /* Copy the JavaScript files to the build directory. */
-    /*  eg src/file.js -> build/src/file.js */
     "allowJs": true,
 
-    /* Targeted Node version of compilation process */
     "target": "es5",
+    // "baseUrl": "./",
 
     /* The directory where the build contents will be stored */
-    "outDir": "./build",
+    "outDir": "./dist",
 
+    // Help Jest run faster
+    "isolatedModules": true,
     "moduleResolution": "node",
-    "lib": ["es2015"],
+    "lib": ["esnext"], // OR es2015
 
-    /* Root directory of the project */
     "rootDir": "./",
-
-    /* Maintains file structure of the transpiled code in the build directory. */
-    /* eg. src/* -> build/src/* */
     "resolveJsonModule": true,
-
-//    Added by me(Nelson)
-    "esModuleInterop": true,                        /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */
-    "skipLibCheck": true,
+    "esModuleInterop": true /* Enables emit interoperability between CommonJS and ES Modules via creation of namespace objects for all imports. Implies 'allowSyntheticDefaultImports'. */,
+    "skipLibCheck": true
   },
   /* Directories to include in the TypeScript build */
   /* In our project, we want to build and deploy our src code */
-  "include": [ "src/**/*", "serverless.yml","package.json","package-lock.json",".env"],
+  "include": ["src", "package.json", "package-lock.json"],
 
   /* Directories to exclude in the TypeScript build */
-  "exclude": [
-    "node_modules",
-    "**/*.test.ts",
-    ".build"
-  ]
+  "exclude": ["node_modules", "*/*/*.test.ts", "*/*/test.ts", ".build"]
 }

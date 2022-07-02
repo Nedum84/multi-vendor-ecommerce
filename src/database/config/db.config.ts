@@ -1,5 +1,5 @@
 import { Dialect, Options } from "sequelize";
-import config from "../../config/config";
+import config from "../../ec-config/config";
 
 interface DBStages {
   test: Options;

@@ -1,0 +1,140 @@
+service: habarideals
+useDotenv: false # Load environment variables from .env files (default: false)
+configValidationMode: off # error | warn(default) | off
+
+custom:
+  awsId: ${aws:accountId, '158282916771'}
+  domain: habarideals.com
+  stage: ${opt:stage, self:provider.stage}
+  awsRegion: ${opt:region, 'eu-west-2'} #${aws:region}
+  bucketName: ${self:custom.domain}-${self:service}-${self:custom.stage}
+  vpc:
+    "dev": ""
+    "qa": ""
+    "prod":
+      securityGroupIds:
+        - sg-05beeb1916b1b5a03
+      subnetIds:
+        - subnet-0aa39a66831030eed
+        - subnet-0262de9840c69a23c
+        - subnet-0377bb607f00ae088
+
+provider:
+  name: aws
+  runtime: nodejs14.x
+  memorySize: 128
+  timeout: 10
+  stage: ${self:custom.stage}
+  region: ${self:custom.awsRegion}
+  lambdaHashingVersion: "20201221"
+  tags:
+    service: habarideals
+    company: habaridealsInc.
+    project: backendApp
+  tracing:
+    apiGateway: true
+    lambda: true
+  logs:
+    restApi:
+      level: ERROR
+  deploymentBucket:
+    name: ${self:custom.awsId}.${self:custom.awsRegion}.deploys
+    serverSideEncryption: AES256
+    versioning: false
+  vpc: ${self:custom.vpc.${self:custom.stage}}
+  environment:
+    AWS_S3_BUCKET_NAME:
+      Ref: S3BucketAssets
+    AWS_S3_DISTRIBUTION:
+      "Fn::GetAtt":
+        - CloudFrontDistribution
+        - DomainName
+
+plugins:
+  - serverless-offline
+  - serverless-deployment-bucket
+
+package:
+  exclude:
+    - "node_modules/aws-sdk/**"
+    - "node_modules/typescript/**"
+    - "node_modules/@firebase/database/**"
+    - "node_modules/faker/dist/**"
+
+functions:
+  cli:
+    handler: src/ec-aws/lambda-cli.handler
+    timeout: 300 # 5 minutes
+  api:
+    handler: src/ec-aws/lambda-express.handler
+    timeout: 30
+    memorySize: 128
+    dependsOn:
+      - S3BucketAssets
+    events:
+      - http:
+          path: /v1
+          method: ANY
+          cors: true
+      - http:
+          path: /v1/{proxy+}
+          method: ANY
+          cors: true
+
+resources:
+  Resources:
+    S3BucketAssets: #Can be any name
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: ${self:custom.bucketName}
+        VersioningConfiguration:
+          Status: Enabled
+        CorsConfiguration:
+          CorsRules:
+            - AllowedHeaders:
+                - "*"
+              AllowedMethods:
+                - GET
+                - PUT
+                - POST
+                - DELETE
+                - HEAD
+              AllowedOrigins:
+                - "*"
+    CloudFrontDistribution: #Can be any name
+      Type: AWS::CloudFront::Distribution
+      DependsOn:
+        - S3BucketAssets
+      Properties:
+        DistributionConfig:
+          Origins:
+            - DomainName:
+                "Fn::GetAtt":
+                  - S3BucketAssets
+                  - RegionalDomainName
+              Id:
+                Ref: S3BucketAssets
+              CustomOriginConfig:
+                OriginProtocolPolicy: http-only
+          Enabled: "true"
+          Comment: ${self:service} ${opt:stage}
+          DefaultCacheBehavior:
+            AllowedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            CachedMethods:
+              - GET
+              - HEAD
+              - OPTIONS
+            Compress: true
+            TargetOriginId:
+              Ref: S3BucketAssets
+            ForwardedValues:
+              QueryString: "false"
+              Cookies:
+                Forward: none
+            ViewerProtocolPolicy: redirect-to-https
+          PriceClass: PriceClass_All
+          ViewerCertificate:
+            CloudFrontDefaultCertificate: "true"

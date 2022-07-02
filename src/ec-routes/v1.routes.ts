@@ -1,0 +1,60 @@
+import express from "express";
+import authRoute from "../ec-auth/auth.route";
+import cartRoute from "../ec-cart/cart.route";
+import categoryRoute from "../ec-category/category.route";
+import collectionRoute from "../ec-collection/collection.route";
+import couponRoute from "../ec-coupon/coupon.route";
+import creditCodeRoute from "../ec-credit-code/credit.code.route";
+import flashSalesRoute from "../ec-flash-sales/flas.sales.route";
+import mediaRoute from "../ec-media/route";
+import orderAddressRoute from "../ec-orders-address/order.address.route";
+import ordersRoute from "../ec-orders/orders.route";
+import productRatingRoute from "../ec-product-review/product.rating.route";
+import productRoute from "../ec-product/product.route";
+import productVariationRoute from "../ec-product-variation/product.variation.route";
+import relatedProductRoute from "../ec-related-product/related.product.route";
+import storeRoute from "../ec-store/store.route";
+import storeOrdersProductRoute from "../ec-store-orders-products/store.orders.product.route";
+import storeOrdersRoute from "../ec-store-orders/store.orders.route";
+import tagRoute from "../ec-tag/tag.route";
+import userAddressRoute from "../ec-user-address/user.address.route";
+import userRoute from "../ec-user/user.route";
+import userWalletRoute from "../ec-user-wallet/user.wallet.route";
+import variationAttributesRoute from "../ec-variation-attributes/variation.attributes.route";
+import vendorSettlementRoute from "../ec-vendor-settlement/vendor.settlement.route";
+import wishlistRoute from "../ec-wishlist/wishlist.route";
+import withrawalRoute from "../ec-withdrawal/withdrawal.route";
+import postmanVariablesRoutes from "../../postman_variables/index";
+
+const router = express.Router();
+
+router.use("/auth", authRoute);
+router.use("/cart", cartRoute);
+router.use("/category", categoryRoute);
+router.use("/collection", collectionRoute);
+router.use("/coupon", couponRoute);
+router.use("/credit", creditCodeRoute);
+router.use("/flashsales", flashSalesRoute);
+router.use("/media", mediaRoute);
+router.use("/order-address", orderAddressRoute);
+
+router.use("/orders", ordersRoute);
+router.use("/product-rating", productRatingRoute);
+router.use("/product", productRoute);
+router.use("/variation", productVariationRoute);
+router.use("/related-product", relatedProductRoute);
+router.use("/store", storeRoute);
+router.use("/sub-orders-products", storeOrdersProductRoute);
+router.use("/sub-orders", storeOrdersRoute);
+router.use("/tag", tagRoute);
+router.use("/user-address", userAddressRoute);
+router.use("/user", userRoute);
+router.use("/wallet", userWalletRoute);
+router.use("/attributes", variationAttributesRoute);
+router.use("/settlement", vendorSettlementRoute);
+router.use("/wishlist", wishlistRoute);
+router.use("/withdrawal", withrawalRoute);
+
+// Just postman variables
+router.use("/postman_variables", postmanVariablesRoutes);
+export default router;

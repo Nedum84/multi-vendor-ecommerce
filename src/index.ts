@@ -1,6 +1,6 @@
 import { app } from "./app";
-import config from "./config/config";
-import logger from "./config/logger";
+import config from "./ec-config/config";
+import logger from "./ec-config/logger";
 
 //Start mongoose & event bus
 const start = async () => {

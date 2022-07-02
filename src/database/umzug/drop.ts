@@ -1,5 +1,5 @@
-import sequelize from "../../models";
-import config from "../../config/config";
+import sequelize from "../../ec-models";
+import config from "../../ec-config/config";
 
 (async () => {
   try {
