@@ -8,13 +8,20 @@ import { createModel, getPaginate } from "../ec-models/utils";
 import { NotFoundError } from "../ec-api-response/not.found.error";
 import { allFoldersQuery, getChildFoldersQuery, getParentFoldersQuery } from "./utils.query";
 import { isEmpty } from "lodash";
-import { copyMediaFoldersFiles, hashFileName, sanitizeFileName, uploadPath } from "./utils";
+import {
+  copyMediaFoldersFiles,
+  hashFileName,
+  newBucketKeyFromOldKey,
+  sanitizeFileName,
+  uploadPath,
+} from "./utils";
 import fileupload from "express-fileupload";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { getImageDimensions } from "./image.optimization";
 import { bucketName, defaultImageBreakpoints } from "./constants";
 import { createAndUploadVariants } from "./utils.image.variations";
-import { uploadFile } from "./utils.s3";
+import { duplicateFile, uploadFile } from "./utils.s3";
+import { generateChars } from "../ec-utils/random.string";
 
 //Create a folder
 const createFolder = async (req: Request) => {
@@ -29,10 +36,9 @@ const createFolder = async (req: Request) => {
 };
 
 // Create file(s)
-async function createFiles(req: Request) {
+const createFiles = async (req: Request) => {
   const { user_id } = req.user!;
   const { folder_id } = req.body;
-  console.log(req.body, "HEY!");
 
   // grabs all the the attached files
   const fileArray: fileupload.FileArray | undefined = req.files;
@@ -91,7 +97,7 @@ async function createFiles(req: Request) {
   }
 
   return fileStorages;
-}
+};
 
 //update folder
 const updateFolder = async (req: Request) => {
@@ -131,23 +137,33 @@ const copy = async (req: Request) => {
         const { parent_id, type, id } = eachItem;
         if (type == "folder") {
           const folderId = id;
-          //Checking if User is copying to child folder
+          // Checking if User is copying to child folder
           const children = await getChildrenFolders(folderId);
           const checkIfParentIsChild = children.find((f) => f.folder_id === parent_id);
           if (checkIfParentIsChild) {
             throw new Error("You can't copy parent folder to a child folder");
           }
 
-          //Return plain objects(with no sequelize meta rubbish). Reason for @false param
-          const folders = await findAllNestedFolders(folderId, true, false); //id===folder_id
+          // Return plain objects(with no sequelize meta rubbish). Reason for @false param
+          const folders = await findAllNestedFolders(folderId, true, false);
 
-          // copy the files/folders
+          // copy the folders(and nested folders/files)
           await copyMediaFoldersFiles(folders, parent_id, transaction);
         } else {
           const fileId = id;
           const file = await findFileById(fileId);
           file.folder_id = parent_id;
-          //-->inserts
+          file.url = await duplicateFile(file.key, newBucketKeyFromOldKey(file.key));
+
+          const variants = {};
+          if (file.variants) {
+            for await (const [key, value] of Object.entries(file.variants)) {
+              const newVaUrl = await duplicateFile(value.key, newBucketKeyFromOldKey(value.key));
+              variants[key] = { ...value, url: newVaUrl };
+            }
+          }
+          file.variants = variants;
+          //-->create file
           await createModel<MediaFilesInstance>(MediaFiles, file.toJSON(), "file_id", {
             transaction,
           });

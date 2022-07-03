@@ -20,7 +20,7 @@ const envVarsSchema = Joi.object()
     DB_PASSWORD: Joi.string().default("1223"),
     DB_HOST: Joi.string().default("localhost"),
     DB_PORT: Joi.number().default(5432),
-    AWS_S3_BUCKET_NAME: Joi.string().default("bucket-name-sc"),
+    AWS_S3_BUCKET_NAME: Joi.string().default("ecom-bucket-name"),
     AWS_REGION: Joi.string().default("eu-west-2"),
     AWS_S3_DISTRIBUTION: Joi.string().description("cdn path"),
     AWS_S3_IMAGE_UPLOAD_PATH: Joi.string().default("image"),
@@ -29,7 +29,7 @@ const envVarsSchema = Joi.object()
     AWS_S3_ZIP_UPLOAD_PATH: Joi.string().default("zip"),
     AWS_S3_ICS_UPLOAD_PATH: Joi.string().default("ics"),
     AWS_S3_OTHERS_UPLOAD_PATH: Joi.string().default("others"),
-    MINIO_BASE_URL: Joi.string().default("http://localhost:9000"), // aka - MINIO_S3_ENDPOINT
+    MINIO_BASE_URL: Joi.string().default("http://localhost:9002"), // aka - MINIO_S3_ENDPOINT
     MINIO_USERNAME: Joi.string().default("admin"),
     MINIO_PASSWORD: Joi.string().default("Ecommerce-1234"),
   })

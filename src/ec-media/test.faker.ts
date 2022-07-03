@@ -2,6 +2,12 @@ import faker from "faker";
 import { MediaFiles, MediaFolder } from "../ec-models";
 import userFake from "../ec-user/user.fake";
 import { generateChars } from "../ec-utils/random.string";
+import { pngFilePath } from "./test";
+import { hashFileName, sanitizeFileName, uploadPath } from "./utils";
+import { uploadFile } from "./utils.s3";
+import fs from "fs";
+import { bucketName } from "./constants";
+import { MediaFilesAttributes } from "./model.media.files";
 
 export default {
   rawCreateFolder: async function (props?: any) {
@@ -16,12 +22,25 @@ export default {
     return MediaFolder.create(data);
   },
   rawCreateFile: async function (props?: any) {
+    const payload = this.createFile();
     const { folder_id, created_by } = await this.rawCreateFolder();
-    const data = {
-      ...this.createFile(),
+    // upload file to s3...
+    const fileBuffer = fs.readFileSync(pngFilePath);
+    const hashedFileName = hashFileName(payload.name);
+    const fileName = sanitizeFileName(payload.name);
+    const key = `${uploadPath(fileName)}/${hashedFileName}`;
+
+    const url = await uploadFile(key, fileBuffer);
+
+    const data: MediaFilesAttributes = {
+      ...payload,
       folder_id,
       file_id: generateChars(),
       created_by,
+      key,
+      bucket: bucketName,
+      url,
+      variants: {},
       ...props,
     };
     return MediaFiles.create(data);
@@ -31,11 +50,11 @@ export default {
     desc: faker.random.words(10),
   }),
   createFile: () => ({
-    name: faker.random.words(3),
+    name: "faker_test_image_2.png",
     desc: faker.random.words(10),
     url: faker.random.image(),
     size: 20,
-    mime: "image/jpeg",
+    mime: "image/png",
     key: "test-file/sample.jpeg",
     bucket: "bucket-name",
   }),

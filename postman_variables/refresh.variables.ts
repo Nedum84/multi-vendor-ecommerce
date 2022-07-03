@@ -33,7 +33,7 @@ import { SuccessResponse } from "../src/ec-api-response/success.response";
 import config from "../src/ec-config/config";
 import { generateChars } from "../src/ec-utils/random.string";
 import fs from "fs";
-import { jpgFilePath } from "../src/ec-media/test";
+import { jpgFilePath, pngFilePath } from "../src/ec-media/test";
 
 export const refreshVariables = async (req: Request, res: Response) => {
   //Reset DB
@@ -163,8 +163,8 @@ const processVariables = async (req: Request) => {
   const { withdrawal_id } = await withdrawalService.withdraw(req);
 
   // Media create
-  const fileStream = fs.createReadStream(jpgFilePath);
-  req.body.files = fileStream;
+  const fileBuffer = fs.readFileSync(pngFilePath);
+  req.body.files = fileBuffer;
   const { file_id } = (await mediaService.createFiles(req))[0];
   const { file_id: file_id2 } = (await mediaService.createFiles(req))[0];
 

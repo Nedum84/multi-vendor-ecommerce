@@ -50,6 +50,7 @@ export const MediaFilesModelAttributes: SequelizeAttributes<MediaFilesAttributes
   url: {
     type: DataTypes.STRING,
     allowNull: false,
+    unique: true,
   },
   size: {
     type: DataTypes.INTEGER,
@@ -99,7 +100,7 @@ export function MediaFilesFactory(sequelize: Sequelize) {
 
     MediaFiles.belongsTo(models.User, {
       as: "user",
-      foreignKey: "uploaded_by",
+      foreignKey: "created_by",
       targetKey: "user_id",
     });
   };

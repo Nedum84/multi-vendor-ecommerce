@@ -7,6 +7,8 @@ import { fileNameRegex } from "./constants";
 import { v4 as uuidv4 } from "uuid";
 import sanitize from "sanitize-filename";
 import config from "../ec-config/config";
+import { mapAsync } from "../ec-utils/function.utils";
+import { duplicateFile } from "./utils.s3";
 
 /**
  * Recursive fn
@@ -26,11 +28,25 @@ export const copyMediaFoldersFiles = async (
 
     if (folder.files) {
       const fileId = await genUniqueColId<MediaFilesAttributes>(MediaFiles, "file_id", 10);
-      const files = folder.files.map((file, index) => ({
-        ...file,
-        file_id: `${fileId}${index + 1}`,
-        folder_id,
-      }));
+      const files = await mapAsync(folder.files, async (file, index) => {
+        const newKey = newBucketKeyFromOldKey(file.name);
+        const newUrl = await duplicateFile(file.key, newKey);
+        const variants = {};
+        if (file.variants) {
+          for await (const [key, value] of Object.entries(file.variants)) {
+            const newVaUrl = await duplicateFile(value.key, newBucketKeyFromOldKey(value.key));
+            variants[key] = { ...value, url: newVaUrl };
+          }
+        }
+
+        return {
+          ...file,
+          file_id: `${fileId}${index + 1}`,
+          url: newUrl,
+          variants,
+          folder_id,
+        };
+      });
 
       await MediaFiles.bulkCreate(files, { transaction });
     }
@@ -96,4 +112,21 @@ export const sanitizeFileName = (fileName: string) => {
   const [name, extension] = fileName.split(fileNameRegex);
 
   return `${name ? `${sanitize(name)}` : ""}${extension ? `.${extension}` : ""}`;
+};
+
+/**
+ * Generates new s3 key from an old s3 key
+ * @param fileName string
+ * @returns new s3 bucket key
+ */
+export const newBucketKeyFromOldKey = (fileName: string) => {
+  const newFileName = addTimestampToFileName(fileName);
+  const newHashedFileName = hashFileName(newFileName);
+  return `${uploadPath(fileName)}/${newHashedFileName}`;
+};
+export const addTimestampToFileName = (fileName: string) => {
+  const [name, extension] = fileName.split(fileNameRegex);
+  const updatedName = `${name}_${new Date().getTime()}`;
+
+  return `${updatedName}${extension ? `.${extension}` : ""}`;
 };

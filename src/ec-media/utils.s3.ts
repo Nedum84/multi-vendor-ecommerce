@@ -24,6 +24,20 @@ export const uploadFile = async (
   return generateBaseUrl(key);
 };
 
+export const duplicateFile = async (sourceKey: string, newKey: string): Promise<string> => {
+  const storage = await getStorageInstance();
+
+  storage
+    .copyObject({
+      Bucket: bucketName,
+      Key: newKey,
+      CopySource: `${bucketName}/${sourceKey}`,
+    })
+    .promise();
+
+  return generateBaseUrl(newKey);
+};
+
 export const generateBaseUrl = (key: string) => {
   if (isLocal() || isTest()) return `${config.MINIO_BASE_URL}/${bucketName}/${key}`;
 

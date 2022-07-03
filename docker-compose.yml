@@ -21,15 +21,15 @@ services:
     volumes:
       - opensearch-data:/usr/share/opensearch/data
     ports:
-      - 9200:9200
-      - 9600:9600 # required for Performance Analyzer
+      - 9205:9200
+      - 9605:9600 # required for Performance Analyzer
 
   opensearch-dashboards:
     restart: always
     image: opensearchproject/opensearch-dashboards:latest
     container_name: ec-opensearch-dashboards
     ports:
-      - 5601:5601
+      - 5605:5601
     expose:
       - "5601"
     environment:
