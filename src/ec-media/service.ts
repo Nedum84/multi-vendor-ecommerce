@@ -186,11 +186,13 @@ const move = async (req: Request) => {
 
     //IS FOLDER
     if (type == "folder") {
-      const folder = await findFolderById(id); //id===folder_id
+      const folderId = id; //id===folder_id
+      const folder = await findFolderById(folderId);
       folder.parent_id = parent_id;
       await folder.save();
     } else {
-      const file = await findFileById(id); //id===file_id
+      const fileId = id; //id===file_id
+      const file = await findFileById(fileId);
       file.folder_id = parent_id;
       await file.save();
     }
@@ -208,10 +210,10 @@ const deleteFolder = async (req: Request) => {
   const ids = children.map((i) => i.folder_id);
 
   await sequelize.transaction(async (transaction) => {
-    for await (const folder of [...ids, folder_id]) {
-      await MediaFolder.destroy({ where: { folder_id: folder }, transaction });
+    for await (const folderId of [...ids, folder_id]) {
+      await MediaFolder.destroy({ where: { folder_id: folderId }, transaction });
       // Delete associated files
-      await MediaFiles.destroy({ where: { folder_id: folder }, transaction });
+      await MediaFiles.destroy({ where: { folder_id: folderId }, transaction });
       // TODO: Delete the files from S3
     }
   });

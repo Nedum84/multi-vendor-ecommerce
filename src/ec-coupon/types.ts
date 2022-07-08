@@ -9,5 +9,4 @@ export enum CouponApplyFor {
 export enum CouponType {
   PERCENTAGE = "percentage",
   FIXED_AMOUNT = "fixedamount",
-  FREE_SHIPPING = "freeshipping",
 }

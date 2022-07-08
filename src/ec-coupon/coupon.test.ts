@@ -5,8 +5,8 @@ import { expectError, expectSuccess } from "../ec-test-utils/utils";
 import productVariationFake from "../ec-product-variation/product.variation.fake";
 import cartFake from "../ec-cart/cart.fake";
 import storeFake from "../ec-store/store.fake";
-import CouponUtils from "./coupon.utils";
 import { customRequest } from "../ec-test-utils/custom.request";
+import { applyCouponCap, calcCouponAmount, generateNewCoupon } from "./utils";
 
 describe("Coupon Tests", () => {
   it("Can create product coupon", async () => {
@@ -231,44 +231,80 @@ describe("Coupon Tests", () => {
     const { coupon: all_orders_coupon } = allOrdersResponse.body.data;
 
     const storesCouponAmount =
-      CouponUtils.calcCouponAmount(stores_coupon, cart1.qty, price1, discount1, flash_discount1) +
-      CouponUtils.calcCouponAmount(stores_coupon, cart2.qty, price2, discount2, flash_discount2);
+      calcCouponAmount({
+        coupon: stores_coupon,
+        qty: cart1.qty,
+        price: price1,
+        discount: discount1,
+        flash_discount: flash_discount1,
+      }) +
+      calcCouponAmount({
+        coupon: stores_coupon,
+        qty: cart2.qty,
+        price: price2,
+        discount: discount2,
+        flash_discount: flash_discount2,
+      });
     const usersCouponAmount =
-      CouponUtils.calcCouponAmount(users_coupon, cart1.qty, price1, discount1, flash_discount1) +
-      CouponUtils.calcCouponAmount(users_coupon, cart2.qty, price2, discount2, flash_discount2);
+      calcCouponAmount({
+        coupon: users_coupon,
+        qty: cart1.qty,
+        price: price1,
+        discount: discount1,
+        flash_discount: flash_discount1,
+      }) +
+      calcCouponAmount({
+        coupon: users_coupon,
+        qty: cart2.qty,
+        price: price2,
+        discount: discount2,
+        flash_discount: flash_discount2,
+      });
     const productsCouponAmount =
-      CouponUtils.calcCouponAmount(products_coupon, cart1.qty, price1, discount1, flash_discount1) +
-      CouponUtils.calcCouponAmount(products_coupon, cart2.qty, price2, discount2, flash_discount2);
+      calcCouponAmount({
+        coupon: products_coupon,
+        qty: cart1.qty,
+        price: price1,
+        discount: discount1,
+        flash_discount: flash_discount1,
+      }) +
+      calcCouponAmount({
+        coupon: products_coupon,
+        qty: cart2.qty,
+        price: price2,
+        discount: discount2,
+        flash_discount: flash_discount2,
+      });
     const userProductsCouponAmount =
-      CouponUtils.calcCouponAmount(
-        user_products_coupon,
-        cart1.qty,
-        price1,
-        discount1,
-        flash_discount1
-      ) +
-      CouponUtils.calcCouponAmount(
-        user_products_coupon,
-        cart2.qty,
-        price2,
-        discount2,
-        flash_discount2
-      );
+      calcCouponAmount({
+        coupon: user_products_coupon,
+        qty: cart1.qty,
+        price: price1,
+        discount: discount1,
+        flash_discount: flash_discount1,
+      }) +
+      calcCouponAmount({
+        coupon: user_products_coupon,
+        qty: cart2.qty,
+        price: price2,
+        discount: discount2,
+        flash_discount: flash_discount2,
+      });
     const allOrdersCouponAmount =
-      CouponUtils.calcCouponAmount(
-        all_orders_coupon,
-        cart1.qty,
-        price1,
-        discount1,
-        flash_discount1
-      ) +
-      CouponUtils.calcCouponAmount(
-        all_orders_coupon,
-        cart2.qty,
-        price2,
-        discount2,
-        flash_discount2
-      );
+      calcCouponAmount({
+        coupon: all_orders_coupon,
+        qty: cart1.qty,
+        price: price1,
+        discount: discount1,
+        flash_discount: flash_discount1,
+      }) +
+      calcCouponAmount({
+        coupon: all_orders_coupon,
+        qty: cart2.qty,
+        price: price2,
+        discount: discount2,
+        flash_discount: flash_discount2,
+      });
 
     expectSuccess(storesResponse);
     expectSuccess(usersResponse);
@@ -278,19 +314,19 @@ describe("Coupon Tests", () => {
 
     // Comparing to be sure that { max_coupon_amount } is applied if it's set
     expect(storesResponse.body.data.coupon_amount).toBe(
-      CouponUtils.applyCouponCap(stores_coupon, storesCouponAmount)
+      applyCouponCap(stores_coupon, storesCouponAmount)
     );
     expect(usersResponse.body.data.coupon_amount).toBe(
-      CouponUtils.applyCouponCap(users_coupon, usersCouponAmount)
+      applyCouponCap(users_coupon, usersCouponAmount)
     );
     expect(productsResponse.body.data.coupon_amount).toBe(
-      CouponUtils.applyCouponCap(products_coupon, productsCouponAmount)
+      applyCouponCap(products_coupon, productsCouponAmount)
     );
     expect(userProductsResponse.body.data.coupon_amount).toBe(
-      CouponUtils.applyCouponCap(user_products_coupon, userProductsCouponAmount)
+      applyCouponCap(user_products_coupon, userProductsCouponAmount)
     );
     expect(allOrdersResponse.body.data.coupon_amount).toBe(
-      CouponUtils.applyCouponCap(all_orders_coupon, allOrdersCouponAmount)
+      applyCouponCap(all_orders_coupon, allOrdersCouponAmount)
     );
 
     // Checking for coupon amount without the cap applied
@@ -302,8 +338,8 @@ describe("Coupon Tests", () => {
   });
 
   it("Can check if coupon exist", async () => {
-    const coupon_code1 = await CouponUtils.generateCoupon();
-    const coupon_code2 = await CouponUtils.generateCoupon();
+    const coupon_code1 = await generateNewCoupon();
+    const coupon_code2 = await generateNewCoupon();
     const payload = await couponFake.allOrdersCreate();
 
     await customRequest({

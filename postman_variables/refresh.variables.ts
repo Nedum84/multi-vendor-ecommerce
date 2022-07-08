@@ -10,7 +10,7 @@ import tagFake from "../src/ec-tag/tag.fake";
 import tagService from "../src/ec-tag/tag.service";
 import tokenService from "../src/ec-auth/token.service";
 import cartFake from "../src/ec-cart/cart.fake";
-import CouponUtils from "../src/ec-coupon/coupon.utils";
+import CouponUtils from "../src/ec-coupon/utils.query";
 import CreditCodeUtils from "../src/ec-credit-code/credit.utils";
 import { PaymentChannel } from "../src/ec-orders/payment.enum";
 import userWalletService from "../src/ec-user-wallet/user.wallet.service";
@@ -34,6 +34,7 @@ import config from "../src/ec-config/config";
 import { generateChars } from "../src/ec-utils/random.string";
 import fs from "fs";
 import { jpgFilePath, pngFilePath } from "../src/ec-media/test";
+import { generateNewCoupon } from "../src/ec-coupon/utils";
 
 export const refreshVariables = async (req: Request, res: Response) => {
   //Reset DB
@@ -134,7 +135,7 @@ const processVariables = async (req: Request) => {
   });
 
   //Generate codes
-  const coupon_code = await CouponUtils.generateCoupon();
+  const coupon_code = await generateNewCoupon();
   const credit_code = await CreditCodeUtils.generateCreditCode();
 
   //Top up credit

@@ -24,6 +24,17 @@ declare global {
   var signin: (props?: object) => Promise<SignInData>;
 }
 
+beforeAll(async () => {
+  await sequelize
+    .sync({ force: true })
+    .catch((e) => console.log(e))
+    .then((r) => console.log("db. connected"));
+});
+
+beforeEach(async () => {
+  jest.clearAllMocks();
+});
+
 afterAll(async () => {
   await sequelize.close();
 });

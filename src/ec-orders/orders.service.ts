@@ -32,8 +32,9 @@ import productVariationService from "../ec-product-variation/product.variation.s
 import { VendorSettlementInstance } from "../ec-vendor-settlement/vendor.settlement.model";
 import { UserWalletAttributes } from "../ec-user-wallet/user.wallet.model";
 import { OrdersInstance } from "./orders.model";
-import CouponUtils from "../ec-coupon/coupon.utils";
+import CouponUtils from "../ec-coupon/utils.query";
 import { StockStatus } from "../ec-product/types";
+import { calcCouponAmount } from "../ec-coupon/utils";
 
 //create
 const create = async (req: Request) => {
@@ -122,7 +123,7 @@ const create = async (req: Request) => {
   return findById(result.order.order_id);
 };
 
-//update order payment
+// update order payment
 const updatePayment = async (req: Request) => {
   const { user_id } = req.user!;
 
@@ -324,7 +325,7 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
 
       if (order.coupon_code) {
         const coupon = await couponService.findByCouponCode(order.coupon_code);
-        couponAmount += CouponUtils.calcCouponAmount(coupon, qty, price, discount, flash_discount);
+        couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
       }
     });
   });

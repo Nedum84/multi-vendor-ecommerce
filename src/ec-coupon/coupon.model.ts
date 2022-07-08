@@ -18,8 +18,16 @@ export interface CouponAttributes {
   usage_limit: number;
   usage_limit_per_user: number;
   created_by: string;
-  percentage_discount: number;
-  max_coupon_amount: number;
+  percentage_discount: number; // {CouponType===PERCENTAGE}
+  fixed_price_coupon_amount: number; // {CouponType===FIXED_AMOUNT}
+  max_coupon_amount: number; // max amount that this coupon can discount to(ie coupon cap)
+  min_spend: number; // min amount before you can use this coupon
+  max_spend: number; // max amount before you can use this coupon
+  enable_free_shipping: boolean;
+  // whether this coupon is on vendors or the company
+  // OR is vendor the one to bear this coupon discount or the company
+  // to be used during settlement to know how much to settle the vendors
+  vendor_bears_discount: boolean;
   revoke: boolean;
 }
 
@@ -76,11 +84,19 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  percentage_discount: {
-    type: DataTypes.INTEGER,
-    allowNull: false,
-  },
+  percentage_discount: DataTypes.INTEGER,
+  fixed_price_coupon_amount: DataTypes.INTEGER,
   max_coupon_amount: DataTypes.INTEGER,
+  min_spend: DataTypes.INTEGER,
+  max_spend: DataTypes.INTEGER,
+  enable_free_shipping: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
+  vendor_bears_discount: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false,
+  },
   revoke: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
@@ -99,6 +115,13 @@ export function CouponFactory(sequelize: Sequelize) {
       scopes: {
         basic: {
           attributes: [],
+        },
+      },
+      validate: {
+        discountOrFixedPriceRequired: function () {
+          if (this.percentage_discount == null && this.fixed_price_coupon_amount == null) {
+            throw new Error("Percentage discount or coupon amount is required");
+          }
         },
       },
     }

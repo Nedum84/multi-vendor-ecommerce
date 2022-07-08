@@ -17,8 +17,20 @@ const create = {
     product_qty_limit: Joi.number().min(1),
     usage_limit: Joi.number().min(1),
     usage_limit_per_user: Joi.number().min(1),
-    percentage_discount: Joi.number().min(5).max(100).required(),
+    percentage_discount: Joi.string().when("coupon_type", {
+      is: CouponType.PERCENTAGE,
+      then: Joi.number().min(5).max(100).required(),
+      otherwise: Joi.forbidden(),
+    }),
+    fixed_price_coupon_amount: Joi.string().when("coupon_type", {
+      is: CouponType.FIXED_AMOUNT,
+      then: Joi.number().min(1).required(),
+      otherwise: Joi.forbidden(),
+    }),
     max_coupon_amount: Joi.number().min(1),
+    min_spend: Joi.number().min(1),
+    max_spend: Joi.number().min(1),
+    enable_free_shipping: Joi.boolean().default(false),
     products: Joi.array()
       .items(
         Joi.object().keys({
