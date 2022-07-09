@@ -325,7 +325,13 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
 
       if (order.coupon_code) {
         const coupon = await couponService.findByCouponCode(order.coupon_code);
-        couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+        couponAmount += calcCouponAmount({
+          coupon,
+          qty,
+          price,
+          discount,
+          flash_discount: flash_discount,
+        });
       }
     });
   });

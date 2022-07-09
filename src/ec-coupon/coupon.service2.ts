@@ -57,7 +57,7 @@ const create = async (req: Request) => {
   }
 
   if (coupon_type == CouponType.PERCENTAGE) {
-    if (!body.percentage_discount) {
+    if (!body.coupon_discount) {
       throw new BadRequestError(
         "Percentage discount required for PERCENTAGE _DISCOUNT COUPON TYPE"
       );
@@ -253,7 +253,13 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
           const { product_id, discount, flash_discount, price } = cart.variation;
           const { qty } = cart;
           if (couponProductIds.includes(product_id)) {
-            couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+            couponAmount += calcCouponAmount({
+              coupon,
+              qty,
+              price,
+              discount,
+              flash_discount: flash_discount,
+            });
           }
         });
         break;
@@ -265,7 +271,13 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
           const { store_id, qty } = cart;
 
           if (couponStoreIds.includes(store_id)) {
-            couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+            couponAmount += calcCouponAmount({
+              coupon,
+              qty,
+              price,
+              discount,
+              flash_discount: flash_discount,
+            });
           }
         });
         break;
@@ -276,7 +288,13 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
           carts.forEach((cart) => {
             const { discount, price, flash_discount } = cart.variation;
             const { qty } = cart;
-            couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+            couponAmount += calcCouponAmount({
+              coupon,
+              qty,
+              price,
+              discount,
+              flash_discount: flash_discount,
+            });
           });
         } else {
           throw new BadRequestError("You are not eligible to use this coupon");
@@ -292,7 +310,13 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
             const { product_id, discount, price, flash_discount } = cart.variation;
             const { qty } = cart;
             if (couponProductIds.includes(product_id)) {
-              couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+              couponAmount += calcCouponAmount({
+                coupon,
+                qty,
+                price,
+                discount,
+                flash_discount: flash_discount,
+              });
             }
           });
         } else {
@@ -304,7 +328,13 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
         carts.forEach((cart) => {
           const { discount, price, flash_discount } = cart.variation;
           const { qty } = cart;
-          couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          couponAmount += calcCouponAmount({
+            coupon,
+            qty,
+            price,
+            discount,
+            flash_discount: flash_discount,
+          });
         });
         // couponAmount += userCarts.sub_total * couponPercent;
         break;
@@ -359,7 +389,13 @@ const findStoreCouponAmount = (
       if (couponStoreIds.includes(store_id)) {
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          storeCouponAmount += calcCouponAmount({
+            coupon,
+            qty,
+            price,
+            discount,
+            flash_discount: flash_discount,
+          });
         }
       }
     });
@@ -373,7 +409,13 @@ const findStoreCouponAmount = (
       if (couponProductIds.includes(product_id)) {
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          storeCouponAmount += calcCouponAmount({
+            coupon,
+            qty,
+            price,
+            discount,
+            flash_discount: flash_discount,
+          });
         }
       }
     });
@@ -386,7 +428,13 @@ const findStoreCouponAmount = (
         const { qty, store_id: each_store_id } = cart;
         //if this product belongs to this store
         if (each_store_id === store_id) {
-          storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          storeCouponAmount += calcCouponAmount({
+            coupon,
+            qty,
+            price,
+            discount,
+            flash_discount: flash_discount,
+          });
         }
       });
     }
@@ -403,7 +451,13 @@ const findStoreCouponAmount = (
         if (couponProductIds.includes(product_id)) {
           //if this product belongs to this store
           if (each_store_id === store_id) {
-            storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+            storeCouponAmount += calcCouponAmount({
+              coupon,
+              qty,
+              price,
+              discount,
+              flash_discount: flash_discount,
+            });
           }
         }
       });
@@ -414,7 +468,13 @@ const findStoreCouponAmount = (
       const { qty, store_id: each_store_id } = cart;
       //if this product belongs to this coupon
       if (each_store_id === store_id) {
-        storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+        storeCouponAmount += calcCouponAmount({
+          coupon,
+          qty,
+          price,
+          discount,
+          flash_discount: flash_discount,
+        });
       }
     });
   }

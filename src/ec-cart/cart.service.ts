@@ -13,6 +13,7 @@ import productVariationService from "../ec-product-variation/product.variation.s
 import { ProductVariationInstance } from "../ec-product-variation/product.variation.model";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { StockStatus } from "../ec-product/types";
+import { calcCartSubTotal } from "./utils";
 
 const create = async (req: Request) => {
   const { user_id } = req.user!;
@@ -168,7 +169,7 @@ const findAllByUserId = async (user_id: string) => {
   });
 
   return {
-    sub_total: getSubTotal(carts),
+    sub_total: calcCartSubTotal(carts),
     carts,
   };
 };
@@ -178,42 +179,10 @@ const findOneByUserAndProduct = async (user_id: string, variation_id: string) =>
   return cart;
 };
 
-const getSubTotal = (carts: CartInstance[]) => {
-  var sub_total = 0;
-  carts.forEach((cart) => {
-    const { discount, flash_discount, price } = cart.variation;
-    const { qty } = cart;
-
-    if (flash_discount) {
-      sub_total += qty * flash_discount.price;
-    } else if (discount) {
-      sub_total += qty * discount.price;
-    } else {
-      sub_total += qty * price;
-    }
-  });
-
-  // OR
-  // const sub_total2 = carts.reduce((total, cart) => {
-  //   const { discount, flash_discount, price } = cart.variation;
-  //   const { qty } = cart;
-  //   if (flash_discount) {
-  //     return total + qty * flash_discount.price;
-  //   } else if (discount) {
-  //     return total + qty * discount.price;
-  //   } else {
-  //     return total + qty * price;
-  //   }
-  // }, 0);
-
-  return sub_total;
-};
-
 export default {
   create,
   update,
   clearCart,
   validateCartProductQty,
   findAllByUserId,
-  getSubTotal,
 };

@@ -12,6 +12,8 @@ import couponService from "../ec-coupon/coupon.service";
 import shippingService from "../ec-orders/shipping.service";
 import storeService from "../ec-store/store.service";
 import storeOrdersProductService from "../ec-store-orders-products/store.orders.product.service";
+import { calcStoreCouponAmount } from "../ec-coupon/utils";
+import { calcCartSubTotal } from "../ec-cart/utils";
 
 const create = async (
   order_id: string,
@@ -32,31 +34,26 @@ const create = async (
   // const {carts} = await cartService.findAllByUserId(user_id);
   const store = await storeService.findById(store_id);
   const storeCarts = carts.filter((c) => c.store_id === store_id);
-  const variation_ids = storeCarts.map((c) => c.variation_id);
+  const variationIds = storeCarts.map((c) => c.variation_id);
 
-  const sub_total = cartService.getSubTotal(storeCarts);
+  const cartSubTotal = calcCartSubTotal(storeCarts);
   let storeCouponAmount = 0;
 
   if (couponData) {
     const { coupon, coupon_amount, coupon_amount_without_cap } = couponData;
-    storeCouponAmount = couponService.findStoreCouponAmount(coupon, carts, store_id, user_id);
-
-    //...
-    if (storeCouponAmount != 0) {
-      if (coupon.max_coupon_amount) {
-        storeCouponAmount = (storeCouponAmount / coupon_amount_without_cap) * coupon_amount;
-      }
-    }
+    storeCouponAmount = await calcStoreCouponAmount({
+      coupon,
+      carts,
+      storeId: store_id,
+      couponAmount: coupon_amount,
+      couponAmountWithoutCap: coupon_amount_without_cap,
+    });
   }
 
-  const store_shipping = await shippingService.getStoreShipping(
-    store_id,
-    variation_ids,
-    address_id
-  );
-  const store_tax_amount = 0;
-  const amount = sub_total - storeCouponAmount + store_shipping + store_tax_amount;
-  const store_price = (sub_total - storeCouponAmount) * (store.store_percentage / 100);
+  const storeShipping = await shippingService.getStoreShipping(store_id, variationIds, address_id);
+  const storeTaxAmount = 0;
+  const amount = cartSubTotal - storeCouponAmount + storeShipping + storeTaxAmount;
+  const store_price = (cartSubTotal - storeCouponAmount) * (store.store_percentage / 100);
 
   const store_order_id = await genUniqueColId(
     StoreOrders,
@@ -70,10 +67,10 @@ const create = async (
     store_order_id: store_order_id,
     store_id,
     amount,
-    sub_total,
+    sub_total: cartSubTotal,
     coupon_amount: storeCouponAmount,
-    shipping_amount: store_shipping,
-    tax_amount: store_tax_amount, //As above, do same to this guy later with each product(variation) taxz....
+    shipping_amount: storeShipping,
+    tax_amount: storeTaxAmount, //As above, do same to this guy later with each product(variation) taxz....
     order_id,
     order_status: OrderStatus.PENDING,
     delivery_status: DeliveryStatus.NOT_PICKED,

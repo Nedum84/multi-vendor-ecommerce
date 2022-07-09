@@ -43,6 +43,7 @@ import { TagProductFactory } from "../ec-tag/tag.product.model";
 import { WithdrawalFactory } from "../ec-withdrawal/withdrawal.model";
 import { ProductRatingFactory } from "../ec-product-review/product.rating.model";
 import { isAssociatable } from "./types";
+import { CouponCategoryFactory } from "../ec-coupon/coupon.category.model";
 pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
 
 // @ts-ignore
@@ -60,6 +61,7 @@ export const Collection = CollectionFactory(sequelize);
 export const CollectionProduct = CollectionProductFactory(sequelize);
 export const CouponProduct = CouponProductFactory(sequelize);
 export const Coupon = CouponFactory(sequelize);
+export const CouponCategory = CouponCategoryFactory(sequelize);
 export const CouponStore = CouponStoreFactory(sequelize);
 export const CouponUser = CouponUserFactory(sequelize);
 export const CreditCode = CreditCodeFactory(sequelize);
@@ -101,6 +103,7 @@ const models = {
   CollectionProduct,
   CouponProduct,
   Coupon,
+  CouponCategory,
   CouponStore,
   CouponUser,
   CreditCode,

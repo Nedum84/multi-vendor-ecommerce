@@ -8,6 +8,7 @@ const create = {
     name: Joi.string().required(),
     desc: Joi.string(),
     icon: Joi.string(),
+    banner: Joi.string(),
     active: Joi.boolean(),
   }),
 };
@@ -22,6 +23,7 @@ const update = {
       name: Joi.string(),
       desc: Joi.string(),
       icon: Joi.string(),
+      banner: Joi.string(),
       active: Joi.boolean(),
     })
     .min(1),

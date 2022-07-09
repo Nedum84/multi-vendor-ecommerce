@@ -1,15 +1,15 @@
 import { Optional, Sequelize } from "sequelize";
 import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from "../ec-models";
-import { CouponApplyFor, CouponType } from "./types";
+import { CouponType } from "./types";
 import { ModelStatic, SequelizeAttributes } from "../ec-models/types";
 import { CouponProductInstance } from "./coupon.product.model";
 import { CouponStoreInstance } from "./coupon.store.model";
 import { CouponUserInstance } from "./coupon.user.model";
+import { CouponCategoryInstance } from "./coupon.category.model";
 
 export interface CouponAttributes {
   coupon_code: string;
-  coupon_apply_for: CouponApplyFor;
   coupon_type: CouponType;
   title: string;
   start_date: Date;
@@ -18,9 +18,9 @@ export interface CouponAttributes {
   usage_limit: number;
   usage_limit_per_user: number;
   created_by: string;
-  percentage_discount: number; // {CouponType===PERCENTAGE}
-  fixed_price_coupon_amount: number; // {CouponType===FIXED_AMOUNT}
-  max_coupon_amount: number; // max amount that this coupon can discount to(ie coupon cap)
+  /** percentage discount(<100) FOR {CouponType=PERCENTAGE} or coupon amount FOR {CouponType=FIXED_AMOUNT}  */
+  coupon_discount: number;
+  max_coupon_amount: number; // max amount that this coupon can discount to(ie coupon cap) FOR {CouponType=PERCENTAGE}
   min_spend: number; // min amount before you can use this coupon
   max_spend: number; // max amount before you can use this coupon
   enable_free_shipping: boolean;
@@ -39,6 +39,7 @@ export interface CouponInstance
   products: CouponProductInstance[];
   stores: CouponStoreInstance[];
   users: CouponUserInstance[];
+  categories: CouponCategoryInstance[];
 }
 
 //--> Model attributes
@@ -49,11 +50,6 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     allowNull: false,
     primaryKey: true,
     unique: true,
-  },
-  coupon_apply_for: {
-    type: DataTypes.ENUM,
-    values: Object.values(CouponApplyFor),
-    allowNull: false,
   },
   coupon_type: {
     type: DataTypes.ENUM,
@@ -84,8 +80,10 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
     type: DataTypes.STRING,
     allowNull: false,
   },
-  percentage_discount: DataTypes.INTEGER,
-  fixed_price_coupon_amount: DataTypes.INTEGER,
+  coupon_discount: {
+    type: DataTypes.INTEGER,
+    allowNull: false,
+  },
   max_coupon_amount: DataTypes.INTEGER,
   min_spend: DataTypes.INTEGER,
   max_spend: DataTypes.INTEGER,
@@ -95,7 +93,7 @@ export const CouponModelAttributes: SequelizeAttributes<CouponAttributes> = {
   },
   vendor_bears_discount: {
     type: DataTypes.BOOLEAN,
-    defaultValue: false,
+    defaultValue: true,
   },
   revoke: {
     type: DataTypes.BOOLEAN,
@@ -119,7 +117,7 @@ export function CouponFactory(sequelize: Sequelize) {
       },
       validate: {
         discountOrFixedPriceRequired: function () {
-          if (this.percentage_discount == null && this.fixed_price_coupon_amount == null) {
+          if (this.coupon_discount == null && this.fixed_price_coupon_amount == null) {
             throw new Error("Percentage discount or coupon amount is required");
           }
         },
@@ -147,6 +145,11 @@ export function CouponFactory(sequelize: Sequelize) {
     });
     Coupon.hasMany(models.CouponUser, {
       as: "users",
+      foreignKey: "coupon_code",
+      sourceKey: "coupon_code",
+    });
+    Coupon.hasMany(models.CouponCategory, {
+      as: "categories",
       foreignKey: "coupon_code",
       sourceKey: "coupon_code",
     });

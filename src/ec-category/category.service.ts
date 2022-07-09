@@ -1,5 +1,5 @@
 import { Request } from "express";
-import CategoryUtils from "./category.utils";
+import CategoryUtils from "./utils.query";
 import { QueryTypes } from "sequelize";
 import { CategoryAttributes, CategoryInstance } from "./category.model";
 import { createModel } from "../ec-models/utils";

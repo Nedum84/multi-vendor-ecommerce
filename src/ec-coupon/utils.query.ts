@@ -1,9 +1,5 @@
 import { FindOptions } from "sequelize";
-import { Coupon, CouponProduct, CouponStore, CouponUser } from "../ec-models";
-import { CouponInstance } from "./coupon.model";
-import { FlashSalesProductsInstance } from "../ec-flash-sales/flash.sales.products.model";
-import { ProductDiscountInstance } from "../ec-product-variation/product.discount.model";
-import { genUniqueColId } from "../ec-models/utils";
+import { CouponProduct, CouponStore, CouponUser } from "../ec-models";
 
 class CouponUtils {
   static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {

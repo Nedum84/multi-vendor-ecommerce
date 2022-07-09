@@ -9,6 +9,7 @@ export interface CategoryAttributes {
   name: string;
   desc: string;
   icon: string;
+  banner: string;
   active: boolean;
   is_featured: boolean;
 }
@@ -40,6 +41,7 @@ export const CategoryModelAttributes: SequelizeAttributes<CategoryAttributes> = 
   },
   desc: DataTypes.STRING,
   icon: DataTypes.STRING,
+  banner: DataTypes.STRING,
   active: {
     type: DataTypes.BOOLEAN,
     defaultValue: true,

@@ -1,4 +1,4 @@
-export enum CouponApplyFor {
+export enum CouponApplyForx {
   ALL_ORDERS = "allorders",
   USER = "user",
   STORE = "store",
