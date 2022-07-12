@@ -3,10 +3,10 @@ import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from "../ec-models";
 import { CouponType } from "./types";
 import { ModelStatic, SequelizeAttributes } from "../ec-models/types";
-import { CouponProductInstance } from "./coupon.product.model";
-import { CouponStoreInstance } from "./coupon.store.model";
-import { CouponUserInstance } from "./coupon.user.model";
-import { CouponCategoryInstance } from "./coupon.category.model";
+import { CouponProductInstance } from "./model.product";
+import { CouponStoreInstance } from "./model.store";
+import { CouponUserInstance } from "./model.user";
+import { CouponCategoryInstance } from "./model.category";
 
 export interface CouponAttributes {
   coupon_code: string;

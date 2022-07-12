@@ -13,6 +13,7 @@ export interface CartAttributes {
 
 export interface CartInstance extends Model<CartAttributes, CartAttributes>, CartAttributes {
   variation: ProductVariationInstance;
+  final_price: number;
 }
 
 //--> Model attributes
@@ -68,5 +69,23 @@ export function CartFactory(sequelize: Sequelize) {
     const values = { ...this.get() };
     return values;
   };
+  Cart.afterFind((findResult) => {
+    if (!findResult) return;
+    if (!(findResult instanceof Array)) findResult = [findResult];
+
+    // Set final price for product variation
+    for (const cart of findResult) {
+      if (!cart.variation) continue;
+      const { flash_discount, discount, price } = cart.variation;
+      let finalPrice = price;
+      if (flash_discount) {
+        finalPrice = flash_discount.price;
+      } else if (discount) {
+        finalPrice = discount.price;
+      }
+      // @ts-ignore
+      cart.variation.setDataValue("final_price", finalPrice);
+    }
+  });
   return Cart;
 }

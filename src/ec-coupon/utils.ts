@@ -1,10 +1,9 @@
 import { CartInstance } from "../ec-cart/cart.model";
 import { categoriesChildren } from "../ec-category/utils";
-import { FlashSalesProductsInstance } from "../ec-flash-sales/flash.sales.products.model";
 import { Coupon } from "../ec-models";
 import { genUniqueColId } from "../ec-models/utils";
-import { ProductDiscountInstance } from "../ec-product-variation/product.discount.model";
-import { CouponAttributes, CouponInstance } from "./coupon.model";
+import { ProductVariationInstance } from "../ec-product-variation/product.variation.model";
+import { CouponAttributes, CouponInstance } from "./model.coupon";
 import { CouponType } from "./types";
 
 /**
@@ -19,19 +18,16 @@ export function generateNewCoupon() {
  * Calculates coupon amount using coupon, product (variation) & cart xtericts/properties/values
  * @param coupon CouponInstance
  * @param qty Cart Qty
- * @param price Product(Variation) Price
- * @param discount Discount Price(If any)
+ * @param variation ProductVariationInstance
  * @returns coupon amount
  */
-export function calcCouponAmount(props: {
-  coupon: CouponInstance;
-  qty: number;
-  price: number;
-  discount?: ProductDiscountInstance;
-  flash_discount?: FlashSalesProductsInstance;
-}): number {
-  const { qty, flash_discount: flashDiscount, discount, price } = props;
-  const { product_qty_limit, coupon_discount: percentage_discount, coupon_type } = props.coupon; //{{ product_qty_limit }} == no of prod to apply coupon to
+export function calcCouponAmount(
+  coupon: CouponInstance,
+  qty: number,
+  variation: ProductVariationInstance
+): number {
+  const { flash_discount: flashDiscount, discount, price } = variation;
+  const { product_qty_limit, coupon_discount: percentage_discount, coupon_type } = coupon; //{{ product_qty_limit }} == no of prod to apply coupon to
   // use percentage if {CouponType.PERCENTAGE} else use the actual price
   const couponPercent = coupon_type === CouponType.PERCENTAGE ? percentage_discount / 100 : 1;
 
@@ -117,19 +113,19 @@ export const calcStoreCouponAmount = async (props: {
     const couponCategoryIds = coupon.categories?.map((x) => x.category_id) || [];
 
     for await (const cart of carts) {
-      const { discount, price, flash_discount, product, product_id } = cart.variation;
-      const { store_id: cartStoreId, qty } = cart;
+      const { product, product_id } = cart.variation;
+      const { store_id: cartStoreId, qty, variation } = cart;
       const { categories } = product;
 
       if (couponStoreIds.includes(storeId)) {
         //if this product belongs to this store
         if (cartStoreId === storeId) {
-          storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          storeCouponAmount += calcCouponAmount(coupon, qty, variation);
         }
       } else if (couponProductIds.includes(product_id)) {
         //if this product belongs to this store
         if (cartStoreId === storeId) {
-          storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          storeCouponAmount += calcCouponAmount(coupon, qty, variation);
         }
       } else if (couponCategoryIds.length) {
         const productCatIds = await categoriesChildren(categories.map((x) => x.category_id));
@@ -139,7 +135,7 @@ export const calcStoreCouponAmount = async (props: {
         const isCatRestricted = allCouponCatIds.find((catId) => productCatIds.includes(catId));
         if (isCatRestricted) {
           if (cartStoreId === storeId) {
-            storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+            storeCouponAmount += calcCouponAmount(coupon, qty, variation);
           }
         }
       }
@@ -147,11 +143,10 @@ export const calcStoreCouponAmount = async (props: {
   } else {
     // no restrictions appied
     for (const cart of carts) {
-      const { discount, price, flash_discount } = cart.variation;
-      const { store_id: cartStoreId, qty } = cart;
+      const { store_id: cartStoreId, qty, variation } = cart;
 
       if (cartStoreId === storeId) {
-        storeCouponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+        storeCouponAmount += calcCouponAmount(coupon, qty, variation);
       }
     }
   }

@@ -1,18 +1,19 @@
 import { CREATED, OK } from "http-status";
 import { generateChars } from "../ec-utils/random.string";
-import couponFake from "./coupon.fake";
+import couponFake from "./test.faker";
 import { expectError, expectSuccess } from "../ec-test-utils/utils";
 import productVariationFake from "../ec-product-variation/product.variation.fake";
 import cartFake from "../ec-cart/cart.fake";
 import storeFake from "../ec-store/store.fake";
 import { customRequest } from "../ec-test-utils/custom.request";
 import { applyCouponCap, calcCouponAmount, generateNewCoupon } from "./utils";
+import { ProductVariation } from "../ec-models";
 
 describe("Coupon Tests", () => {
-  it("Can create product coupon", async () => {
+  it("Can create coupon with product restriction", async () => {
     const coupon_code = generateChars();
 
-    const payload = await couponFake.productCreate();
+    const payload = await couponFake.productRestriction();
     const response = await customRequest({
       path: `/coupon`,
       method: "post",
@@ -22,10 +23,10 @@ describe("Coupon Tests", () => {
     expectSuccess(response, CREATED);
     expect(response.body.data.coupon.products.length).toBeGreaterThan(0);
   });
-  it("Can create store coupon", async () => {
+  it("Can create coupon with store restriction", async () => {
     const coupon_code = generateChars();
 
-    const payload = await couponFake.storeCreate();
+    const payload = await couponFake.storeRestriction();
     const response = await customRequest({
       path: `/coupon`,
       method: "post",
@@ -35,10 +36,10 @@ describe("Coupon Tests", () => {
     expectSuccess(response, CREATED);
     expect(response.body.data.coupon.stores.length).toBeGreaterThan(0);
   });
-  it("Can create user coupon", async () => {
+  it("Can create coupon with user restriction", async () => {
     const coupon_code = generateChars();
 
-    const payload = await couponFake.userCreate();
+    const payload = await couponFake.userRestriction();
     const response = await customRequest({
       path: `/coupon`,
       method: "post",
@@ -49,10 +50,10 @@ describe("Coupon Tests", () => {
     expect(response.body.data.coupon.users.length).toBeGreaterThan(0);
   });
 
-  it("Can create user & product coupon", async () => {
+  it("Can create coupon with category restriction", async () => {
     const coupon_code = generateChars();
 
-    const payload = await couponFake.userProductCreate();
+    const payload = await couponFake.categoryRestriction();
     const response = await customRequest({
       path: `/coupon`,
       method: "post",
@@ -60,21 +61,7 @@ describe("Coupon Tests", () => {
     });
 
     expectSuccess(response, CREATED);
-    expect(response.body.data.coupon.products.length).toBeGreaterThan(0);
-    expect(response.body.data.coupon.users.length).toBeGreaterThan(0);
-  });
-
-  it("Can create all orders coupon", async () => {
-    const coupon_code = generateChars();
-
-    const payload = await couponFake.allOrdersCreate();
-    const response = await customRequest({
-      path: `/coupon`,
-      method: "post",
-      payload: { ...payload, coupon_code },
-    });
-
-    expectSuccess(response, CREATED);
+    expect(response.body.data.coupon.categories.length).toBeGreaterThan(0);
   });
 
   it("Can generate coupon code", async () => {
@@ -90,7 +77,7 @@ describe("Coupon Tests", () => {
   it("Can revoke coupon", async () => {
     const coupon_code = generateChars();
 
-    const payload = await couponFake.userCreate();
+    const payload = await couponFake.userRestriction();
     await customRequest({
       path: `/coupon`,
       method: "post",
@@ -112,23 +99,13 @@ describe("Coupon Tests", () => {
     const { token } = tokens.access;
     const { user_id } = user;
 
-    const {
-      variation_id: variation_id1,
-      product: product1,
-      price: price1,
-      discount: discount1,
-      flash_discount: flash_discount1,
-    } = await productVariationFake.rawCreate();
-    const {
-      variation_id: variation_id2,
-      product: product2,
-      price: price2,
-      discount: discount2,
-      flash_discount: flash_discount2,
-    } = await productVariationFake.rawCreate();
+    const variation1 = await productVariationFake.rawCreate();
+    const { variation_id: variation_id1, product: product1 } = variation1;
+    const variation2 = await productVariationFake.rawCreate();
+    const { variation_id: variation_id2, product: product2 } = variation2;
 
-    const { store_id: store_id1 } = product1;
-    const { store_id: store_id2 } = product2;
+    const { store_id: store_id1, categories: categories1 } = product1;
+    const { store_id: store_id2, categories: categories2 } = product2;
 
     //Add to cart
     const cart1 = await cartFake.rawCreate({
@@ -143,23 +120,24 @@ describe("Coupon Tests", () => {
       user_id,
       variation_id: variation_id2,
     });
-
     //vary the length to avoid duplicate
     const stores_coupon_code = generateChars(20);
     const users_coupon_code = generateChars(21);
     const products_coupon_code = generateChars(22);
-    const user_products_coupon_code = generateChars(23);
-    const all_orders_coupon_code = generateChars(24);
+    const categories_coupon_code = generateChars(23);
 
     const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
     const users = [{ user_id }];
     const products = [{ product_id: product1.product_id }, { product_id: product2.product_id }];
+    const categories = [
+      { category_id: categories1[0].category_id },
+      { category_id: categories2[0].category_id },
+    ];
     //payloads
-    const storesPayload = await couponFake.storeCreate({ stores });
-    const usersPayload = await couponFake.userCreate({ users });
-    const productsPayload = await couponFake.productCreate({ products });
-    const userProductsPayload = await couponFake.userProductCreate({ users, products });
-    const allOrdersPayload = await couponFake.allOrdersCreate({ users, products });
+    const storesPayload = await couponFake.storeRestriction({ stores });
+    const usersPayload = await couponFake.userRestriction({ users });
+    const productsPayload = await couponFake.productRestriction({ products });
+    const categoriesPayload = await couponFake.categoryRestriction({ categories });
 
     //apply store coupon
     await customRequest({
@@ -199,120 +177,43 @@ describe("Coupon Tests", () => {
       payload: { coupon_code: products_coupon_code },
       token,
     });
-    //apply user & product  coupon
+    //apply categories  coupon
     await customRequest({
       path: `/coupon`,
       method: "post",
-      payload: { ...userProductsPayload, coupon_code: user_products_coupon_code },
+      payload: { ...categoriesPayload, coupon_code: categories_coupon_code },
     });
-    const userProductsResponse = await customRequest({
+    const categoriesResponse = await customRequest({
       path: `/coupon/apply`,
       method: "post",
-      payload: { coupon_code: user_products_coupon_code },
-      token,
-    });
-    //apply user & product  coupon
-    await customRequest({
-      path: `/coupon`,
-      method: "post",
-      payload: { ...allOrdersPayload, coupon_code: all_orders_coupon_code },
-    });
-    const allOrdersResponse = await customRequest({
-      path: `/coupon/apply`,
-      method: "post",
-      payload: { coupon_code: all_orders_coupon_code },
+      payload: { coupon_code: categories_coupon_code },
       token,
     });
 
     const { coupon: stores_coupon } = storesResponse.body.data;
     const { coupon: users_coupon } = usersResponse.body.data;
     const { coupon: products_coupon } = productsResponse.body.data;
-    const { coupon: user_products_coupon } = userProductsResponse.body.data;
-    const { coupon: all_orders_coupon } = allOrdersResponse.body.data;
+    const { coupon: categories_coupon } = categoriesResponse.body.data;
 
     const storesCouponAmount =
-      calcCouponAmount({
-        coupon: stores_coupon,
-        qty: cart1.qty,
-        price: price1,
-        discount: discount1,
-        flash_discount: flash_discount1,
-      }) +
-      calcCouponAmount({
-        coupon: stores_coupon,
-        qty: cart2.qty,
-        price: price2,
-        discount: discount2,
-        flash_discount: flash_discount2,
-      });
+      calcCouponAmount(stores_coupon, cart1.qty, variation1) +
+      calcCouponAmount(stores_coupon, cart2.qty, variation2);
     const usersCouponAmount =
-      calcCouponAmount({
-        coupon: users_coupon,
-        qty: cart1.qty,
-        price: price1,
-        discount: discount1,
-        flash_discount: flash_discount1,
-      }) +
-      calcCouponAmount({
-        coupon: users_coupon,
-        qty: cart2.qty,
-        price: price2,
-        discount: discount2,
-        flash_discount: flash_discount2,
-      });
+      calcCouponAmount(users_coupon, cart1.qty, variation1) +
+      calcCouponAmount(users_coupon, cart2.qty, variation2);
     const productsCouponAmount =
-      calcCouponAmount({
-        coupon: products_coupon,
-        qty: cart1.qty,
-        price: price1,
-        discount: discount1,
-        flash_discount: flash_discount1,
-      }) +
-      calcCouponAmount({
-        coupon: products_coupon,
-        qty: cart2.qty,
-        price: price2,
-        discount: discount2,
-        flash_discount: flash_discount2,
-      });
-    const userProductsCouponAmount =
-      calcCouponAmount({
-        coupon: user_products_coupon,
-        qty: cart1.qty,
-        price: price1,
-        discount: discount1,
-        flash_discount: flash_discount1,
-      }) +
-      calcCouponAmount({
-        coupon: user_products_coupon,
-        qty: cart2.qty,
-        price: price2,
-        discount: discount2,
-        flash_discount: flash_discount2,
-      });
-    const allOrdersCouponAmount =
-      calcCouponAmount({
-        coupon: all_orders_coupon,
-        qty: cart1.qty,
-        price: price1,
-        discount: discount1,
-        flash_discount: flash_discount1,
-      }) +
-      calcCouponAmount({
-        coupon: all_orders_coupon,
-        qty: cart2.qty,
-        price: price2,
-        discount: discount2,
-        flash_discount: flash_discount2,
-      });
+      calcCouponAmount(products_coupon, cart1.qty, variation1) +
+      calcCouponAmount(products_coupon, cart2.qty, variation2);
+    const categoriesCouponAmount =
+      calcCouponAmount(categories_coupon, cart1.qty, variation1) +
+      calcCouponAmount(categories_coupon, cart2.qty, variation2);
 
     expectSuccess(storesResponse);
     expectSuccess(usersResponse);
     expectSuccess(productsResponse);
-    expectSuccess(userProductsResponse);
-    expectSuccess(allOrdersResponse);
+    expectSuccess(categoriesResponse);
 
-    // Comparing to be sure that { max_coupon_amount } is applied if it's set
+    // Comparing to be sure that { max_coupon_amount/fixed_coupon_amount } is applied if it's set
     expect(storesResponse.body.data.coupon_amount).toBe(
       applyCouponCap(stores_coupon, storesCouponAmount)
     );
@@ -322,25 +223,27 @@ describe("Coupon Tests", () => {
     expect(productsResponse.body.data.coupon_amount).toBe(
       applyCouponCap(products_coupon, productsCouponAmount)
     );
-    expect(userProductsResponse.body.data.coupon_amount).toBe(
-      applyCouponCap(user_products_coupon, userProductsCouponAmount)
+    expect(categoriesResponse.body.data.coupon_amount).toBe(
+      applyCouponCap(categories_coupon, categoriesCouponAmount)
     );
-    expect(allOrdersResponse.body.data.coupon_amount).toBe(
-      applyCouponCap(all_orders_coupon, allOrdersCouponAmount)
+
+    console.log(
+      usersResponse.body.data.coupon_amount_without_cap,
+      usersCouponAmount,
+      usersResponse.body.data.coupon_amount
     );
 
     // Checking for coupon amount without the cap applied
     expect(storesResponse.body.data.coupon_amount_without_cap).toBe(storesCouponAmount);
     expect(usersResponse.body.data.coupon_amount_without_cap).toBe(usersCouponAmount);
     expect(productsResponse.body.data.coupon_amount_without_cap).toBe(productsCouponAmount);
-    expect(userProductsResponse.body.data.coupon_amount_without_cap).toBe(userProductsCouponAmount);
-    expect(allOrdersResponse.body.data.coupon_amount_without_cap).toBe(allOrdersCouponAmount);
+    expect(categoriesResponse.body.data.coupon_amount_without_cap).toBe(categoriesCouponAmount);
   });
 
   it("Can check if coupon exist", async () => {
     const coupon_code1 = await generateNewCoupon();
     const coupon_code2 = await generateNewCoupon();
-    const payload = await couponFake.allOrdersCreate();
+    const payload = await couponFake.productRestriction();
 
     await customRequest({
       path: `/coupon`,
@@ -378,7 +281,7 @@ describe("Coupon Tests", () => {
 
     const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
 
-    const storesPayload = await couponFake.storeCreate({ stores });
+    const storesPayload = await couponFake.storeRestriction({ stores });
     await customRequest({
       path: `/coupon`,
       method: "post",
@@ -408,7 +311,7 @@ describe("Coupon Tests", () => {
 
     const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
 
-    const payload = await couponFake.storeCreate({ stores });
+    const payload = await couponFake.categoryRestriction({ stores });
     await customRequest({
       path: `/coupon`,
       method: "post",

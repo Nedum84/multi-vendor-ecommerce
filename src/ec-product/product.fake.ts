@@ -13,6 +13,7 @@ import productVariationService from "../ec-product-variation/product.variation.s
 import tagFake from "../ec-tag/tag.fake";
 import tagProductService from "../ec-tag/tag.product.service";
 import { generateChars } from "../ec-utils/random.string";
+import productService from "./product.service";
 
 export default {
   rawCreate: async function (props?: any) {
@@ -42,7 +43,7 @@ export default {
         await productVariationService.create(data.variation, data.discount, []),
       ];
     }
-    return product;
+    return productService.findById(product.product_id);
   },
   create: async () => {
     const { category_id } = await categoryFake.rawCreate();

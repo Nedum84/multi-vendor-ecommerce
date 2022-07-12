@@ -11,7 +11,7 @@ import { ProductDiscountAttributes } from "./product.discount.model";
 import { Op, Transaction } from "sequelize";
 import { arraysEqual, asyncForEach } from "../ec-utils/function.utils";
 import { isAdmin } from "../ec-admin/roles.service";
-import ProductVariationUtils from "./product.variation.utils";
+import ProductVariationUtils from "./utils.query";
 import variationAttributesService from "../ec-variation-attributes/variation.attributes.service";
 
 //--> Create

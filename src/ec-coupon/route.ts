@@ -1,8 +1,8 @@
 import express from "express";
-import couponController from "./coupon.controller";
+import couponController from "./controller";
 import { requireAuth } from "../ec-middlewares/auth.middleware";
 import { validateReq } from "../ec-middlewares/validate.req";
-import couponValidation from "./coupon.validation";
+import couponValidation from "./validation";
 
 const router = express.Router();
 

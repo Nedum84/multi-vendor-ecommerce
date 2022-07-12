@@ -128,5 +128,26 @@ export function ProductVariationFactory(sequelize: Sequelize) {
     exclude.forEach((e) => delete values[e]);
     return values;
   };
+  ProductVariation.addHook("afterFind", (findResult) => {
+    if (!findResult) return;
+    if (!(findResult instanceof Array)) findResult = [findResult];
+
+    // Set final price
+    for (const productVariation of findResult) {
+      // @ts-ignore
+      const { flash_discount, discount, price } = productVariation.get();
+
+      let finalPrice = price;
+      if (flash_discount) {
+        finalPrice = flash_discount.price;
+      } else if (discount) {
+        finalPrice = discount.price;
+      }
+
+      // @ts-ignore
+      productVariation.setDataValue("final_price", finalPrice);
+    }
+  });
+
   return ProductVariation;
 }

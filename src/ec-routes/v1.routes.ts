@@ -3,7 +3,7 @@ import authRoute from "../ec-auth/auth.route";
 import cartRoute from "../ec-cart/cart.route";
 import categoryRoute from "../ec-category/category.route";
 import collectionRoute from "../ec-collection/collection.route";
-import couponRoute from "../ec-coupon/coupon.route";
+import couponRoute from "../ec-coupon/route";
 import creditCodeRoute from "../ec-credit-code/credit.code.route";
 import flashSalesRoute from "../ec-flash-sales/flas.sales.route";
 import mediaRoute from "../ec-media/route";

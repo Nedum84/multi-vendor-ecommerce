@@ -6,11 +6,11 @@ import pg from "pg";
 import { UserFactory } from "../ec-user/user.model";
 import { TokenFactory } from "../ec-auth/token.model";
 import { CartFactory } from "../ec-cart/cart.model";
-import { CouponProductFactory } from "../ec-coupon/coupon.product.model";
+import { CouponProductFactory } from "../ec-coupon/model.product";
 import { CategoryFactory } from "../ec-category/category.model";
-import { CouponFactory } from "../ec-coupon/coupon.model";
-import { CouponStoreFactory } from "../ec-coupon/coupon.store.model";
-import { CouponUserFactory } from "../ec-coupon/coupon.user.model";
+import { CouponFactory } from "../ec-coupon/model.coupon";
+import { CouponStoreFactory } from "../ec-coupon/model.store";
+import { CouponUserFactory } from "../ec-coupon/model.user";
 import { MediaFilesFactory } from "../ec-media/model.media.files";
 import { MediaFolderFactory } from "../ec-media/model.media.folder";
 import { StoreOrdersFactory } from "../ec-store-orders/store.orders.model";
@@ -43,7 +43,7 @@ import { TagProductFactory } from "../ec-tag/tag.product.model";
 import { WithdrawalFactory } from "../ec-withdrawal/withdrawal.model";
 import { ProductRatingFactory } from "../ec-product-review/product.rating.model";
 import { isAssociatable } from "./types";
-import { CouponCategoryFactory } from "../ec-coupon/coupon.category.model";
+import { CouponCategoryFactory } from "../ec-coupon/model.category";
 pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
 
 // @ts-ignore

@@ -16,7 +16,7 @@ describe("Product Variation Tests", () => {
       payload: { ...productVariationFake.create, product_id },
     });
 
-    expect(response.body.data.variation).toBeDefined();
+    expect(response.body.data).toBeDefined();
     expectSuccess(response, httpStatus.CREATED);
   });
 
@@ -111,7 +111,7 @@ describe("Product Variation Tests", () => {
 
     //create product
     const variation = (await productFake.create()).variation;
-    //@ts-ignore
+    // @ts-ignore
     variation.is_default = true;
     const { product_id } = await productFake.rawCreate({ variation });
     //Create product attributes

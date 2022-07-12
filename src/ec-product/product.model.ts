@@ -141,6 +141,12 @@ export function ProductFactory(sequelize: Sequelize) {
       foreignKey: "product_id",
       targetKey: "category_id",
     });
+    Product.belongsToMany(models.Tag, {
+      as: "tags",
+      through: models.TagProduct,
+      foreignKey: "product_id",
+      targetKey: "tag_id",
+    });
     Product.belongsToMany(models.Collection, {
       as: "collections",
       through: models.CollectionProduct,
@@ -165,5 +171,30 @@ export function ProductFactory(sequelize: Sequelize) {
     exclude.forEach((e) => delete values[e]);
     return values;
   };
+
+  Product.addHook("afterFind", (findResult) => {
+    if (!findResult) return;
+    if (!(findResult instanceof Array)) findResult = [findResult];
+
+    // Set final price for product variation
+    for (const product of findResult) {
+      // @ts-ignore
+      if (!product.variations) return;
+      // @ts-ignore
+      product.variations.forEach((variation: ProductVariationInstance) => {
+        const { flash_discount, discount, price } = variation;
+
+        let finalPrice = price;
+        if (flash_discount) {
+          finalPrice = flash_discount.price;
+        } else if (discount) {
+          finalPrice = discount.price;
+        }
+        // @ts-ignore
+        variation.setDataValue("final_price", finalPrice);
+      });
+    }
+  });
+
   return Product;
 }

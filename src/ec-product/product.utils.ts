@@ -12,6 +12,7 @@ import {
   ProductVariation,
   ProductWithAttribute,
   Store,
+  Tag,
 } from "../ec-models";
 
 class ProductUtils {
@@ -77,13 +78,21 @@ class ProductUtils {
         `;
   };
 
+  static calcFinalPrice() {
+    return `(
+            CASE WHEN "variations".flash_discount IS NOT NULL THEN "variations".flash_discount
+                WHEN "variations"."discount" IS NOT NULL THEN "variations"."discount".price
+                ELSE "variations"."ProductVariation".price 
+            END
+          )
+        `;
+  }
+
   static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {
     const options: FindOptions = {
       ...(paginate ?? {}),
       subQuery: false,
       include: [
-        { model: Store, as: "store", attributes: ["store_id", "name"], required: true },
-        { model: Category, as: "categories" },
         {
           model: ProductVariation,
           as: "variations",
@@ -122,7 +131,10 @@ class ProductUtils {
             },
           ],
         },
+        { model: Store, as: "store", attributes: ["store_id", "name"], required: true },
+        { model: Category, as: "categories" },
         { model: Collection, as: "collections" },
+        { model: Tag, as: "tags" },
         { model: ProductWithAttribute, as: "attributes" },
       ],
       attributes: {

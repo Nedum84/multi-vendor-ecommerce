@@ -14,8 +14,8 @@ import moment from "moment";
 import CONSTANTS from "../ec-utils/constants";
 import userWalletService from "../ec-user-wallet/user.wallet.service";
 import cartService from "../ec-cart/cart.service";
-import couponService from "../ec-coupon/coupon.service";
-import { CouponInstance } from "../ec-coupon/coupon.model";
+import couponService from "../ec-coupon/service";
+import { CouponInstance } from "../ec-coupon/model.coupon";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import shippingService from "./shipping.service";
 import { genUniqueColId, getPaginate } from "../ec-models/utils";
@@ -32,9 +32,9 @@ import productVariationService from "../ec-product-variation/product.variation.s
 import { VendorSettlementInstance } from "../ec-vendor-settlement/vendor.settlement.model";
 import { UserWalletAttributes } from "../ec-user-wallet/user.wallet.model";
 import { OrdersInstance } from "./orders.model";
-import CouponUtils from "../ec-coupon/utils.query";
 import { StockStatus } from "../ec-product/types";
 import { calcCouponAmount } from "../ec-coupon/utils";
+import { computeFinalPrice } from "../ec-product-variation/utils";
 
 //create
 const create = async (req: Request) => {
@@ -96,7 +96,7 @@ const create = async (req: Request) => {
     const uniqueStoreIds = Array.from(new Set(cartStoreIds));
 
     //Iterate each store
-    await asyncForEach(uniqueStoreIds, async (store_id) => {
+    for await (const store_id of uniqueStoreIds) {
       //Create Sub Order...
       await storeOrdersService.create(
         order_id,
@@ -107,7 +107,7 @@ const create = async (req: Request) => {
         transaction,
         couponData
       );
-    });
+    }
 
     //Create order address
     const userAddress = await userAddressService.findById(address_id);
@@ -308,33 +308,19 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
   let calcSubTotal = 0;
   let couponAmount = 0;
 
-  await asyncForEach(order.store_orders, async (sub_order) => {
-    await asyncForEach(sub_order.products, async (product) => {
+  for await (const subOrder of order.store_orders) {
+    for await (const product of subOrder.products) {
       const { variation_id, qty } = product;
-      const { discount, flash_discount, price } = await productVariationService.findById(
-        variation_id
-      );
+      const variation = await productVariationService.findById(variation_id);
 
-      if (flash_discount) {
-        calcSubTotal += qty * flash_discount.price;
-      } else if (discount) {
-        calcSubTotal += qty * discount.price;
-      } else {
-        calcSubTotal += qty * price;
-      }
+      calcSubTotal += qty * computeFinalPrice(variation);
 
       if (order.coupon_code) {
         const coupon = await couponService.findByCouponCode(order.coupon_code);
-        couponAmount += calcCouponAmount({
-          coupon,
-          qty,
-          price,
-          discount,
-          flash_discount: flash_discount,
-        });
+        couponAmount += calcCouponAmount(coupon, qty, variation);
       }
-    });
-  });
+    }
+  }
 
   const amount = calcSubTotal - couponAmount;
 
@@ -344,8 +330,8 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
 
   //Update qty remaining...
   //Extra validation(s) could be removed shaaa...
-  await asyncForEach(order.store_orders, async (sub_order) => {
-    await asyncForEach(sub_order.products, async (product) => {
+  for await (const subOrder of order.store_orders) {
+    for await (const product of subOrder.products) {
       const { variation_id, qty } = product;
       const variation = await productVariationService.findById(variation_id, transaction);
       const { flash_discount } = variation;
@@ -373,8 +359,8 @@ const validateOrder = async (order: OrdersInstance, transaction: Transaction) =>
         flash_discount.sold = flash_discount.sold + qty;
         await flash_discount.save({ transaction });
       }
-    });
-  });
+    }
+  }
   return true;
 };
 

@@ -3,6 +3,7 @@ import { ProductDiscount, ProductVariation } from "../ec-models";
 import { StockStatus } from "../ec-product/types";
 import productFake from "../ec-product/product.fake";
 import { generateChars } from "../ec-utils/random.string";
+import productVariationService from "./product.variation.service";
 
 export default {
   rawCreate: async function (props?: any) {
@@ -21,7 +22,7 @@ export default {
       data.discount.variation_id = variation.variation_id;
       variation.discount = await ProductDiscount.create(data.discount);
     }
-    return variation;
+    return variation.reload();
   },
   create: {
     sku: faker.random.words(2),

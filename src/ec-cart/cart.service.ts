@@ -2,6 +2,8 @@ import { Request } from "express";
 import { Op, Transaction } from "sequelize";
 import {
   Cart,
+  Category,
+  Collection,
   FlashSales,
   FlashSalesProducts,
   Product,
@@ -136,7 +138,14 @@ const findAllByUserId = async (user_id: string) => {
       model: ProductVariation,
       as: "variation",
       include: [
-        { model: Product, as: "product" },
+        {
+          model: Product,
+          as: "product",
+          include: [
+            { model: Category, as: "categories" },
+            { model: Collection, as: "collections" },
+          ],
+        },
         {
           model: ProductDiscount,
           as: "discount",

@@ -4,15 +4,15 @@ import { DeliveryStatus, OrderStatus } from "./types";
 import { PaymentChannel, PaymentStatus } from "./payment.enum";
 import { Orders, StoreOrders } from "../ec-models";
 import CONSTANTS from "../ec-utils/constants";
-import CouponUtils from "../ec-coupon/coupon.utils";
 import { generateChars } from "../ec-utils/random.string";
 import cartFake from "../ec-cart/cart.fake";
-import couponFake from "../ec-coupon/coupon.fake";
 import productFake from "../ec-product/product.fake";
 import productVariationFake from "../ec-product-variation/product.variation.fake";
 import userAddressFake from "../ec-user-address/user.address.fake";
 import { expectSuccess } from "../ec-test-utils/utils";
 import { customRequest } from "../ec-test-utils/custom.request";
+import { generateNewCoupon } from "../ec-coupon/utils";
+import couponFaker from "../ec-coupon/test.faker";
 
 describe("Order Tests...", () => {
   it("Can create order without coupon", async () => {
@@ -96,9 +96,9 @@ describe("Order Tests...", () => {
     await cartFake.rawCreate({ qty: 2, store_id: store_id1, user_id, variation_id: variation_id4 });
     await cartFake.rawCreate({ qty: 8, store_id: store_id2, user_id, variation_id: variation_id2 });
     await cartFake.rawCreate({ qty: 6, store_id: store_id3, user_id, variation_id: variation_id3 });
-    const coupon_code = await CouponUtils.generateCoupon();
+    const coupon_code = await generateNewCoupon();
     const stores = [{ store_id: store_id1 }, { store_id: store_id2 }];
-    const storesPayload = await couponFake.storeCreate({ stores });
+    const storesPayload = await couponFaker.storeRestriction({ stores });
     //create coupon
     await customRequest({
       path: `/coupon`,
@@ -534,9 +534,9 @@ describe("Order Tests...", () => {
     const { user_id } = user;
     const { variation_id, product } = await productVariationFake.rawCreate();
     const { store_id } = product;
-    const coupon_code = await CouponUtils.generateCoupon();
+    const coupon_code = await generateNewCoupon();
     const stores = [{ store_id }];
-    const storesPayload = await couponFake.storeCreate({ stores });
+    const storesPayload = await couponFaker.storeRestriction({ stores });
     //create coupon
     await customRequest({
       path: `/coupon`,

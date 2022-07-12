@@ -1,34 +1,40 @@
 import { Request } from "express";
-import sequelize, { Coupon, CouponProduct, CouponStore, CouponUser } from "../ec-models";
+import sequelize, {
+  Coupon,
+  CouponCategory,
+  CouponProduct,
+  CouponStore,
+  CouponUser,
+} from "../ec-models";
 import { Op } from "sequelize";
-import { CouponAttributes, CouponInstance } from "./coupon.model";
+import { CouponAttributes, CouponInstance } from "./model.coupon";
 import { CouponType } from "./types";
-import { CouponUserAttributes } from "./coupon.user.model";
+import { CouponUserAttributes } from "./model.user";
 import moment from "moment";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { ForbiddenError } from "../ec-api-response/forbidden.error";
-import { CouponStoreAttributes } from "./coupon.store.model";
+import { CouponStoreAttributes } from "./model.store";
 import storeService from "../ec-store/store.service";
-import { CouponProductAttributes } from "./coupon.product.model";
+import { CouponProductAttributes } from "./model.product";
 import ordersService from "../ec-orders/orders.service";
 import cartService from "../ec-cart/cart.service";
-import { CartInstance } from "../ec-cart/cart.model";
 import { isAdmin } from "../ec-admin/roles.service";
 import productService from "../ec-product/product.service";
 import { NotFoundError } from "../ec-api-response/not.found.error";
-import CouponUtils from "./utils.query";
 import { getPaginate } from "../ec-models/utils";
 import { applyCouponCap, calcCouponAmount, generateNewCoupon, isRestrictedCoupon } from "./utils";
 import { baseCurrencySymbol } from "../ec-utils/currency.utils";
 import { WhereFilters } from "../ec-models/types";
 import { categoriesChildren } from "../ec-category/utils";
+import { CouponCategoryAttributes } from "./model.category";
+import { couponSequelizeFindOptions } from "./utils.query";
 
 //--> create
 const create = async (req: Request) => {
   const { user_id, role, stores } = req.user!;
   const body: CouponAttributes & { products: CouponProductAttributes[] } & {
     stores: CouponStoreAttributes[];
-  } & { users: CouponUserAttributes[] } = req.body;
+  } & { users: CouponUserAttributes[] } & { categories: CouponCategoryAttributes[] } = req.body;
   const { coupon_code, coupon_type } = body;
   body.created_by = user_id;
 
@@ -87,31 +93,38 @@ const create = async (req: Request) => {
   try {
     await sequelize.transaction(async (transaction) => {
       //--> Create coupon
+      const coupon = await Coupon.create(body, { transaction });
 
-      //--> Create respective coupon types(except for general)
-      if (body.products.length) {
+      if (body.products?.length) {
         const payload = body.products.map(({ product_id }) => ({
           product_id,
           coupon_code,
         }));
         await CouponProduct.bulkCreate(payload, { transaction });
       }
-      if (body.stores.length) {
+      if (body.stores?.length) {
         const payload = body.stores.map(({ store_id }) => ({
           store_id,
           coupon_code,
         }));
         await CouponStore.bulkCreate(payload, { transaction });
       }
-      if (body.users.length) {
+      if (body.users?.length) {
         const payload = body.users.map(({ user_id }) => ({
           user_id,
           coupon_code,
         }));
         await CouponUser.bulkCreate(payload, { transaction });
       }
+      if (body.categories?.length) {
+        const payload = body.categories.map(({ category_id }) => ({
+          category_id,
+          coupon_code,
+        }));
+        await CouponCategory.bulkCreate(payload, { transaction });
+      }
     });
-  } catch (error: any) {
+  } catch (error) {
     throw new BadRequestError(error);
   }
 
@@ -189,7 +202,7 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
   }
 
   // Restrict users not permitted to use coupon
-  if (coupon.users.length) {
+  if (coupon.users?.length) {
     const couponUserIds = coupon.users.map((x) => x.user_id);
     if (!couponUserIds.includes(user_id)) {
       throw new BadRequestError("You are not eligible to use this coupon");
@@ -206,14 +219,14 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
     const couponCategoryIds = coupon.categories?.map((x) => x.category_id) || [];
 
     for await (const cart of carts) {
-      const { discount, price, flash_discount, product, product_id } = cart.variation;
+      const { product, product_id } = cart.variation;
       const { store_id, qty } = cart;
       const { categories } = product;
 
       if (couponStoreIds.includes(store_id)) {
-        couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+        couponAmount += calcCouponAmount(coupon, qty, cart.variation);
       } else if (couponProductIds.includes(product_id)) {
-        couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+        couponAmount += calcCouponAmount(coupon, qty, cart.variation);
       } else if (couponCategoryIds.length) {
         const productCatIds = await categoriesChildren(categories.map((x) => x.category_id));
         const allCouponCatIds = await categoriesChildren(couponCategoryIds);
@@ -221,16 +234,15 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
         // check if children category is part of the coupon restriction
         const isCatRestricted = allCouponCatIds.find((catId) => productCatIds.includes(catId));
         if (isCatRestricted) {
-          couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+          couponAmount += calcCouponAmount(coupon, qty, cart.variation);
         }
       }
     }
   } else {
     // no restrictions appied
     for (const cart of carts) {
-      const { discount, price, flash_discount } = cart.variation;
       const { qty } = cart;
-      couponAmount += calcCouponAmount({ coupon, qty, price, discount, flash_discount });
+      couponAmount += calcCouponAmount(coupon, qty, cart.variation);
     }
     // couponAmount += userCarts.sub_total * couponPercent;
   }
@@ -265,7 +277,7 @@ const validateCouponExist = async (coupon_code: string) => {
 const findByCouponCode = async (coupon_code: string) => {
   const coupon = await Coupon.findOne({
     where: { coupon_code },
-    ...CouponUtils.sequelizeFindOptions(),
+    ...couponSequelizeFindOptions(),
   });
   if (!coupon) {
     throw new NotFoundError("Coupon not found");
@@ -292,7 +304,7 @@ const findAllByStoreId = async (req: Request) => {
 
   const coupons = await Coupon.findAll({
     where,
-    ...CouponUtils.sequelizeFindOptions({ limit, offset }),
+    ...couponSequelizeFindOptions({ limit, offset }),
   });
 
   return coupons;
@@ -322,7 +334,7 @@ const findAll = async (req: Request) => {
   }
   const coupons = await Coupon.findAll({
     where,
-    ...CouponUtils.sequelizeFindOptions({ limit, offset }),
+    ...couponSequelizeFindOptions({ limit, offset }),
   });
 
   return coupons;

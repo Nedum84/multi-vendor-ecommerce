@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { SuccessResponse } from "../ec-api-response/success.response";
-import couponService from "./coupon.service";
+import couponService from "./service";
 
 const create = async (req: Request, res: Response) => {
   const result = await couponService.create(req);

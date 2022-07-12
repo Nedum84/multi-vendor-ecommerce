@@ -1,4 +1,4 @@
-import { FindOptions, Op } from "sequelize";
+import { FindOptions, Op, Sequelize } from "sequelize";
 import {
   FlashSales,
   FlashSalesProducts,
@@ -9,6 +9,16 @@ import {
 } from "../ec-models";
 
 class ProductVariationUtils {
+  static calcFinalPrice() {
+    return `(
+            CASE WHEN "flash_discount" IS NOT NULL THEN "flash_discount".price
+                WHEN "discount" IS NOT NULL THEN "discount".price
+                ELSE "ProductVariation".price 
+            END
+          )
+        `;
+  }
+
   static sequelizeFindOptions = (paginate?: { limit: number; offset: number }) => {
     const options: FindOptions = {
       ...(paginate ?? {}),
@@ -54,7 +64,7 @@ class ProductVariationUtils {
         },
       ],
       // attributes: {
-      //   include: [[Sequelize.literal(this.imgSubQuery()), "images"]],
+      //   include: [[Sequelize.literal(ProductVariationUtils.calcFinalPrice()), "final_price"]],
       // },
     };
     return options;
