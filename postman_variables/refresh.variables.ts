@@ -1,33 +1,33 @@
 import { Request, Response } from "express";
 import { signin } from "./signin";
-import productFake from "../src/ec-product/product.fake";
-import productService from "../src/ec-product/product.service";
-import categoryFake from "../src/ec-category/category.fake";
-import categoryService from "../src/ec-category/category.service";
-import collectionFake from "../src/ec-collection/collection.fake";
-import collectionService from "../src/ec-collection/collection.service";
-import tagFake from "../src/ec-tag/tag.fake";
-import tagService from "../src/ec-tag/tag.service";
-import tokenService from "../src/ec-auth/token.service";
-import cartFake from "../src/ec-cart/cart.fake";
+import productFake from "../src/ec-product/test.faker";
+import productService from "../src/ec-product/service";
+import categoryFake from "../src/ec-category/test.faker";
+import categoryService from "../src/ec-category/service.category";
+import collectionFake from "../src/ec-collection/test.faker";
+import collectionService from "../src/ec-collection/service.collection";
+import tagFake from "../src/ec-tag/test.faker";
+import tagService from "../src/ec-tag/service.tag";
+import tokenService from "../src/ec-auth/service.token";
+import cartFake from "../src/ec-cart/test.faker";
 import CreditCodeUtils from "../src/ec-credit-code/credit.utils";
 import { PaymentChannel } from "../src/ec-orders/payment.enum";
-import userWalletService from "../src/ec-user-wallet/user.wallet.service";
+import userWalletService from "../src/ec-user-wallet/service";
 import variationAttributesFake from "../src/ec-variation-attributes/variation.attributes.fake";
-import userAddressFake from "../src/ec-user-address/user.address.fake";
+import userAddressFake from "../src/ec-user-address/test.faker";
 import variationAttributesService from "../src/ec-variation-attributes/variation.attributes.service";
-import ordersService from "../src/ec-orders/orders.service";
-import userAddressService from "../src/ec-user-address/user.address.service";
-import wishlistService from "../src/ec-wishlist/wishlist.service";
-import vendorSettlementService from "../src/ec-vendor-settlement/vendor.settlement.service";
-import withdrawalService from "../src/ec-withdrawal/withdrawal.service";
+import ordersService from "../src/ec-orders/service";
+import userAddressService from "../src/ec-user-address/service";
+import wishlistService from "../src/ec-wishlist/service";
+import vendorSettlementService from "../src/ec-vendor-settlement/service";
+import withdrawalService from "../src/ec-withdrawal/service";
 import sequelize, { FlashSales, Orders, StoreOrders } from "../src/ec-models";
 import { DeliveryStatus } from "../src/ec-orders/types";
-import userService from "../src/ec-user/user.service";
+import userService from "../src/ec-user/service";
 import mediaService from "../src/ec-media/service";
 import mediaFake from "../src/ec-media/test.faker";
-import flashSalesService from "../src/ec-flash-sales/flash.sales.service";
-import flashSalesFake from "../src/ec-flash-sales/flash.sales.fake";
+import flashSalesService from "../src/ec-flash-sales/service";
+import flashSalesFake from "../src/ec-flash-sales/test.faker";
 import { SuccessResponse } from "../src/ec-api-response/success.response";
 import config from "../src/ec-config/config";
 import { generateChars } from "../src/ec-utils/random.string";
@@ -93,18 +93,8 @@ const processVariables = async (req: Request) => {
   const { address_id } = await userAddressService.create(req);
 
   //Populate carts
-  await cartFake.rawCreate({
-    qty: 5,
-    store_id: store_id,
-    user_id,
-    variation_id: variations1[0].variation_id,
-  });
-  await cartFake.rawCreate({
-    qty: 8,
-    store_id: store_id2,
-    user_id,
-    variation_id: variations2[0].variation_id,
-  });
+  await cartFake.rawCreate({ qty: 5, user_id, variation_id: variations1[0].variation_id });
+  await cartFake.rawCreate({ qty: 8, user_id, variation_id: variations2[0].variation_id });
   // Create order
   req.body = { address_id };
   const { order_id, store_orders } = await ordersService.create(req);
@@ -120,18 +110,8 @@ const processVariables = async (req: Request) => {
   );
 
   //Populate carts again(since the previous was cleared after order created)
-  await cartFake.rawCreate({
-    qty: 5,
-    store_id: store_id,
-    user_id,
-    variation_id: variations1[0].variation_id,
-  });
-  await cartFake.rawCreate({
-    qty: 8,
-    store_id: store_id2,
-    user_id,
-    variation_id: variations2[0].variation_id,
-  });
+  await cartFake.rawCreate({ qty: 5, user_id, variation_id: variations1[0].variation_id });
+  await cartFake.rawCreate({ qty: 8, user_id, variation_id: variations2[0].variation_id });
 
   //Generate codes
   const coupon_code = await generateNewCoupon();

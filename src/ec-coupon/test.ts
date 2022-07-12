@@ -8,6 +8,8 @@ import storeFake from "../ec-store/store.fake";
 import { customRequest } from "../ec-test-utils/custom.request";
 import { applyCouponCap, calcCouponAmount, generateNewCoupon } from "./utils";
 import { ProductVariation } from "../ec-models";
+import { CouponAttributes } from "./model.coupon";
+import { CouponType } from "./types";
 
 describe("Coupon Tests", () => {
   it("Can create coupon with product restriction", async () => {
@@ -94,7 +96,7 @@ describe("Coupon Tests", () => {
     expect(response.body.data.coupon.revoke).toBeTruthy();
   });
 
-  it("Can apply coupon", async () => {
+  it("Can apply percentage discount coupon", async () => {
     const { user, tokens } = await global.signin();
     const { token } = tokens.access;
     const { user_id } = user;
@@ -107,19 +109,10 @@ describe("Coupon Tests", () => {
     const { store_id: store_id1, categories: categories1 } = product1;
     const { store_id: store_id2, categories: categories2 } = product2;
 
-    //Add to cart
-    const cart1 = await cartFake.rawCreate({
-      qty: 2,
-      store_id: store_id1,
-      user_id,
-      variation_id: variation_id1,
-    });
-    const cart2 = await cartFake.rawCreate({
-      qty: 40,
-      store_id: store_id2,
-      user_id,
-      variation_id: variation_id2,
-    });
+    //Add some times to the cart
+    const cart1 = await cartFake.rawCreate({ qty: 2, user_id, variation_id: variation_id1 });
+    const cart2 = await cartFake.rawCreate({ qty: 40, user_id, variation_id: variation_id2 });
+
     //vary the length to avoid duplicate
     const stores_coupon_code = generateChars(20);
     const users_coupon_code = generateChars(21);
@@ -190,11 +183,17 @@ describe("Coupon Tests", () => {
       token,
     });
 
+    expectSuccess(storesResponse);
+    expectSuccess(usersResponse);
+    expectSuccess(productsResponse);
+    expectSuccess(categoriesResponse);
+
     const { coupon: stores_coupon } = storesResponse.body.data;
     const { coupon: users_coupon } = usersResponse.body.data;
     const { coupon: products_coupon } = productsResponse.body.data;
     const { coupon: categories_coupon } = categoriesResponse.body.data;
 
+    // computes the 2 cart items coupon amount (since 2 items was added to the cart)
     const storesCouponAmount =
       calcCouponAmount(stores_coupon, cart1.qty, variation1) +
       calcCouponAmount(stores_coupon, cart2.qty, variation2);
@@ -208,12 +207,8 @@ describe("Coupon Tests", () => {
       calcCouponAmount(categories_coupon, cart1.qty, variation1) +
       calcCouponAmount(categories_coupon, cart2.qty, variation2);
 
-    expectSuccess(storesResponse);
-    expectSuccess(usersResponse);
-    expectSuccess(productsResponse);
-    expectSuccess(categoriesResponse);
-
-    // Comparing to be sure that { max_coupon_amount/fixed_coupon_amount } is applied if it's set
+    // checking that the response {coupon_amount} matches the coupon amount computed using cart items
+    // Also, we compare to be sure that { max_coupon_amount/fixed_coupon_amount } is applied if it's set
     expect(storesResponse.body.data.coupon_amount).toBe(
       applyCouponCap(stores_coupon, storesCouponAmount)
     );
@@ -227,17 +222,47 @@ describe("Coupon Tests", () => {
       applyCouponCap(categories_coupon, categoriesCouponAmount)
     );
 
-    console.log(
-      usersResponse.body.data.coupon_amount_without_cap,
-      usersCouponAmount,
-      usersResponse.body.data.coupon_amount
-    );
-
     // Checking for coupon amount without the cap applied
     expect(storesResponse.body.data.coupon_amount_without_cap).toBe(storesCouponAmount);
     expect(usersResponse.body.data.coupon_amount_without_cap).toBe(usersCouponAmount);
     expect(productsResponse.body.data.coupon_amount_without_cap).toBe(productsCouponAmount);
     expect(categoriesResponse.body.data.coupon_amount_without_cap).toBe(categoriesCouponAmount);
+  });
+
+  it("Can apply fixed amount coupon", async () => {
+    const { user, tokens } = await global.signin();
+    const { token } = tokens.access;
+    const { user_id } = user;
+
+    const variation1 = await productVariationFake.rawCreate();
+    const { product: product1 } = variation1;
+    const variation2 = await productVariationFake.rawCreate();
+    const { product: product2 } = variation2;
+
+    //Add some times to the cart
+    await cartFake.rawCreate({ qty: 2, user_id, variation_id: variation1.variation_id });
+    await cartFake.rawCreate({ qty: 40, user_id, variation_id: variation2.variation_id });
+
+    // create coupon with store restriction
+    const stores_coupon_code = generateChars(11);
+    const stores = [{ store_id: product1.store_id }, { store_id: product2.store_id }];
+    const storesPayload = await couponFake.storeRestriction({ stores });
+
+    //create coupon
+    await customRequest<CouponAttributes>({
+      path: `/coupon`,
+      method: "post",
+      payload: { ...storesPayload, coupon_code: stores_coupon_code },
+    });
+    //apply coupon
+    const response = await customRequest<CouponAttributes>({
+      path: `/coupon/apply`,
+      method: "post",
+      payload: { coupon_code: stores_coupon_code },
+      token,
+    });
+
+    expectSuccess(response);
   });
 
   it("Can check if coupon exist", async () => {

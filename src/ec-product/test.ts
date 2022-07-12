@@ -1,8 +1,8 @@
 import { CREATED } from "http-status";
 import { CollectStatus } from "../ec-collection/types";
-import categoryFake from "../ec-category/category.fake";
-import collectionFake from "../ec-collection/collection.fake";
-import productFake from "./product.fake";
+import categoryFake from "../ec-category/test.faker";
+import collectionFake from "../ec-collection/test.faker";
+import productFake from "./test.faker";
 import tagFake from "../ec-tag/tag.fake";
 import { expectSuccess } from "../ec-test-utils/utils";
 import { customRequest } from "../ec-test-utils/custom.request";

@@ -1,8 +1,8 @@
-import { CartInstance } from "../ec-cart/cart.model";
+import { CartInstance } from "../ec-cart/model";
 import { categoriesChildren } from "../ec-category/utils";
 import { Coupon } from "../ec-models";
 import { genUniqueColId } from "../ec-models/utils";
-import { ProductVariationInstance } from "../ec-product-variation/product.variation.model";
+import { ProductVariationInstance } from "../ec-product-variation/model";
 import { CouponAttributes, CouponInstance } from "./model.coupon";
 import { CouponType } from "./types";
 

@@ -1,7 +1,7 @@
 import { Request } from "express";
 import { UserRoleStatus } from "../src/ec-user/types";
-import userService from "../src/ec-user/user.service";
-import userFake from "../src/ec-user/user.fake";
+import userService from "../src/ec-user/service";
+import userFake from "../src/ec-user/test.faker";
 
 //Register & signin user
 export const signin = async (req: Request) => {

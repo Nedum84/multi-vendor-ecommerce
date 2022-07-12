@@ -1,6 +1,6 @@
-import { CartInstance } from "./cart.model";
+import { CartInstance } from "./model";
 
-export const calcCartSubTotal = (carts: CartInstance[]) => {
+export const calcCartSubTotal = (carts: CartInstance[]): number => {
   var subTotal = 0;
   carts.forEach((cart) => {
     const { discount, flash_discount, price } = cart.variation;

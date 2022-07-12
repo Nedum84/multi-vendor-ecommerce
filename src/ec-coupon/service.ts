@@ -7,19 +7,19 @@ import sequelize, {
   CouponUser,
 } from "../ec-models";
 import { Op } from "sequelize";
-import { CouponAttributes, CouponInstance } from "./model.coupon";
+import { CouponAttributes } from "./model.coupon";
 import { CouponType } from "./types";
 import { CouponUserAttributes } from "./model.user";
 import moment from "moment";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { ForbiddenError } from "../ec-api-response/forbidden.error";
 import { CouponStoreAttributes } from "./model.store";
-import storeService from "../ec-store/store.service";
+import storeService from "../ec-store/service";
 import { CouponProductAttributes } from "./model.product";
-import ordersService from "../ec-orders/orders.service";
-import cartService from "../ec-cart/cart.service";
-import { isAdmin } from "../ec-admin/roles.service";
-import productService from "../ec-product/product.service";
+import ordersService from "../ec-orders/service";
+import cartService from "../ec-cart/service";
+import { isAdmin } from "../ec-apps/app-admin/roles.service";
+import productService from "../ec-product/service";
 import { NotFoundError } from "../ec-api-response/not.found.error";
 import { getPaginate } from "../ec-models/utils";
 import { applyCouponCap, calcCouponAmount, generateNewCoupon, isRestrictedCoupon } from "./utils";
@@ -84,6 +84,9 @@ const create = async (req: Request) => {
           );
         }
       });
+    }
+    if (body.enable_free_shipping) {
+      throw new BadRequestError("Store cannot enable free shipping coupon");
     }
   }
 
@@ -191,13 +194,13 @@ const applyCoupon = async (user_id: string, coupon_code: string) => {
   // Check if cart amount is lower than the minimun amount to apply the coupon
   if (coupon.min_spend && sub_total < coupon.min_spend) {
     throw new BadRequestError(
-      `The minimum spend for this coupon is ${baseCurrencySymbol}${sub_total}`
+      `The minimum spend for this coupon is ${baseCurrencySymbol}${coupon.min_spend}`
     );
   }
   // Check if cart amount is higher than the maximum amount to apply the coupon
-  if (coupon.max_spend && sub_total < coupon.max_spend) {
+  if (coupon.max_spend && sub_total > coupon.max_spend) {
     throw new BadRequestError(
-      `The maximum spend for this coupon is ${baseCurrencySymbol}${sub_total}`
+      `The maximum spend for this coupon is ${baseCurrencySymbol}${coupon.max_spend}`
     );
   }
 
@@ -314,15 +317,13 @@ const findAllByStoreId = async (req: Request) => {
 const findAll = async (req: Request) => {
   const { limit, offset } = getPaginate(req.query);
   const { role } = req.user!;
-  const { coupon_apply_for, search_query, store_id } = req.query as any;
+  const { search_query, store_id } = req.query as any;
 
   if (!isAdmin(role)) {
     throw new ForbiddenError("Not authorized to access this resources");
   }
   const where: { [k: string]: any } = {};
-  if (coupon_apply_for) {
-    where.coupon_apply_for = coupon_apply_for;
-  }
+
   if (store_id) {
     where["$stores.store_id$"] = store_id;
   }

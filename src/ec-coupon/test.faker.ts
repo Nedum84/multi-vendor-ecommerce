@@ -1,10 +1,11 @@
 import faker from "faker";
 import { Coupon, CouponProduct } from "../ec-models";
-import productFake from "../ec-product/product.fake";
-import userFake from "../ec-user/user.fake";
-import storeFake from "../ec-store/store.fake";
+import productFake from "../ec-product/test.faker";
+import userFake from "../ec-user/test.faker";
+import storeFake from "../ec-store/test.faker";
 import { generateChars } from "../ec-utils/random.string";
-import categoryFake from "../ec-category/category.fake";
+import categoryFake from "../ec-category/test.faker";
+import { CouponType } from "./types";
 
 export default {
   rawCreateProduct: async function (props?: any) {
@@ -28,7 +29,7 @@ export default {
     await CouponProduct.bulkCreate(payload);
     return coupon;
   },
-  create: function () {
+  createDiscountType: function () {
     return {
       title: faker.random.words(4),
       start_date: new Date(),
@@ -40,12 +41,25 @@ export default {
       coupon_discount: 40,
     };
   },
+  createFixedAmount: function () {
+    return {
+      title: faker.random.words(4),
+      start_date: new Date(),
+      coupon_type: CouponType.FIXED_AMOUNT,
+      end_date: new Date(Date.now() + 48 * 3600),
+      product_qty_limit: 20,
+      usage_limit: 20,
+      usage_limit_per_user: 5,
+      min_spend: 7500,
+      coupon_discount: 1250,
+    };
+  },
   productRestriction: async function (props?: any) {
     const { product_id: pId1 } = await productFake.rawCreate();
     const { product_id: pId2 } = await productFake.rawCreate();
 
     return {
-      ...this.create(),
+      ...this.createDiscountType(),
       products: [{ product_id: pId1 }, { product_id: pId2 }],
       ...props,
     };
@@ -55,7 +69,7 @@ export default {
     const { store_id: store2 } = await storeFake.rawCreate();
 
     return {
-      ...this.create(),
+      ...this.createDiscountType(),
       stores: [{ store_id: store1 }, { store_id: store2 }],
       ...props,
     };
@@ -65,7 +79,7 @@ export default {
     const { user_id: u2 } = await userFake.rawCreate();
 
     return {
-      ...this.create(),
+      ...this.createDiscountType(),
       users: [{ user_id: u1 }, { user_id: u2 }],
       ...props,
     };
@@ -75,7 +89,7 @@ export default {
     const { category_id: catId2 } = await categoryFake.rawCreate();
 
     return {
-      ...this.create(),
+      ...this.createDiscountType(),
       categories: [{ category_id: catId1 }, { category_id: catId2 }],
       ...props,
     };

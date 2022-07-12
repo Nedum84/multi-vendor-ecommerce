@@ -1,4 +1,4 @@
-import categoryService from "./category.service";
+import categoryService from "./service.category";
 
 export const categoriesChildren = async (catIds: string[]): Promise<string[]> => {
   // find all the categories & their children

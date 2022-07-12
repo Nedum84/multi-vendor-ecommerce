@@ -1,4 +1,4 @@
-import { ProductVariationInstance } from "../ec-product-variation/product.variation.model";
+import { ProductVariationInstance } from "./model";
 
 export function computeFinalPrice(variation: ProductVariationInstance): number {
   const { flash_discount: flashDiscount, discount, price } = variation;

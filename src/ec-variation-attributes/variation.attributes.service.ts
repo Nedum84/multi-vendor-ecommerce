@@ -16,7 +16,7 @@ import {
   ProductAttributeSetsInstance,
 } from "./product.attribute.sets.model";
 import { arraysEqual } from "../ec-utils/function.utils";
-import productVariationService from "../ec-product-variation/product.variation.service";
+import productVariationService from "../ec-product-variation/service";
 
 ///----->>> VARIATIONS
 //--> Product Attributes

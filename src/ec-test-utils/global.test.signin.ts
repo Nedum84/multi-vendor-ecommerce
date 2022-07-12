@@ -1,8 +1,8 @@
-import tokenService from "../ec-auth/token.service";
+import tokenService from "../ec-auth/service.token";
 import sequelize from "../ec-models";
 import { UserRoleStatus } from "../ec-user/types";
-import userFake from "../ec-user/user.fake";
-import { UserAttributes } from "../ec-user/user.model";
+import userFake from "../ec-user/test.faker";
+import { UserAttributes } from "../ec-user/model";
 
 // THIS RUNS BEFORE each test File
 // So, the number of times it runs equals the number of test files

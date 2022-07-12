@@ -1,14 +1,14 @@
 import { Request, Response } from "express";
-import productFake from "../src/ec-product/product.fake";
-import productVariationFake from "../src/ec-product-variation/product.variation.fake";
-import storeFake from "../src/ec-store/store.fake";
-import categoryFake from "../src/ec-category/category.fake";
-import collectionFake from "../src/ec-collection/collection.fake";
-import tagFake from "../src/ec-tag/tag.fake";
+import productFake from "../src/ec-product/test.faker";
+import productVariationFake from "../src/ec-product-variation/test.faker";
+import storeFake from "../src/ec-store/test.faker";
+import categoryFake from "../src/ec-category/test.faker";
+import collectionFake from "../src/ec-collection/test.faker";
+import tagFake from "../src/ec-tag/test.faker";
 import variationAttributesFake from "../src/ec-variation-attributes/variation.attributes.fake";
-import userAddressFake from "../src/ec-user-address/user.address.fake";
+import userAddressFake from "../src/ec-user-address/test.faker";
 import mediaFake from "../src/ec-media/test.faker";
-import flashSalesFake from "../src/ec-flash-sales/flash.sales.fake";
+import flashSalesFake from "../src/ec-flash-sales/test.faker";
 
 export const generateBodyPayload = async (req: Request, res: Response) => {
   const payloads = await getPayloads(req);

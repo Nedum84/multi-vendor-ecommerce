@@ -3,7 +3,7 @@ import { Op } from "sequelize";
 import { Request } from "express";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { ForbiddenError } from "../ec-api-response/forbidden.error";
-import { isAdmin } from "../ec-admin/roles.service";
+import { isAdmin } from "../ec-apps/app-admin/roles.service";
 import { CreditCodeAttributes } from "./credit.code.model";
 import { CreditCodeUserAttributes } from "./credit.code.user.model";
 import { CreditCodeType } from "./types";

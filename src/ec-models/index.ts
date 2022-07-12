@@ -3,45 +3,44 @@ import { Sequelize } from "sequelize";
 import dbConfig from "../database/config/db.config";
 import config from "../ec-config/config";
 import pg from "pg";
-import { UserFactory } from "../ec-user/user.model";
-import { TokenFactory } from "../ec-auth/token.model";
-import { CartFactory } from "../ec-cart/cart.model";
+import { UserFactory } from "../ec-user/model";
+import { TokenFactory } from "../ec-auth/model.token";
+import { CartFactory } from "../ec-cart/model";
 import { CouponProductFactory } from "../ec-coupon/model.product";
-import { CategoryFactory } from "../ec-category/category.model";
+import { CategoryFactory } from "../ec-category/model.category";
 import { CouponFactory } from "../ec-coupon/model.coupon";
 import { CouponStoreFactory } from "../ec-coupon/model.store";
 import { CouponUserFactory } from "../ec-coupon/model.user";
 import { MediaFilesFactory } from "../ec-media/model.media.files";
 import { MediaFolderFactory } from "../ec-media/model.media.folder";
-import { StoreOrdersFactory } from "../ec-store-orders/store.orders.model";
-import { OrdersPaymentFactory } from "../ec-orders/orders.payment.model";
-import { StoreOrdersProductFactory } from "../ec-store-orders-products/store.orders.product.model";
+import { StoreOrdersFactory } from "../ec-store-orders/model";
+import { StoreOrdersProductFactory } from "../ec-store-orders-products/model";
 import { ProductAttributeFactory } from "../ec-variation-attributes/product.attribute.model";
 import { ProductAttributeSetsFactory } from "../ec-variation-attributes/product.attribute.sets.model";
-import { ProductDiscountFactory } from "../ec-product-variation/product.discount.model";
-import { ProductFactory } from "../ec-product/product.model";
-import { ProductVariationFactory } from "../ec-product-variation/product.variation.model";
+import { ProductDiscountFactory } from "../ec-product-variation/discount.model";
+import { ProductFactory } from "../ec-product/model";
+import { ProductVariationFactory } from "../ec-product-variation/model";
 import { ProductVariationWithAttributeSetFactory } from "../ec-variation-attributes/product.variation.with.attribute.set.model";
 import { ProductWithAttributeFactory } from "../ec-variation-attributes/product.with.attribute.model";
-import { StoreFactory } from "../ec-store/store.model";
-import { VendorSettlementFactory } from "../ec-vendor-settlement/vendor.settlement.model";
-import { WishlistFactory } from "../ec-wishlist/wishlist.model";
-import { OrdersAddressFactory } from "../ec-orders-address/orders.address.model";
-import { UserAddressFactory } from "../ec-user-address/user.address.model";
-import { UserWalletFactory } from "../ec-user-wallet/user.wallet.model";
-import { OrdersFactory } from "../ec-orders/orders.model";
-import { CollectionFactory } from "../ec-collection/collection.model";
-import { CollectionProductFactory } from "../ec-collection/collection.product.model";
-import { CategoryProductFactory } from "../ec-category/category.product.model";
+import { StoreFactory } from "../ec-store/model";
+import { VendorSettlementFactory } from "../ec-vendor-settlement/model";
+import { WishlistFactory } from "../ec-wishlist/model";
+import { OrdersAddressFactory } from "../ec-orders-address/model";
+import { UserAddressFactory } from "../ec-user-address/model";
+import { UserWalletFactory } from "../ec-user-wallet/model";
+import { OrdersFactory } from "../ec-orders/model";
+import { CollectionFactory } from "../ec-collection/model.collection";
+import { CollectionProductFactory } from "../ec-collection/model.collection.product";
+import { CategoryProductFactory } from "../ec-category/model.category.product";
 import { CreditCodeFactory } from "../ec-credit-code/credit.code.model";
 import { CreditCodeUserFactory } from "../ec-credit-code/credit.code.user.model";
-import { FlashSalesFactory } from "../ec-flash-sales/flash.sales.model";
-import { FlashSalesProductsFactory } from "../ec-flash-sales/flash.sales.products.model";
-import { RelatedProductFactory } from "../ec-related-product/related.product.model";
-import { TagFactory } from "../ec-tag/tag.model";
-import { TagProductFactory } from "../ec-tag/tag.product.model";
-import { WithdrawalFactory } from "../ec-withdrawal/withdrawal.model";
-import { ProductRatingFactory } from "../ec-product-review/product.rating.model";
+import { FlashSalesFactory } from "../ec-flash-sales/model.flash.sales";
+import { FlashSalesProductsFactory } from "../ec-flash-sales/model.flash.sales.products";
+import { RelatedProductFactory } from "../ec-related-product/model";
+import { TagFactory } from "../ec-tag/model.tag";
+import { TagProductFactory } from "../ec-tag/model.tag.product";
+import { WithdrawalFactory } from "../ec-withdrawal/model";
+import { ProductRatingFactory } from "../ec-product-review/model";
 import { isAssociatable } from "./types";
 import { CouponCategoryFactory } from "../ec-coupon/model.category";
 pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
@@ -73,7 +72,6 @@ export const MediaFolder = MediaFolderFactory(sequelize);
 export const OrdersAddress = OrdersAddressFactory(sequelize);
 export const Orders = OrdersFactory(sequelize);
 export const StoreOrders = StoreOrdersFactory(sequelize);
-export const OrdersPayment = OrdersPaymentFactory(sequelize);
 export const StoreOrdersProduct = StoreOrdersProductFactory(sequelize);
 export const ProductAttribute = ProductAttributeFactory(sequelize);
 export const ProductAttributeSets = ProductAttributeSetsFactory(sequelize);
@@ -115,7 +113,6 @@ const models = {
   OrdersAddress,
   Orders,
   StoreOrders,
-  OrdersPayment,
   StoreOrdersProduct,
   ProductAttribute,
   ProductAttributeSets,

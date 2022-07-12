@@ -1,6 +1,6 @@
 import faker from "faker";
 import { CreditCode, CreditCodeUser } from "../ec-models";
-import userFake from "../ec-user/user.fake";
+import userFake from "../ec-user/test.faker";
 import { generateChars } from "../ec-utils/random.string";
 import { CreditCodeType } from "./types";
 
