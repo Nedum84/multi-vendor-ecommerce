@@ -14,11 +14,15 @@ export interface OrdersAttributes {
   tax_amount: number;
   purchased_by: string;
   payed_from_wallet: boolean;
+  buy_now_pay_later: object;
   payment_completed: boolean;
 }
 
 interface OrdersCreationAttributes
-  extends Optional<OrdersAttributes, "order_id" | "payed_from_wallet" | "payment_completed"> {}
+  extends Optional<
+    OrdersAttributes,
+    "order_id" | "payed_from_wallet" | "payment_completed" | "buy_now_pay_later"
+  > {}
 
 export interface OrdersInstance
   extends Model<OrdersAttributes, OrdersCreationAttributes>,
@@ -63,6 +67,7 @@ export const OrdersModelAttributes: SequelizeAttributes<OrdersAttributes> = {
     type: DataTypes.BOOLEAN,
     defaultValue: false,
   },
+  buy_now_pay_later: DataTypes.JSONB,
   payment_completed: {
     type: DataTypes.BOOLEAN,
     defaultValue: false,

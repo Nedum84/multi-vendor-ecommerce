@@ -6,7 +6,7 @@ import tokenService from "./service.token";
 import userService from "../ec-user/service";
 
 const register = async (req: Request, res: Response) => {
-  const user = await userService.create(req.body);
+  const user = await userService.create(req);
 
   const tokens = await tokenService.generateAuthTokens(user, []);
   SuccessResponse.created(res, { user, tokens });

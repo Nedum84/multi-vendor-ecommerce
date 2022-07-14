@@ -11,8 +11,7 @@ import tagService from "../src/ec-tag/service.tag";
 import tokenService from "../src/ec-auth/service.token";
 import cartFake from "../src/ec-cart/test.faker";
 import CreditCodeUtils from "../src/ec-credit-code/credit.utils";
-import { PaymentChannel } from "../src/ec-orders/payment.enum";
-import userWalletService from "../src/ec-user-wallet/service";
+import topupService from "../src/ec-topup/service";
 import variationAttributesFake from "../src/ec-variation-attributes/variation.attributes.fake";
 import userAddressFake from "../src/ec-user-address/test.faker";
 import variationAttributesService from "../src/ec-variation-attributes/variation.attributes.service";
@@ -21,7 +20,7 @@ import userAddressService from "../src/ec-user-address/service";
 import wishlistService from "../src/ec-wishlist/service";
 import vendorSettlementService from "../src/ec-vendor-settlement/service";
 import withdrawalService from "../src/ec-withdrawal/service";
-import sequelize, { FlashSales, Orders, StoreOrders } from "../src/ec-models";
+import { FlashSales, Orders, StoreOrders } from "../src/ec-models";
 import { DeliveryStatus } from "../src/ec-orders/types";
 import userService from "../src/ec-user/service";
 import mediaService from "../src/ec-media/service";
@@ -32,8 +31,9 @@ import { SuccessResponse } from "../src/ec-api-response/success.response";
 import config from "../src/ec-config/config";
 import { generateChars } from "../src/ec-utils/random.string";
 import fs from "fs";
-import { jpgFilePath, pngFilePath } from "../src/ec-media/test";
+import { pngFilePath } from "../src/ec-media/test";
 import { generateNewCoupon } from "../src/ec-coupon/utils";
+import { PaymentChannel } from "../src/ec-topup/types";
 
 export const refreshVariables = async (req: Request, res: Response) => {
   //Reset DB
@@ -117,13 +117,15 @@ const processVariables = async (req: Request) => {
   const coupon_code = await generateNewCoupon();
   const credit_code = await CreditCodeUtils.generateCreditCode();
 
-  //Top up credit
-  req.body = {
-    payment_reference: generateChars(43),
+  // Top up wallet
+  await topupService.topUserAccount({
+    action_performed_by: user_id,
+    user_id,
     amount: 12000,
-    channel: PaymentChannel.SQUAD,
-  };
-  await userWalletService.userCreateCreditReward(req);
+    payment_channel: PaymentChannel.SQUAD,
+    payment_reference: generateChars(43),
+    transaction_fee: 0,
+  });
 
   // Create wishlists
   req.body = { product_id };

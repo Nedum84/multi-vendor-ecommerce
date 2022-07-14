@@ -10,10 +10,8 @@ import {
   ProductDiscount,
   ProductVariation,
 } from "../ec-models";
-import { CartInstance } from "./model";
 import productVariationService from "../ec-product-variation/service";
 import { ProductVariationInstance } from "../ec-product-variation/model";
-import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { StockStatus } from "../ec-product/types";
 import { calcCartSubTotal } from "./utils";
 
@@ -78,32 +76,6 @@ const clearCart = async (user_id: string, variation_id?: string, transaction?: T
   //clear cart...
   await Cart.destroy({ where: { user_id, ...variation }, transaction });
   return findAllByUserId(user_id);
-};
-const validateCartProductQty = (carts: CartInstance[]) => {
-  carts.forEach((cart) => {
-    const { variation, qty } = cart;
-    const { flash_discount } = variation;
-
-    if (variation.with_storehouse_management) {
-      if (variation.stock_qty < qty) {
-        throw new BadRequestError(`Item ${variation.product.name} is currently out of stock`);
-      }
-    } else {
-      if (variation.stock_status !== StockStatus.IN_STOCK) {
-        throw new BadRequestError(`Item ${variation.product.name} is currently out of stock`);
-      }
-    }
-    //Validate qty remaining for flash sale...
-    if (flash_discount) {
-      if (flash_discount.qty < flash_discount.sold + qty) {
-        const qtyRem = flash_discount.qty - flash_discount.sold;
-        throw new Error(
-          `Product(${variation.product.name}) quantity remaining on flash sale is ${qtyRem}`
-        );
-      }
-    }
-  });
-  return true;
 };
 
 const validateProductQty = (variation: ProductVariationInstance, qty: number) => {
@@ -192,6 +164,5 @@ export default {
   create,
   update,
   clearCart,
-  validateCartProductQty,
   findAllByUserId,
 };

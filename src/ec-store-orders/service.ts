@@ -3,15 +3,14 @@ import { NotFoundError } from "../ec-api-response/not.found.error";
 import { DeliveryStatus, OrderStatus } from "../ec-orders/types";
 import { Orders, StoreOrders, StoreOrdersProduct } from "../ec-models";
 import { CartInstance } from "../ec-cart/model";
-import { CouponInstance } from "../ec-coupon/model.coupon";
 import { StoreOrdersAttributes } from "./model";
-import { asyncForEach } from "../ec-utils/function.utils";
 import { genUniqueColId } from "../ec-models/utils";
 import shippingService from "../ec-orders-shipping/service";
 import storeService from "../ec-store/service";
 import storeOrdersProductService from "../ec-store-orders-products/service";
 import { calcStoreCouponAmount } from "../ec-coupon/utils";
 import { calcCartSubTotal } from "../ec-cart/utils";
+import { ApplyCouponResponse } from "../ec-coupon/types";
 
 const create = async (
   order_id: string,
@@ -20,12 +19,7 @@ const create = async (
   address_id: string,
   carts: CartInstance[],
   transaction: Transaction,
-  couponData?: {
-    coupon_amount: number;
-    coupon_amount_without_cap: number;
-    sub_total: number;
-    coupon: CouponInstance;
-  }
+  couponData?: ApplyCouponResponse
 ) => {
   // OR removing carts from params and passing user_id,
   // With that you can access the carts via
@@ -51,38 +45,44 @@ const create = async (
   const storeShipping = await shippingService.getStoreShipping(store_id, variationIds, address_id);
   const storeTaxAmount = 0;
   const amount = cartSubTotal - storeCouponAmount + storeShipping + storeTaxAmount;
-  const store_price = (cartSubTotal - storeCouponAmount) * (store.store_percentage / 100);
+  // If Vendor/Store bears the cost of the coupon or the company
+  let storePrice = 0;
+  if (storeCouponAmount !== 0 && couponData?.coupon.vendor_bears_discount) {
+    storePrice = (cartSubTotal - storeCouponAmount) * (store.store_percentage / 100);
+  } else {
+    storePrice = cartSubTotal * (store.store_percentage / 100);
+  }
 
-  const store_order_id = await genUniqueColId(
+  const storeOrderId = await genUniqueColId(
     StoreOrders,
     "store_order_id",
-    10,
+    12,
     "alphanumeric",
     "uppercase"
   );
 
   const subOrderAttrs: StoreOrdersAttributes = {
-    store_order_id: store_order_id,
+    store_order_id: storeOrderId,
     store_id,
     amount,
     sub_total: cartSubTotal,
-    coupon_amount: storeCouponAmount,
+    coupon_amount: storeCouponAmount !== 0 ? storeCouponAmount : undefined,
     shipping_amount: storeShipping,
     tax_amount: storeTaxAmount, //As above, do same to this guy later with each product(variation) taxz....
     order_id,
     order_status: OrderStatus.PENDING,
     delivery_status: DeliveryStatus.NOT_PICKED,
-    store_price,
+    store_price: storePrice,
     purchased_by: user_id,
     ...({} as any),
   };
   const subOrder = await StoreOrders.create(subOrderAttrs, { transaction });
 
-  //create sub order products
-  await asyncForEach(storeCarts, async (cart) => {
+  //create store order products
+  for await (const cart of storeCarts) {
     //Create Order products
-    await storeOrdersProductService.create(store_order_id, cart, transaction);
-  });
+    await storeOrdersProductService.create(storeOrderId, cart, transaction);
+  }
 
   return subOrder;
 };

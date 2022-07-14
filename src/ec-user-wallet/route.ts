@@ -6,38 +6,9 @@ import userWalletValidation from "./validation";
 
 const router = express.Router();
 
-//Auth Routes...
+//-->Auth routes
 router.use(requireAuth);
 
-router.get(
-  "/",
-  validateReq(userWalletValidation.getWalletBalance),
-  userWalletController.getWalletBalance
-);
-router.get(
-  "/history",
-  validateReq(userWalletValidation.balanceHistory),
-  userWalletController.balanceHistory
-);
-router.get(
-  "/withdrawable",
-  validateReq(userWalletValidation.withrawableBalance),
-  userWalletController.withrawableBalance
-);
+router.get("/balance", validateReq(userWalletValidation.balance), userWalletController.balance);
 
-router.post(
-  "/admin-credit",
-  validateReq(userWalletValidation.adminCreateCreditReward),
-  userWalletController.adminCreateCreditReward
-);
-router.post(
-  "/user-credit",
-  validateReq(userWalletValidation.userCreateCreditReward),
-  userWalletController.userCreateCreditReward
-);
-router.post(
-  "/redeem-credit",
-  validateReq(userWalletValidation.userRedeemCreditReward),
-  userWalletController.userRedeemCreditReward
-);
 export default router;

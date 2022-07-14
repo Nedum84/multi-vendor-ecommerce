@@ -10,12 +10,12 @@ const router = express.Router();
 router.use(requireAuth);
 router.post("/", validateReq(withdrawalValidation.withdraw), withdrawController.withdraw);
 router.post(
-  "/process/:withdrawal_id",
+  "/:withdrawal_id/process",
   validateReq(withdrawalValidation.adminProcessWithdrawal),
   withdrawController.adminProcessWithdrawal
 );
 router.post(
-  "/decline/:withdrawal_id",
+  "/:withdrawal_id/decline",
   validateReq(withdrawalValidation.adminDeclineWithdrawal),
   withdrawController.adminDeclineWithdrawal
 );
@@ -25,7 +25,7 @@ router.get(
   withdrawController.findForUser
 );
 router.get(
-  "/all", //?=processed,is_declined,user_id,offset,limit
+  "/admin", //?=processed,is_declined,user_id,offset,limit
   validateReq(withdrawalValidation.adminFindAll),
   withdrawController.adminFindAll
 );

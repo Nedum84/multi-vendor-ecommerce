@@ -8,7 +8,7 @@ import sequelize, {
 } from "../ec-models";
 import { Op } from "sequelize";
 import { CouponAttributes } from "./model.coupon";
-import { CouponType } from "./types";
+import { ApplyCouponResponse, CouponType } from "./types";
 import { CouponUserAttributes } from "./model.user";
 import moment from "moment";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
@@ -156,7 +156,7 @@ const revokeCoupon = async (req: Request) => {
 };
 
 //-->  apply coupon
-const applyCoupon = async (user_id: string, coupon_code: string) => {
+const applyCoupon = async (user_id: string, coupon_code: string): Promise<ApplyCouponResponse> => {
   const coupon = await findByCouponCode(coupon_code);
   const { carts, sub_total } = await cartService.findAllByUserId(user_id);
 

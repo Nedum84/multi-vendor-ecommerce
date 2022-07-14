@@ -43,6 +43,8 @@ import { WithdrawalFactory } from "../ec-withdrawal/model";
 import { ProductRatingFactory } from "../ec-product-review/model";
 import { isAssociatable } from "./types";
 import { CouponCategoryFactory } from "../ec-coupon/model.category";
+import { TopupFactory } from "../ec-topup/model";
+import { TransactionFactory } from "../ec-transaction/model";
 pg.defaults.parseInt8 = true; //Convert Int returned as strings to Int...
 
 // @ts-ignore
@@ -85,6 +87,8 @@ export const RelatedProduct = RelatedProductFactory(sequelize);
 export const Store = StoreFactory(sequelize);
 export const Tag = TagFactory(sequelize);
 export const TagProduct = TagProductFactory(sequelize);
+export const Topup = TopupFactory(sequelize);
+export const Transaction = TransactionFactory(sequelize);
 export const Token = TokenFactory(sequelize);
 export const VendorSettlement = VendorSettlementFactory(sequelize);
 export const UserAddress = UserAddressFactory(sequelize);
@@ -126,6 +130,8 @@ const models = {
   Store,
   Tag,
   TagProduct,
+  Topup,
+  Transaction,
   Token,
   VendorSettlement,
   UserAddress,

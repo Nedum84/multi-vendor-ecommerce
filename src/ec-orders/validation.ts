@@ -1,7 +1,6 @@
 import Joi from "joi";
 import { paginateDefault } from "../ec-joi-schema/utils";
 import { DeliveryStatus, OrderStatus } from "./types";
-import { PaymentChannel, PaymentStatus } from "./payment.enum";
 import { ValidatorInterface } from "../ec-joi-schema/types";
 
 const create = {
@@ -18,32 +17,22 @@ const updatePayment = {
   body: Joi.object().keys({
     order_id: Joi.string().required(),
     payed_from_wallet: Joi.boolean().required(),
-
-    payment_reference: Joi.string().when("payed_from_wallet", {
+    buy_now_pay_later: Joi.when("payed_from_wallet", {
       is: false,
-      then: Joi.string().required(),
-    }),
-    payment_status: Joi.string().when("payed_from_wallet", {
-      is: false,
-      then: Joi.string()
-        .valid(...Object.values(PaymentStatus))
-        .required(),
-    }),
-    payment_channel: Joi.string().when("payed_from_wallet", {
-      is: false,
-      then: Joi.string()
-        .valid(...Object.values(PaymentChannel))
-        .required(),
+      then: Joi.object({
+        account_no: Joi.string().required(),
+        code: Joi.string().required(),
+      }).required(),
+      otherwise: Joi.forbidden(),
     }),
   }),
 };
+
 const adminUpdatePayment = {
   params: Joi.object().keys({}),
   body: Joi.object().keys({
     order_id: Joi.string().required(),
-    payment_status: Joi.string()
-      .valid(...Object.values(PaymentStatus))
-      .required(),
+    payed_from_wallet: Joi.boolean(),
   }),
 };
 

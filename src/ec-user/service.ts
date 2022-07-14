@@ -1,18 +1,21 @@
 import { Request } from "express";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
-import sequelize, { User, UserWallet } from "../ec-models";
+import sequelize, { User } from "../ec-models";
 import { UserAttributes, UserInstance } from "./model";
-import { createModel, genUniqueColId, getPaginate } from "../ec-models/utils";
-import { FundingTypes } from "../ec-orders/payment.enum";
-import userWalletService from "../ec-user-wallet/service";
+import { createModel, getPaginate } from "../ec-models/utils";
+import couponService from "../ec-coupon/service";
 import { NotFoundError } from "../ec-api-response/not.found.error";
 import { isAdmin } from "../ec-apps/app-admin/roles.service";
 import { ForbiddenError } from "../ec-api-response/forbidden.error";
 import { Op } from "sequelize";
 import { UserUtils } from "./utils";
-import { UserWalletAttributes } from "../ec-user-wallet/model";
+import { generateNewCoupon } from "../ec-coupon/utils";
+import { CouponType } from "../ec-coupon/types";
+import { CouponAttributes } from "../ec-coupon/model.coupon";
+import { regCouponAmountBonus } from "./constants";
 
-const create = async (body: UserAttributes) => {
+const create = async (req: Request) => {
+  const body: UserAttributes = req.body;
   const { email } = body;
 
   if (email) {
@@ -32,18 +35,27 @@ const create = async (body: UserAttributes) => {
       user = await createModel<UserInstance>(User, body, "user_id", { transaction: t });
       const { user_id } = user;
 
-      //Add Registration Coins Bonus
-      const payment_reference = await genUniqueColId(UserWallet, "payment_reference", 14);
-      const amount = 50; //USD
+      // Create Registration coupon bonus
+      const couponCode = await generateNewCoupon();
+      req.body = {
+        coupon_code: couponCode,
+        coupon_type: CouponType.PERCENTAGE,
+        title: "Welcome coupon bonus",
+        start_date: new Date(),
+        end_date: undefined, // doesn't expire,
+        product_qty_limit: undefined,
+        usage_limit: 1,
+        usage_limit_per_user: 1,
+        coupon_discount: 50,
+        max_coupon_amount: regCouponAmountBonus,
+        min_spend: 500,
+        max_spend: 500,
+        enable_free_shipping: undefined,
+        vendor_bears_discount: true,
+        users: [{ user_id }], // can only be used by this user
+      } as Partial<CouponAttributes>;
 
-      const creditPayload: UserWalletAttributes = {
-        user_id,
-        amount,
-        fund_type: FundingTypes.REG_BONUS,
-        payment_reference,
-        action_performed_by: user_id,
-      };
-      await userWalletService.createCredit(creditPayload, t);
+      await couponService.create(req);
     });
   } catch (error: any) {
     throw new Error(error);

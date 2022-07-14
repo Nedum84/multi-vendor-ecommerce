@@ -1,53 +1,30 @@
 import { Sequelize } from "sequelize";
-import { Model, Optional, DataTypes } from "sequelize";
+import { Model, DataTypes } from "sequelize";
 import { ModelRegistry } from "../ec-models";
-import { FundingTypes } from "../ec-orders/payment.enum";
 import { ModelStatic, SequelizeAttributes } from "../ec-models/types";
+import { isTest } from "../ec-utils/env.utils";
 
 export interface UserWalletAttributes {
   user_id: string;
-  amount: number;
-  fund_type: FundingTypes;
-  payment_reference: string;
-  action_performed_by: string;
-  store_order_id?: string;
-  credit_code?: string;
+  balance: number;
 }
 
-interface UserWalletCreationAttributes
-  extends Optional<UserWalletAttributes, "store_order_id" | "payment_reference" | "credit_code"> {}
-
 export interface UserWalletInstance
-  extends Model<UserWalletAttributes, UserWalletCreationAttributes>,
+  extends Model<UserWalletAttributes, UserWalletAttributes>,
     UserWalletAttributes {}
 
 //--> Model attributes
 export const UserWalletModelAttributes: SequelizeAttributes<UserWalletAttributes> = {
   user_id: {
     type: DataTypes.STRING,
-    comment: "User's' Id",
     allowNull: false,
+    primaryKey: true,
+    unique: true,
   },
-  amount: {
+  balance: {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
-  fund_type: {
-    type: DataTypes.ENUM,
-    values: Object.values(FundingTypes),
-    defaultValue: FundingTypes.REFUND,
-  },
-  payment_reference: {
-    type: DataTypes.STRING,
-    unique: true,
-    allowNull: false,
-  },
-  action_performed_by: {
-    type: DataTypes.STRING,
-    allowNull: false,
-  },
-  store_order_id: DataTypes.STRING, //not null for refund
-  credit_code: DataTypes.STRING, // not null for credit redeem code
 };
 
 // --> Factory....
@@ -59,14 +36,11 @@ export function UserWalletFactory(sequelize: Sequelize) {
       timestamps: true,
       tableName: "UserWallet",
       freezeTableName: true,
-      indexes: [{ fields: ["user_id"] }],
-      validate: {
-        paymentReferenceErr() {
-          if (!this.payment_reference && this.fund_type !== FundingTypes.REFUND) {
-            throw new Error("Payment Reference can't be null unless except for refund");
-          }
-        },
-      },
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+      deletedAt: "deleted_at",
+      defaultScope: {},
+      scopes: {},
     }
   );
 
@@ -82,9 +56,19 @@ export function UserWalletFactory(sequelize: Sequelize) {
 
   UserWallet.prototype.toJSON = function () {
     const values = { ...this.get() };
-    delete values.createdAt;
-    delete values.updatedAt;
     return values;
   };
+  UserWallet.addHook("afterSave", async (wallet) => {
+    if (!isTest()) {
+      const get = wallet.get();
+      const id = get.user_id;
+
+      // Add to the secondary backup db
+      // Add to elasticsearch
+      const payload = {
+        ...get,
+      };
+    }
+  });
   return UserWallet;
 }

@@ -1,20 +1,22 @@
 import { Sequelize } from "sequelize";
 import { Model, Optional, DataTypes } from "sequelize";
 import { ModelRegistry } from "../ec-models";
+import { WithdrawalMeans } from "./types";
 import { ModelStatic, SequelizeAttributes } from "../ec-models/types";
+import { isTest } from "../ec-utils/env.utils";
 
 export interface WithdrawalAttributes {
   withdrawal_id: string;
   user_id: string;
-  amount: number;
-  amount_user_will_receive: number;
-  charges: number; //maybe tax or any additional charge
+  amount: number; // total_amount = user_amount + transaction_fee
+  user_amount: number;
+  transaction_fee: number; //maybe tax or any additional charge
+  withdrawal_means: WithdrawalMeans;
   processed: boolean;
   processed_at: Date;
   is_declined: boolean;
   declined_reason: string;
 }
-// ...>>> amount = amount_user_will_receive + charges;
 
 interface WithdrawalCreationAttributes
   extends Optional<
@@ -40,12 +42,17 @@ export const WithdrawalModelAttributes: SequelizeAttributes<WithdrawalAttributes
     type: DataTypes.FLOAT,
     allowNull: false,
   },
-  amount_user_will_receive: {
+  user_amount: {
     type: DataTypes.FLOAT,
     allowNull: false,
   },
-  charges: {
+  transaction_fee: {
     type: DataTypes.FLOAT,
+    allowNull: false,
+  },
+  withdrawal_means: {
+    type: DataTypes.ENUM,
+    values: Object.values(WithdrawalMeans),
     allowNull: false,
   },
   processed: {
@@ -69,7 +76,15 @@ export function WithdrawalFactory(sequelize: Sequelize) {
       timestamps: true,
       tableName: "Withdrawal",
       freezeTableName: true,
-      indexes: [{ fields: ["user_id"] }],
+      createdAt: "created_at",
+      updatedAt: "updated_at",
+      deletedAt: "deleted_at",
+      indexes: [
+        {
+          fields: ["user_id"],
+        },
+        { fields: ["user_id", "processed", "is_declined"] },
+      ],
     }
   );
 
@@ -85,9 +100,15 @@ export function WithdrawalFactory(sequelize: Sequelize) {
 
   Withdrawal.prototype.toJSON = function () {
     const values = { ...this.get() };
-    delete values.createdAt;
-    delete values.updatedAt;
+    delete values.created_at;
+    delete values.updated_at;
     return values;
   };
+  Withdrawal.addHook("afterSave", async (withdrawal) => {
+    if (!isTest()) {
+      const get = withdrawal.get();
+      const id = get.withdrawal_id;
+    }
+  });
   return Withdrawal;
 }

@@ -1,3 +1,5 @@
+import { CouponInstance } from "../ec-coupon/model.coupon";
+
 export enum OrderStatus {
   CANCELLED = "cancelled", //by user or the system(cron job)
   PENDING = "pending", // pending payment/approval
@@ -15,21 +17,4 @@ export enum DeliveryStatus {
   NOT_DELIVERED = "not_delivered",
   AUDITED = "audited",
   CANCELLED = "cancelled",
-}
-export enum PaymentStatus {
-  FAILED = "failed",
-  PENDING = "pending",
-  COMPLETED = "completed",
-}
-export enum PaymentChannel {
-  PAYSTACK = "paystack",
-  SQUAD = "squad",
-  FLW = "flutterwave",
-  REFUND = "refund",
-}
-export enum FundingTypes { //For wallet
-  REFUND = "refund",
-  PAYMENT = "payment",
-  REG_BONUS = "reg_bonus",
-  REDEEM_CREDIT = "redeem_credit", //use a code to claim a bonus
 }

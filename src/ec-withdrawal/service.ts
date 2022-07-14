@@ -1,13 +1,16 @@
-import { Withdrawal } from "../ec-models";
+import sequelize, { Withdrawal } from "../ec-models";
 import { Request } from "express";
 import { ForbiddenError } from "../ec-api-response/forbidden.error";
-import { isAdmin } from "../ec-apps/app-admin/roles.service";
-import { createModel, getPaginate } from "../ec-models/utils";
-import { WithdrawalInstance } from "./model";
+import { WithdrawalAttributes, WithdrawalInstance } from "./model";
 import { NotFoundError } from "../ec-api-response/not.found.error";
-import userWalletService from "../ec-user-wallet/service";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
-import { Op } from "sequelize";
+import transactionService from "../ec-transaction/service";
+import { WithdrawalMeans } from "./types";
+import { TransactionOperation } from "../ec-transaction/types";
+import userWalletService from "../ec-user-wallet/service";
+import { WhereFilters } from "../ec-models/types";
+import { createModel, getPaginate } from "../ec-models/utils";
+import { isAdmin } from "../ec-apps/app-admin/roles.service";
 
 const withdraw = async (req: Request) => {
   const { user_id } = req.user!;
@@ -16,21 +19,28 @@ const withdraw = async (req: Request) => {
   const isWithdrawalOpen = await Withdrawal.findOne({
     where: { user_id, processed: false, is_declined: false },
   });
+
   if (isWithdrawalOpen) {
     throw new NotFoundError("You already have a pending withdral awaiting processing");
   }
 
-  const { withrawable_amount } = await userWalletService.withrawableBalance(user_id);
+  const balance = await userWalletService.balance(user_id);
 
-  if (amount > withrawable_amount) {
-    throw new BadRequestError("Withdrawable amount must not be higher than " + withrawable_amount);
+  if (amount > balance) {
+    throw new BadRequestError("Withdrawable amount must not be higher than " + balance);
   }
 
-  const charges = amount * 0.01;
-  const amount_user_will_receive = amount - charges;
-  return createModel<WithdrawalInstance>(
+  const transaction_fee = amount * 0.01;
+  const user_amount = amount - transaction_fee;
+  return createModel<WithdrawalInstance, WithdrawalAttributes>(
     Withdrawal,
-    { amount, amount_user_will_receive, charges, user_id },
+    {
+      amount,
+      user_amount,
+      transaction_fee,
+      user_id,
+      withdrawal_means: WithdrawalMeans.BANK_DETAIL_NG,
+    },
     "withdrawal_id"
   );
 };
@@ -53,12 +63,30 @@ const adminProcessWithdrawal = async (req: Request) => {
   //Do any withdrawal task
   ///
   ///
+  try {
+    return sequelize.transaction(async function (transaction) {
+      withdrawal.processed = true;
+      withdrawal.processed_at = new Date();
+      await withdrawal.save();
 
-  withdrawal.processed = true;
-  withdrawal.processed_at = new Date();
-  await withdrawal.save();
+      // Log detail to transaction table
+      await transactionService.create(
+        {
+          amount: withdrawal.amount,
+          desc: `Wallet topup`,
+          operation: TransactionOperation.REMOVE,
+          reference_id: withdrawal_id,
+          user_id: withdrawal.user_id,
+        },
+        transaction
+      );
 
-  return withdrawal;
+      return withdrawal;
+    });
+  } catch (error) {
+    // Put on queue to be tried later oooo
+    throw new BadRequestError(error);
+  }
 };
 const adminDeclineWithdrawal = async (req: Request) => {
   const { role } = req.user!;
@@ -87,17 +115,22 @@ const findForUser = async (req: Request) => {
   const { processed } = req.query as any;
   const { limit, offset } = getPaginate(req.query);
 
-  return Withdrawal.findAll({
+  const res = await Withdrawal.findAndCountAll({
     where: { user_id, ...(processed ? { processed: processed } : {}) },
     limit,
     offset,
   });
+
+  return {
+    withdrawals: res.rows,
+    total: res.count,
+  };
 };
 const adminFindAll = async (req: Request) => {
   const { role } = req.user!;
   const { processed, user_id, is_declined } = req.query as any;
   const { limit, offset } = getPaginate(req.query);
-  const where: { [k: string]: any } = {};
+  const where: WhereFilters<WithdrawalAttributes> = {};
 
   if (user_id) {
     where.user_id = user_id;
@@ -112,7 +145,12 @@ const adminFindAll = async (req: Request) => {
     throw new ForbiddenError();
   }
 
-  return Withdrawal.findAll({ where, limit, offset });
+  const res = await Withdrawal.findAndCountAll({ where, limit, offset });
+
+  return {
+    withdrawals: res.rows,
+    total: res.count,
+  };
 };
 
 export default {

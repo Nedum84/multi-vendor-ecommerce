@@ -3,6 +3,7 @@ import { categoriesChildren } from "../ec-category/utils";
 import { Coupon } from "../ec-models";
 import { genUniqueColId } from "../ec-models/utils";
 import { ProductVariationInstance } from "../ec-product-variation/model";
+import { computeFinalPrice } from "../ec-product-variation/utils";
 import { CouponAttributes, CouponInstance } from "./model.coupon";
 import { CouponType } from "./types";
 
@@ -26,7 +27,6 @@ export function calcCouponAmount(
   qty: number,
   variation: ProductVariationInstance
 ): number {
-  const { flash_discount: flashDiscount, discount, price } = variation;
   const { product_qty_limit, coupon_discount: percentage_discount, coupon_type } = coupon; //{{ product_qty_limit }} == no of prod to apply coupon to
   // use percentage if {CouponType.PERCENTAGE} else use the actual price
   const couponPercent = coupon_type === CouponType.PERCENTAGE ? percentage_discount / 100 : 1;
@@ -47,14 +47,7 @@ export function calcCouponAmount(
     couponableQty = qty;
   }
 
-  let finalPrice = 0;
-  if (flashDiscount) {
-    finalPrice = flashDiscount.price;
-  } else if (discount) {
-    finalPrice = discount.price;
-  } else {
-    finalPrice = price;
-  }
+  const finalPrice = computeFinalPrice(variation);
   return couponableQty * finalPrice * couponPercent;
 }
 
