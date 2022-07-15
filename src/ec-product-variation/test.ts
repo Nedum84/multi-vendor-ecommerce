@@ -1,7 +1,7 @@
 import { expectSuccess } from "../ec-test-utils/utils";
 import httpStatus from "http-status";
-import productVariationFake from "./product.variation.fake";
-import productFake from "../ec-product/product.fake";
+import productVariationFake from "./test.faker";
+import productFake from "../ec-product/test.faker";
 import variationAttributesFake from "../ec-variation-attributes/variation.attributes.fake";
 import { customRequest } from "../ec-test-utils/custom.request";
 

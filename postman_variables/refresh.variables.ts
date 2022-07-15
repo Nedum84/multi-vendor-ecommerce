@@ -10,7 +10,6 @@ import tagFake from "../src/ec-tag/test.faker";
 import tagService from "../src/ec-tag/service.tag";
 import tokenService from "../src/ec-auth/service.token";
 import cartFake from "../src/ec-cart/test.faker";
-import CreditCodeUtils from "../src/ec-credit-code/credit.utils";
 import topupService from "../src/ec-topup/service";
 import variationAttributesFake from "../src/ec-variation-attributes/variation.attributes.fake";
 import userAddressFake from "../src/ec-user-address/test.faker";
@@ -113,9 +112,8 @@ const processVariables = async (req: Request) => {
   await cartFake.rawCreate({ qty: 5, user_id, variation_id: variations1[0].variation_id });
   await cartFake.rawCreate({ qty: 8, user_id, variation_id: variations2[0].variation_id });
 
-  //Generate codes
+  // Generate coupon code
   const coupon_code = await generateNewCoupon();
-  const credit_code = await CreditCodeUtils.generateCreditCode();
 
   // Top up wallet
   await topupService.topUserAccount({
@@ -180,7 +178,6 @@ const processVariables = async (req: Request) => {
     tag_id,
 
     coupon_code,
-    credit_code,
 
     settlement_id: settlement?.settlement_id,
 

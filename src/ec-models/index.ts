@@ -32,8 +32,6 @@ import { OrdersFactory } from "../ec-orders/model";
 import { CollectionFactory } from "../ec-collection/model.collection";
 import { CollectionProductFactory } from "../ec-collection/model.collection.product";
 import { CategoryProductFactory } from "../ec-category/model.category.product";
-import { CreditCodeFactory } from "../ec-credit-code/credit.code.model";
-import { CreditCodeUserFactory } from "../ec-credit-code/credit.code.user.model";
 import { FlashSalesFactory } from "../ec-flash-sales/model.flash.sales";
 import { FlashSalesProductsFactory } from "../ec-flash-sales/model.flash.sales.products";
 import { RelatedProductFactory } from "../ec-related-product/model";
@@ -65,8 +63,6 @@ export const Coupon = CouponFactory(sequelize);
 export const CouponCategory = CouponCategoryFactory(sequelize);
 export const CouponStore = CouponStoreFactory(sequelize);
 export const CouponUser = CouponUserFactory(sequelize);
-export const CreditCode = CreditCodeFactory(sequelize);
-export const CreditCodeUser = CreditCodeUserFactory(sequelize);
 export const FlashSales = FlashSalesFactory(sequelize);
 export const FlashSalesProducts = FlashSalesProductsFactory(sequelize);
 export const MediaFiles = MediaFilesFactory(sequelize);
@@ -108,8 +104,6 @@ const models = {
   CouponCategory,
   CouponStore,
   CouponUser,
-  CreditCode,
-  CreditCodeUser,
   FlashSales,
   FlashSalesProducts,
   MediaFiles,

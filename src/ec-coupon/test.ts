@@ -2,14 +2,12 @@ import { CREATED, OK } from "http-status";
 import { generateChars } from "../ec-utils/random.string";
 import couponFake from "./test.faker";
 import { expectError, expectSuccess } from "../ec-test-utils/utils";
-import productVariationFake from "../ec-product-variation/product.variation.fake";
-import cartFake from "../ec-cart/cart.fake";
-import storeFake from "../ec-store/store.fake";
+import productVariationFake from "../ec-product-variation/test.faker";
+import cartFake from "../ec-cart/test.faker";
+import storeFake from "../ec-store/test.faker";
 import { customRequest } from "../ec-test-utils/custom.request";
 import { applyCouponCap, calcCouponAmount, generateNewCoupon } from "./utils";
-import { ProductVariation } from "../ec-models";
 import { CouponAttributes } from "./model.coupon";
-import { CouponType } from "./types";
 
 describe("Coupon Tests", () => {
   it("Can create coupon with product restriction", async () => {

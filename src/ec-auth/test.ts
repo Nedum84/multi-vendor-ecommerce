@@ -1,7 +1,7 @@
 import { CREATED } from "http-status";
 import { customRequest } from "../ec-test-utils/custom.request";
 import { expectSuccess } from "../ec-test-utils/utils";
-import userFake from "../ec-user/user.fake";
+import userFake from "../ec-user/test.faker";
 
 describe("Auth(Reg,Login,Logout) Tests", () => {
   it("Can create a user", async () => {

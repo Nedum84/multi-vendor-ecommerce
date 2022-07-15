@@ -1,6 +1,6 @@
 import { CartAttributes } from "./model";
 import cartFake from "./test.faker";
-import productVariationFake from "../ec-product-variation/product.variation.fake";
+import productVariationFake from "../ec-product-variation/test.faker";
 import { expectSuccess } from "../ec-test-utils/utils";
 import { customRequest } from "../ec-test-utils/custom.request";
 
