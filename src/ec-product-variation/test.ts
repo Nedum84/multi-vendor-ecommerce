@@ -2,7 +2,7 @@ import { expectSuccess } from "../ec-test-utils/utils";
 import httpStatus from "http-status";
 import productVariationFake from "./test.faker";
 import productFake from "../ec-product/test.faker";
-import variationAttributesFake from "../ec-variation-attributes/variation.attributes.fake";
+import variationAttributesFake from "../ec-variation-attributes/test.faker";
 import { customRequest } from "../ec-test-utils/custom.request";
 
 describe("Product Variation Tests", () => {

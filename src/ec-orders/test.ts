@@ -21,7 +21,6 @@ describe("Order Tests...", () => {
     const { token } = tokens.access;
     const { variation_id: variation_id1 } = await productVariationFake.rawCreate();
     const { variation_id: variation_id2 } = await productVariationFake.rawCreate();
-    const { variation_id: variation_id3 } = await productVariationFake.rawCreate();
     //Populate carts
     await customRequest({
       path: `/cart`,
@@ -35,36 +34,7 @@ describe("Order Tests...", () => {
       payload: { variation_id: variation_id2, action: "add" },
       token,
     });
-    await customRequest({
-      path: `/cart`,
-      method: "patch",
-      payload: { variation_id: variation_id3, action: "add" },
-      token,
-    });
-    await customRequest({
-      path: `/cart`,
-      method: "patch",
-      payload: { variation_id: variation_id1, action: "add" },
-      token,
-    });
-    await customRequest({
-      path: `/cart`,
-      method: "patch",
-      payload: { variation_id: variation_id2, action: "add" },
-      token,
-    });
-    await customRequest({
-      path: `/cart`,
-      method: "patch",
-      payload: { variation_id: variation_id3, action: "add" },
-      token,
-    });
-    await customRequest({
-      path: `/cart`,
-      method: "patch",
-      payload: { variation_id: variation_id1, action: "add" },
-      token,
-    });
+
     const response = await customRequest({
       path: `/orders`,
       method: "post",
@@ -88,6 +58,7 @@ describe("Order Tests...", () => {
     const { store_id: store_id1 } = product1;
     const { store_id: store_id2 } = product2;
     const { store_id: store_id3 } = product3;
+
     //Just to add/create extra product for store_id1
     const { variations } = await productFake.rawCreate({ store_id: store_id1 });
     const { variation_id: variation_id4 } = variations[0];
@@ -147,8 +118,7 @@ describe("Order Tests...", () => {
     const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
     const { token } = tokens.access;
     const { user_id } = user;
-    const { variation_id, product } = await productVariationFake.rawCreate();
-    const { store_id } = product;
+    const { variation_id } = await productVariationFake.rawCreate();
     // Populate carts
     await cartFake.rawCreate({ qty: 5, user_id, variation_id });
     // Topup Wallet
@@ -215,7 +185,7 @@ describe("Order Tests...", () => {
 
     expectSuccess(response);
     expect(response.body.data.order.payment_completed).toBeTruthy();
-    expect(response.body.data.order.payment).toBeDefined();
+    expect(response.body.data.order.buy_now_pay_later).toBeDefined();
   });
   it("Admin can update user's order payment", async () => {
     const { tokens, user } = await global.signin();
@@ -236,10 +206,9 @@ describe("Order Tests...", () => {
     const response = await customRequest({
       path: `/orders/payment/admin`,
       method: "patch",
-      payload: {
-        order_id: order.order_id,
-      },
+      payload: { order_id: order.order_id },
     });
+
     expectSuccess(response);
     expect(response.body.data.order.payment_completed).toBeTruthy();
     expect(response.body.data.order.purchased_by).toBe(user.user_id);
@@ -332,8 +301,7 @@ describe("Order Tests...", () => {
     const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
     const { token } = tokens.access;
     const { user_id } = user;
-    const { variation_id, product } = await productVariationFake.rawCreate();
-    const { store_id } = product;
+    const { variation_id } = await productVariationFake.rawCreate();
     //Populate carts
     await cartFake.rawCreate({ qty: 5, user_id, variation_id });
     // //create order
@@ -364,7 +332,7 @@ describe("Order Tests...", () => {
       method: "patch",
       payload: { amount },
     });
-    const { body: balanceBody } = await customRequest({ path: `/wallet`, token });
+    const { body: balanceBody } = await customRequest({ path: `/wallet/balance`, token });
     expectSuccess(response);
     expect(response.body.data.sub_order.order_status).toBe(OrderStatus.CANCELLED);
     expect(response.body.data.sub_order.refunded).toBeTruthy();
@@ -486,29 +454,7 @@ describe("Order Tests...", () => {
     const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
     const { token } = tokens.access;
     const { user_id } = user;
-    const { variation_id, product } = await productVariationFake.rawCreate();
-    const { store_id } = product;
-    // Populate carts
-    await cartFake.rawCreate({ qty: 5, user_id, variation_id });
-    // create order
-    const { body } = await customRequest({
-      path: `/orders`,
-      method: "post",
-      payload: { address_id },
-      token,
-    });
-    const { order_id } = body.data.order;
-    const response = await customRequest(`/orders/${order_id}`);
-    expectSuccess(response);
-    expect(response.body.data.order.order_id).toBe(order_id);
-  });
-  it("Can find order by order id", async () => {
-    const { tokens, user } = await global.signin();
-    const { address_id } = await userAddressFake.rawCreate({ user_id: user.user_id });
-    const { token } = tokens.access;
-    const { user_id } = user;
-    const { variation_id, product } = await productVariationFake.rawCreate();
-    const { store_id } = product;
+    const { variation_id } = await productVariationFake.rawCreate();
     // Populate carts
     await cartFake.rawCreate({ qty: 5, user_id, variation_id });
     // create order

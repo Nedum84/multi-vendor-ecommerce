@@ -3,7 +3,7 @@ import { Model, Optional, DataTypes } from "sequelize";
 import { ModelRegistry } from "../ec-models";
 import { UserRoleStatus } from "./types";
 import { ModelStatic, SequelizeAttributes } from "../ec-models/types";
-import { UserUtils } from "./utils";
+import { hashPassword } from "./utils";
 
 export interface UserAttributes {
   user_id: string;
@@ -83,7 +83,7 @@ export function UserFactory(sequelize: Sequelize) {
     freezeTableName: true,
     hooks: {
       beforeCreate: async (user: UserInstance) => {
-        user.password = await UserUtils.hashPassword(user.password);
+        user.password = await hashPassword(user.password);
       },
     },
     defaultScope: {

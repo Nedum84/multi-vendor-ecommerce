@@ -5,7 +5,7 @@ import storeFake from "../src/ec-store/test.faker";
 import categoryFake from "../src/ec-category/test.faker";
 import collectionFake from "../src/ec-collection/test.faker";
 import tagFake from "../src/ec-tag/test.faker";
-import variationAttributesFake from "../src/ec-variation-attributes/variation.attributes.fake";
+import variationAttributesFake from "../src/ec-variation-attributes/test.faker";
 import userAddressFake from "../src/ec-user-address/test.faker";
 import mediaFake from "../src/ec-media/test.faker";
 import flashSalesFake from "../src/ec-flash-sales/test.faker";

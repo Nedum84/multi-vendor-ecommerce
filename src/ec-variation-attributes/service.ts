@@ -10,11 +10,11 @@ import { createModel } from "../ec-models/utils";
 import { NotFoundError } from "../ec-api-response/not.found.error";
 import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { Op, Transaction } from "sequelize";
-import { ProductAttributeAttributes, ProductAttributeInstance } from "./product.attribute.model";
+import { ProductAttributeAttributes, ProductAttributeInstance } from "./model.product.attribute";
 import {
   ProductAttributeSetsAttributes,
   ProductAttributeSetsInstance,
-} from "./product.attribute.sets.model";
+} from "./model.product.attribute.sets";
 import { arraysEqual } from "../ec-utils/function.utils";
 import productVariationService from "../ec-product-variation/service";
 

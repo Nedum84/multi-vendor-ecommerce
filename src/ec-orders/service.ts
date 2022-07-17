@@ -247,41 +247,41 @@ const adminUpdatePayment = async (req: Request) => {
   }
 
   try {
-    const transaction = await sequelize.transaction();
+    await sequelize.transaction(async (transaction) => {
+      // Update order
+      order.payment_completed = true;
+      order.payed_from_wallet = payed_from_wallet;
+      await order.save({ transaction });
 
-    // Update order
-    order.payment_completed = true;
-    order.payed_from_wallet = payed_from_wallet;
-    await order.save({ transaction });
+      // update all the sub orders for stores with auto_complete_order == true
+      for await (const subOrder of order.store_orders) {
+        const { store_id } = subOrder;
+        const { settings } = await storeService.findById(store_id, transaction);
+        if (settings.auto_complete_order) {
+          await StoreOrders.update(
+            { order_status: OrderStatus.COMPLETED },
+            { where: { order_id: order.order_id, store_id }, transaction }
+          );
+        }
+      }
 
-    // update all the sub orders for stores with auto_complete_order == true
-    for await (const subOrder of order.store_orders) {
-      const { store_id } = subOrder;
-      const { settings } = await storeService.findById(store_id, transaction);
-      if (settings.auto_complete_order) {
-        await StoreOrders.update(
-          { order_status: OrderStatus.COMPLETED },
-          { where: { order_id: order.order_id, store_id }, transaction }
+      // Validate orders + Update product qty &/or product flashsale sold
+      await validateOrderCreated(order, transaction);
+
+      // Debit the user's wallet
+      if (payed_from_wallet) {
+        await transactionService.create(
+          {
+            amount: order.amount,
+            desc: `Charge for order ${orderId}`,
+            operation: TransactionOperation.REMOVE,
+            reference_id: orderId,
+            user_id: order.purchased_by,
+          },
+          transaction
         );
       }
-    }
-
-    // Validate orders + Update product qty &/or product flashsale sold
-    await validateOrderCreated(order, transaction);
-
-    // Debit the user's wallet
-    if (payed_from_wallet) {
-      await transactionService.create(
-        {
-          amount: order.amount,
-          desc: `Charge for order ${orderId}`,
-          operation: TransactionOperation.REMOVE,
-          reference_id: orderId,
-          user_id: order.purchased_by,
-        },
-        transaction
-      );
-    }
+    });
   } catch (error: any) {
     throw new BadRequestError(error);
   }

@@ -7,7 +7,7 @@ describe("User Wallet Tests...", () => {
   it("User can find balance", async () => {
     const { tokens } = await global.signin();
     const amount = 1200;
-    // topup
+    // // topup
     await customRequest({
       path: `/topup`,
       method: "post",
@@ -24,7 +24,6 @@ describe("User Wallet Tests...", () => {
       path: `/wallet/balance`,
       token: tokens.access.token,
     });
-
     expectSuccess(response);
     expect(response.body.data.balance).toBe(amount);
   });

@@ -21,7 +21,7 @@ import transactionRoute from "../ec-transaction/route";
 import userAddressRoute from "../ec-user-address/route";
 import userRoute from "../ec-user/route";
 import userWalletRoute from "../ec-user-wallet/route";
-import variationAttributesRoute from "../ec-variation-attributes/variation.attributes.route";
+import variationAttributesRoute from "../ec-variation-attributes/route";
 import vendorSettlementRoute from "../ec-vendor-settlement/route";
 import wishlistRoute from "../ec-wishlist/route";
 import withrawalRoute from "../ec-withdrawal/route";

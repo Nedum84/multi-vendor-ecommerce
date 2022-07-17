@@ -6,7 +6,7 @@ import { ModelStatic, SequelizeAttributes } from "../ec-models/types";
 import { FlashSalesProductsInstance } from "../ec-flash-sales/model.flash.sales.products";
 import { ProductDiscountInstance } from "./discount.model";
 import { ProductInstance } from "../ec-product/model";
-import { ProductVariationWithAttributeSetInstance } from "../ec-variation-attributes/product.variation.with.attribute.set.model";
+import { ProductVariationWithAttributeSetInstance } from "../ec-variation-attributes/model.product.variation.with.attribute.set";
 
 export interface ProductVariationAttributes {
   variation_id: string;

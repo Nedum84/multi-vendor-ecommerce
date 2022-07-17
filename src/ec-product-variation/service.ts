@@ -12,7 +12,7 @@ import { Op, Transaction } from "sequelize";
 import { arraysEqual, asyncForEach } from "../ec-utils/function.utils";
 import { isAdmin } from "../ec-apps/app-admin/roles.service";
 import ProductVariationUtils from "./utils.query";
-import variationAttributesService from "../ec-variation-attributes/variation.attributes.service";
+import variationAttributesService from "../ec-variation-attributes/service";
 
 //--> Create
 const create = async (

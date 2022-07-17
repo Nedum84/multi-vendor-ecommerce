@@ -1,8 +1,8 @@
 import faker from "faker";
 import { UserRoleStatus } from "./types";
 import { User } from "../ec-models";
-import { UserUtils } from "./utils";
 import { generateChars } from "../ec-utils/random.string";
+import { hashPassword } from "./utils";
 
 export default {
   rawCreate: async function (props?: any) {
@@ -10,7 +10,7 @@ export default {
     const data = {
       ...body,
       user_id: generateChars(42),
-      password: await UserUtils.hashPassword(body.password),
+      password: await hashPassword(body.password),
       ...props,
     };
     return User.create(data);

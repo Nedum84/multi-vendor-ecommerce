@@ -8,7 +8,7 @@ import { NotFoundError } from "../ec-api-response/not.found.error";
 import { isAdmin } from "../ec-apps/app-admin/roles.service";
 import { ForbiddenError } from "../ec-api-response/forbidden.error";
 import { Op } from "sequelize";
-import { UserUtils } from "./utils";
+import { createRegCouponBonus, hashPassword, isPasswordMatch } from "./utils";
 import { generateNewCoupon } from "../ec-coupon/utils";
 import { CouponType } from "../ec-coupon/types";
 import { CouponAttributes } from "../ec-coupon/model.coupon";
@@ -16,7 +16,7 @@ import { regCouponAmountBonus } from "./constants";
 
 const create = async (req: Request) => {
   const body: UserAttributes = req.body;
-  const { email } = body;
+  const { email, user_id } = body;
 
   if (email) {
     // Check if Email is taken
@@ -28,39 +28,18 @@ const create = async (req: Request) => {
     }
   }
 
-  let user: UserInstance | null;
   try {
     await sequelize.transaction(async (t) => {
       //create user
-      user = await createModel<UserInstance>(User, body, "user_id", { transaction: t });
-      const { user_id } = user;
+      const user = await createModel<UserInstance>(User, body, "user_id", { transaction: t });
 
-      // Create Registration coupon bonus
-      const couponCode = await generateNewCoupon();
-      req.body = {
-        coupon_code: couponCode,
-        coupon_type: CouponType.PERCENTAGE,
-        title: "Welcome coupon bonus",
-        start_date: new Date(),
-        end_date: undefined, // doesn't expire,
-        product_qty_limit: undefined,
-        usage_limit: 1,
-        usage_limit_per_user: 1,
-        coupon_discount: 50,
-        max_coupon_amount: regCouponAmountBonus,
-        min_spend: 500,
-        max_spend: 500,
-        enable_free_shipping: undefined,
-        vendor_bears_discount: true,
-        users: [{ user_id }], // can only be used by this user
-      } as Partial<CouponAttributes>;
-
-      await couponService.create(req);
+      await createRegCouponBonus(user, t);
     });
   } catch (error: any) {
     throw new Error(error);
   }
-  return user!;
+
+  return findById(body.user_id);
 };
 const update = async (req: Request) => {
   const { user_id } = req.user!;
@@ -105,12 +84,12 @@ const updatePassword = async (user_id: string, updateBody: any) => {
   }
 
   //--> Check password match
-  const match = await UserUtils.isPasswordMatch(old_password, user.password);
+  const match = await isPasswordMatch(old_password, user.password);
 
   if (!match) {
     throw new NotFoundError("Incorrect old password");
   }
-  user.password = await UserUtils.hashPassword(new_password);
+  user.password = await hashPassword(new_password);
   await user.save();
   return user.reload();
 };

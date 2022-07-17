@@ -3,15 +3,15 @@ import { BadRequestError } from "../ec-api-response/bad.request.error";
 import { NotFoundError } from "../ec-api-response/not.found.error";
 import { TokenTypes } from "./types";
 import { Token } from "../ec-models";
-import { UserUtils } from "../ec-user/utils";
 import tokenService from "./service.token";
 import userService from "../ec-user/service";
+import { isPasswordMatch } from "../ec-user/utils";
 
 const login = async (req: Request) => {
   const { email, password } = req.body;
   const user = await userService.findByEmail(email, true);
 
-  if (!user || !(await UserUtils.isPasswordMatch(password, user.password))) {
+  if (!user || !(await isPasswordMatch(password, user.password))) {
     throw new BadRequestError("Incorrect email or password");
   }
   return user;

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { SuccessResponse } from "../ec-api-response/success.response";
-import variationAttributesService from "./variation.attributes.service";
+import variationAttributesService from "./service";
 
 ///----->>> VARIATIONS
 //--> Product Attributes

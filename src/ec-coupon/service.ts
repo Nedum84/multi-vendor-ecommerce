@@ -43,9 +43,9 @@ const create = async (req: Request) => {
       throw new BadRequestError("{max_spend} must be greather than {min_spend}");
   }
 
-  if (body.vendor_bears_discount && !isAdmin(role)) {
-    throw new BadRequestError("Only admin can change {vendor_bears_discount} field");
-  }
+  // if (body.vendor_bears_discount && !isAdmin(role)) {
+  //   throw new BadRequestError("Only admin can change {vendor_bears_discount} field");
+  // }
 
   if (coupon_type == CouponType.FIXED_AMOUNT) {
     if (!isAdmin(role)) {

@@ -1,8 +1,8 @@
 import express from "express";
-import variationAttributesController from "./variation.attributes.controller";
+import variationAttributesController from "./controller";
 import { requireAuth } from "../ec-middlewares/auth.middleware";
 import { validateReq } from "../ec-middlewares/validate.req";
-import variationAttributesValidation from "./variation.attributes.validation";
+import variationAttributesValidation from "./validation";
 
 const router = express.Router();
 
